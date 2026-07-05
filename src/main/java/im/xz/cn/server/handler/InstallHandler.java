@@ -238,7 +238,7 @@ public class InstallHandler {
                 }).start();
             }
 
-            ctx.json(Map.of("success", true, "message", "安装成功！安装向导已关闭，请重启程序以进入正常模式。"));
+            ctx.json(Map.of("success", true, "message", "安装成功！安装向导已关闭，请重启程序以进入正常模式。注：管理员登录是端口35599的管理进程，而不是35565的用户进程！"));
         } catch (Exception e) {
             logger.error("Installation failed: {}", e.getMessage(), e);
             ctx.status(500).json(Map.of("success", false,
