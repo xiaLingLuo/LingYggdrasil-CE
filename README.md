@@ -89,7 +89,7 @@
 
 你只需要在释放页面下载最新的稳定版本，然后扔到服务器上的任意地方，然后使用指令
 
-`java -jar LingYggdrasil-<版本号>.jar` 
+`java -jar LingYggdrasil.jar` 
 
 即可启动~
 
