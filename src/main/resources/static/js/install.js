@@ -177,9 +177,9 @@ const InstallWizard = {
             dbRows = this.summaryRow('文件路径', this.val('sqlitePath') || './data.db');
         } else {
             dbRows = this.summaryRow('主机', this.val('dbHost'))
-                   + this.summaryRow('端口', this.val('dbPort'))
-                   + this.summaryRow('数据库名', this.val('dbName'))
-                   + this.summaryRow('用户名', this.val('dbUsername') || '(空)');
+                + this.summaryRow('端口', this.val('dbPort'))
+                + this.summaryRow('数据库名', this.val('dbName'))
+                + this.summaryRow('用户名', this.val('dbUsername') || '(空)');
         }
 
         let mailSection = '';
@@ -211,10 +211,16 @@ const InstallWizard = {
         `;
     },
 
+    escapeHtml(str) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    },
+
     summaryRow(key, value) {
         return `<div class="summary-row">
-            <span class="summary-key">${key}</span>
-            <span class="summary-value">${value || '—'}</span>
+            <span class="summary-key">${this.escapeHtml(key)}</span>
+            <span class="summary-value">${this.escapeHtml(value || '—')}</span>
         </div>`;
     },
 
@@ -305,16 +311,16 @@ const InstallWizard = {
                 resultView.innerHTML = `
                     <div class="result-icon success"><i class="fas fa-circle-check"></i></div>
                     <h2 class="result-title success">安装完成</h2>
-                    <p class="result-message">${message}</p>
+                    <p class="result-message">${this.escapeHtml(message)}</p>
                 `;
             } else {
                 resultView.innerHTML = `
                     <div class="result-icon error"><i class="fas fa-circle-xmark"></i></div>
                     <h2 class="result-title error">安装失败</h2>
-                    <p class="result-message">${message}</p>
+                    <p class="result-message">${this.escapeHtml(message)}</p>
                     <button class="btn btn-primary" id="backToFormBtn">返回修改</button>
                 `;
-                var backBtn = document.getElementById('backToFormBtn');
+                const backBtn = document.getElementById('backToFormBtn');
                 if (backBtn) {
                     backBtn.addEventListener('click', function() { InstallWizard.backToForm(); });
                 }
