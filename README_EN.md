@@ -88,7 +88,7 @@ How many steps does it take to put an elephant in a fridge?
 
 Just download the latest stable release from the releases page, drop it anywhere on your server, and run
 
-`java -jar LingYggdrasil-<version>.jar` 
+`java -jar LingYggdrasil.jar` 
 
 to start it up~ 
 
