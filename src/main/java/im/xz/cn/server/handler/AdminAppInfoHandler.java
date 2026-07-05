@@ -27,7 +27,7 @@ public class AdminAppInfoHandler {
         info.put("appName", AppConfig.APP_NAME);
         info.put("appVersion", AppConfig.APP_VERSION);
         info.put("appRepo", AppConfig.APP_REPO);
-        info.put("repoUrl", "https://git.im.xz.cn/lingluo/LingYggdrasil");
+        info.put("repoUrl", "https://github.com/xiaLingLuo/LingYggdrasil-CE");
         info.put("installedAt", sysConfig.getInstalledAt() != null ? sysConfig.getInstalledAt() : "未知");
         ctx.json(info);
     }
