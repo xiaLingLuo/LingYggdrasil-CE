@@ -83,17 +83,84 @@
 
 ---
 
+我会先找到 README 和项目说明约束，然后把这段安装指南改成更清晰、专业且保留原有语气的版本。当然，下面是优化后的版本，结构更清晰、语气更自然，也保留了一点轻松感：
+
+
 ## 安装指南
 
-把大象装进冰箱分几步？
+把大象装进冰箱需要几步？启动 LingYggdrasil 也差不多简单。
 
-你只需要在释放页面下载最新的稳定版本，然后扔到服务器上的任意地方，然后使用指令
+### 1. 检查 Java 环境
 
-`java -jar LingYggdrasil.jar` 
+首先在服务器或本机终端中执行：
 
-即可启动~
+```bash
+java --version
+```
 
-（ 建议：可加入 `-Xms` 和 `-Xmx` 参数，从而获得更好的体验）
+请确认已安装 Java 25。
+
+> 理论上，本程序支持 Java 21 及以上版本；但目前仅在 Java 25 环境下完成测试。
+> 如果在非 Java 25 环境中运行出现问题，建议切换至 Java 25。
+
+### 2. 安装 Java 25
+
+如果系统中已经安装 Java 25，可以跳过本步骤。
+
+#### Debian / Ubuntu 等 Linux 发行版
+
+```bash
+sudo apt update
+sudo apt upgrade -y
+sudo apt install openjdk-25-jre -y
+```
+
+#### Red Hat / CentOS / Fedora 等 Linux 发行版
+
+根据你的系统选择以下命令之一：
+
+```bash
+sudo dnf install java-25-openjdk -y
+```
+
+或：
+
+```bash
+sudo yum install java-25-openjdk -y
+```
+
+#### Windows
+
+请在浏览器中搜索并下载 Java 25 安装包，通常为 `.exe` 或 `.msi` 后缀文件。
+
+下载完成后，双击安装包，并按照安装向导完成安装。
+
+### 3. 下载 LingYggdrasil
+
+前往 Releases 页面，下载最新的稳定版本：
+
+```text
+LingYggdrasil.jar
+```
+
+将其放置到服务器或本机的任意目录中。
+
+### 4. 启动程序
+
+在 `LingYggdrasil.jar` 所在目录执行：
+
+```bash
+java -jar LingYggdrasil.jar
+```
+
+你也可以根据服务器配置添加 JVM 内存参数，例如：
+
+```bash
+java -Xms512M -Xmx2G -jar LingYggdrasil.jar
+```
+
+启动完成后即可开始使用。
+
 
 ---
 
