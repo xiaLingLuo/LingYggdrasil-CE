@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, shrink-to-fit=yes">
+    <title>泠 Yggdrasil</title>
+    <link href="/css/css2.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Quicksand', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(160deg, #fff0f5 0%, #ffe4ec 30%, #ffffff 90%);
+            color: #4a2c3d;
+            line-height: 1.4;
+            overflow-x: hidden;
+            min-height: 100vh;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .petal-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .petal {
+            position: absolute;
+            background: radial-gradient(circle at 30% 30%, #ffb7c5, #ff8da1);
+            width: 18px;
+            height: 18px;
+            border-radius: 80% 20% 70% 30% / 60% 50% 50% 40%;
+            opacity: 0.2;
+            animation: floatPetal 18s infinite ease-in-out;
+            filter: blur(0.4px);
+            box-shadow: 0 0 12px rgba(255, 140, 170, 0.35);
+        }
+
+        @keyframes floatPetal {
+            0% { transform: translate(0, 0) rotate(0deg) scale(0.7); }
+            25% { transform: translate(25px, -35px) rotate(90deg) scale(1.0); }
+            50% { transform: translate(-15px, -70px) rotate(180deg) scale(0.8); }
+            75% { transform: translate(20px, -110px) rotate(270deg) scale(1.1); }
+            100% { transform: translate(0px, -150px) rotate(360deg) scale(0.6); }
+        }
+
+        .app-container {
+            position: relative;
+            z-index: 2;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 1.2rem 1.2rem 2.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.2rem;
+        }
+
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border-radius: 50px;
+            padding: 0.8rem 1.5rem;
+            box-shadow: 0 12px 28px rgba(255, 140, 170, 0.25);
+            border: 1px solid rgba(255, 220, 230, 0.9);
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #d43f6b;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            text-shadow: 1px 1px 0 rgba(255, 200, 210, 0.6);
+        }
+
+        .logo i {
+            font-size: 1.8rem;
+            color: #f27b9b;
+        }
+
+        .nav-actions {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: rgba(255, 240, 245, 0.7);
+            border: none;
+            width: 42px;
+            height: 42px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #c0395c;
+            font-size: 1.3rem;
+            backdrop-filter: blur(10px);
+            transition: all 0.25s;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(255, 140, 170, 0.2);
+        }
+
+        .icon-btn:active {
+            background: #ffe4ec;
+            transform: scale(0.94);
+        }
+
+        .btn-login {
+            background: linear-gradient(135deg, #ff8dab, #f75b82);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.4rem;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            box-shadow: 0 10px 18px rgba(249, 123, 156, 0.5);
+            transition: 0.2s;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .btn-login:active {
+            transform: scale(0.96);
+            background: linear-gradient(135deg, #ff9eb5, #ff4770);
+        }
+
+        .hero-card {
+            background: rgba(255, 250, 252, 0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 50px;
+            padding: 2.5rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 25px 45px rgba(255, 150, 170, 0.3);
+            border: 1px solid rgba(255, 220, 230, 0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 0.2rem;
+        }
+
+        .hero-card h1 {
+            font-size: 2.8rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #e44d7a, #b33a5a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+        }
+
+        .subtitle-badge {
+            background: rgba(255, 220, 230, 0.7);
+            padding: 0.5rem 1.5rem;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #b34e67;
+            backdrop-filter: blur(5px);
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .hero-desc {
+            color: #5f3a47;
+            font-weight: 600;
+            font-size: 1rem;
+            margin: 0.3rem 0 0.8rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .btn-primary {
+            background: #f97b9c;
+            color: white;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 40px;
+            font-weight: 700;
+            font-size: 1rem;
+            background: linear-gradient(135deg, #ff8dab, #f75b82);
+            box-shadow: 0 10px 20px rgba(249, 123, 156, 0.5);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            transition: 0.2s;
+        }
+
+        .btn-primary:active {
+            transform: scale(0.96);
+        }
+
+        .btn-outline {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 2px solid #f9a3b7;
+            color: #c0395c;
+            padding: 0.8rem 2rem;
+            border-radius: 40px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #b3415c;
+            margin-bottom: 1.2rem;
+            justify-content: center;
+        }
+
+        .feature-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 1.2rem;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(18px);
+            border-radius: 35px;
+            padding: 1.2rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 12px 25px rgba(255, 140, 170, 0.2);
+            border: 1px solid rgba(255, 210, 220, 0.8);
+            transition: 0.2s;
+        }
+
+        .feature-item:active {
+            background: rgba(255, 245, 250, 0.95);
+            transform: scale(0.98);
+        }
+
+        .feature-icon {
+            background: linear-gradient(145deg, #ffd0dc, #ffb3c6);
+            width: 55px;
+            height: 55px;
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: #b3304c;
+            box-shadow: 0 8px 16px rgba(230, 100, 130, 0.35);
+            flex-shrink: 0;
+        }
+
+        .feature-text h3 {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #a3324f;
+        }
+
+        .feature-text p {
+            font-size: 0.9rem;
+            color: #5d4050;
+            font-weight: 500;
+        }
+
+        .badge {
+            background: #ffe0eb;
+            border-radius: 20px;
+            padding: 0.2rem 0.8rem;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: #c4415e;
+            display: inline-block;
+            margin-top: 0.3rem;
+        }
+
+        .crypto-row {
+            background: rgba(255, 245, 250, 0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 40px;
+            padding: 1.4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            border: 1px solid #ffcfda;
+        }
+
+        .crypto-tag {
+            background: #ffeaf2;
+            border-radius: 30px;
+            padding: 0.6rem 1rem;
+            font-weight: 600;
+            color: #b3415c;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .table-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            border-radius: 35px;
+            padding: 1.2rem;
+            border: 1px solid #ffcfda;
+        }
+
+        .table-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.7rem 0.3rem;
+            border-bottom: 1px dashed #f3b6c9;
+            font-size: 0.9rem;
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        .steps-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            justify-content: center;
+        }
+
+        .step-pill {
+            background: rgba(255, 250, 252, 0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            padding: 0.7rem 1.2rem;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #b3415c;
+            border: 1px solid #ffcfda;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .step-num {
+            background: #f26b8a;
+            color: white;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+        }
+
+        footer {
+            text-align: center;
+            color: #9b6b7a;
+            font-weight: 500;
+            background: rgba(255, 240, 245, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 35px;
+            padding: 1.2rem;
+            font-size: 0.85rem;
+        }
+
+        a, button {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+<div class="petal-bg" id="petalContainer"></div>
+
+<div class="app-container">
+    <nav class="navbar">
+        <div class="logo">
+            <i class="fas fa-feather-alt"></i> Ling
+        </div>
+
+    </nav>
+
+    <div class="hero-card">
+        <h1>泠 Yggdrasil</h1>
+        <div class="subtitle-badge">
+            <i class="fas fa-heart" style="color:#ff6b8a;"></i> 优雅的MC外置登录
+        </div>
+        <div class="hero-desc">安全 · 个性 · 便捷</div>
+        <div class="action-buttons">
+            <a href="login" class="btn-primary"><i class="fas fa-play"></i>登录/注册</a>
+        </div>
+    </div>
+
+    <div>
+        <div class="section-header">
+            <i class="fas fa-star" style="color:#ff7b9c;"></i> 核心特色
+        </div>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-tree"></i></div>
+                <div class="feature-text">
+                    <h3>Yggdrasil 认证</h3>
+                    <p>完整官方协议，兼容主流启动器</p>
+                    <span class="badge"><i class="fas fa-check-circle"></i> 现代优雅</span>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-fingerprint"></i></div>
+                <div class="feature-text">
+                    <h3>令牌登录</h3>
+                    <p>无密码安全登录，快捷高效</p>
+                    <span class="badge"><i class="fas fa-check-circle"></i> 可靠高效</span>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-users"></i></div>
+                <div class="feature-text">
+                    <h3>多角色</h3>
+                    <p>一个账号，多个角色自由切换</p>
+                    <span class="badge"><i class="fas fa-check-circle"></i> 简单方便</span>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon"><i class="fas fa-lock"></i></div>
+                <div class="feature-text">
+                    <h3>高标准加密</h3>
+                    <p>抗量子安全，多层防护</p>
+                    <span class="badge"><i class="fas fa-check-circle"></i> 极致保密</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="crypto-row">
+        <div style="display: flex; align-items: center; gap: 0.8rem;">
+            <i class="fas fa-signature" style="font-size: 2.2rem; color:#e75480;"></i>
+            <span style="font-weight: 700; font-size: 1.3rem; color:#b3415c;">Ed448 标准</span>
+        </div>
+        <div class="crypto-tag"><i class="fas fa-clock"></i> 基于 Edwards 曲线算法</div>
+        <div class="crypto-tag"><i class="fas fa-shield-alt"></i> 抗量子计算威胁</div>
+        <div class="crypto-tag"><i class="fas fa-gem"></i> 安全领域的“奢侈品”</div>
+    </div>
+
+    <div class="table-card">
+        <div class="section-header" style="font-size:1.4rem; margin-bottom:0.8rem;">
+            <i class="fas fa-list-ul"></i> 功能一览
+        </div>
+        <div class="table-row"><span>Yggdrasil 认证</span> <span style="color:#b3415c;">完整协议兼容</span></div>
+        <div class="table-row"><span>令牌管理</span> <span style="color:#b3415c;">角色专属令牌</span></div>
+        <div class="table-row"><span>皮肤/披风</span> <span style="color:#b3415c;">上传预览管理</span></div>
+        <div class="table-row"><span>个人仪表盘</span> <span style="color:#b3415c;">账号概览</span></div>
+        <div class="table-row"><span>抗量子加密</span> <span style="color:#b3415c;">多层安全防护</span></div>
+    </div>
+
+    <div>
+        <div class="section-header"><i class="fas fa-rocket"></i> 快速开始</div>
+        <div class="steps-container">
+            <div class="step-pill"><span class="step-num">1</span> 注册</div>
+            <div class="step-pill"><span class="step-num">2</span> 验证邮箱</div>
+            <div class="step-pill"><span class="step-num">3</span> 创建角色</div>
+            <div class="step-pill"><span class="step-num">4</span> 设置认证</div>
+            <div class="step-pill"><span class="step-num">5</span> 令牌登录</div>
+            <div class="step-pill"><span class="step-num">6</span> 个性定制</div>
+        </div>
+    </div>
+
+    <div style="background: rgba(255,240,245,0.8); backdrop-filter: blur(10px); border-radius: 35px; padding: 1.3rem;">
+        <p style="font-weight: 700; font-size: 1.2rem; color:#b3415c; margin-bottom:0.5rem;"><i class="far fa-question-circle"></i> 常见问题</p>
+        <p style="font-size:0.9rem;"><strong>Q: 令牌泄露怎么办？</strong><br> A: 立即登录角色管理页面重新生成令牌。</p>
+    </div>
+
+    <footer>
+        <i class="far fa-copyright"></i> 泠 Yggdrasil · 优雅的MC外置登录系统<br>
+        <span style="font-size:0.8rem;">安全 · 个性 · 便捷</span><br>
+        <span style="font-size:0.85rem;color:#b88a9a;margin-top:4px;display:inline-block;"><!-- 这n是x备1案footer占i位g符，请v勿fg移q除 --></span>
+    </footer>
+</div>
+
+<script>
+    (function() {
+        const container = document.getElementById('petalContainer');
+        if (!container) return;
+        const petalCount = 20;
+        for (let i = 0; i < petalCount; i++) {
+            const petal = document.createElement('div');
+            petal.className = 'petal';
+            const size = Math.floor(Math.random() * 16 + 10);
+            petal.style.width = `${size}px`;
+            petal.style.height = `${size}px`;
+            petal.style.left = `${Math.random() * 100}%`;
+            petal.style.top = `${Math.random() * 100}%`;
+            petal.style.animationDelay = `${Math.random() * 15}s`;
+            petal.style.animationDuration = `${Math.random() * 12 + 10}s`;
+            petal.style.opacity = Math.random() * 0.25 + 0.1;
+            container.appendChild(petal);
+        }
+    })();
+</script>
+</body>
+</html>
