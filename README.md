@@ -172,6 +172,7 @@ java -Xms512M -Xmx2G -jar LingYggdrasil.jar
 - [ ] 用户的权限组实现，更精确的控制
 - [ ] 多语言支持
 - [ ] 黑夜模式
+- [ ] 让API登录时用户名兼容@*.*的后缀，即形如player@y.net被视作player进行登录
 
 ---
 
