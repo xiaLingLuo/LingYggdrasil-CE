@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.config;
 
 import im.xz.cn.database.DatabaseManager;
@@ -48,8 +65,12 @@ public class SystemConfig {
     private int authRateLimit = 1000;
     private int maxProfilesPerUser = 10;
     private int maxAccountsPerIp = 3;
+    private int maxBlockedUsers = 2000;
+    private String announcementMode = "off";
+    private String announcementScope = "user";
+    private String announcementContent = "";
     private int batchQueryMaxCount = 6;
-    private String signatureMode = "ed448";
+    private String signatureMode = "rsa-sha1";
     private String yggdrasilPrivateKey = "";
     private String yggdrasilPublicKey = "";
 
@@ -111,6 +132,10 @@ public class SystemConfig {
             upsertSetting(db, "auth_rate_limit", String.valueOf(authRateLimit));
             upsertSetting(db, "max_profiles_per_user", String.valueOf(maxProfilesPerUser));
             upsertSetting(db, "max_accounts_per_ip", String.valueOf(maxAccountsPerIp));
+            upsertSetting(db, "max_blocked_users", String.valueOf(maxBlockedUsers));
+            upsertSetting(db, "announcement_mode", announcementMode);
+            upsertSetting(db, "announcement_scope", announcementScope);
+            upsertSetting(db, "announcement_content", announcementContent);
             upsertSetting(db, "batch_query_max_count", String.valueOf(batchQueryMaxCount));
             upsertSetting(db, "signature_mode", signatureMode);
             upsertSetting(db, "yggdrasil_private_key", yggdrasilPrivateKey);
@@ -164,6 +189,10 @@ public class SystemConfig {
             case "auth_rate_limit" -> authRateLimit = parseInt(value, 1000);
             case "max_profiles_per_user" -> maxProfilesPerUser = parseInt(value, 10);
             case "max_accounts_per_ip" -> maxAccountsPerIp = parseInt(value, 3);
+            case "max_blocked_users" -> maxBlockedUsers = Math.clamp(parseInt(value, 2000), 0, 5000);
+            case "announcement_mode" -> announcementMode = value;
+            case "announcement_scope" -> announcementScope = value;
+            case "announcement_content" -> announcementContent = value;
             case "batch_query_max_count" -> batchQueryMaxCount = parseInt(value, 6);
             case "signature_mode" -> signatureMode = value;
             case "yggdrasil_private_key" -> yggdrasilPrivateKey = value;
@@ -305,6 +334,16 @@ public class SystemConfig {
 
     public int getMaxAccountsPerIp() { return maxAccountsPerIp; }
     public void setMaxAccountsPerIp(int maxAccountsPerIp) { this.maxAccountsPerIp = maxAccountsPerIp; }
+
+    public int getMaxBlockedUsers() { return maxBlockedUsers; }
+    public void setMaxBlockedUsers(int maxBlockedUsers) { this.maxBlockedUsers = Math.clamp(maxBlockedUsers, 0, 5000); }
+
+    public String getAnnouncementMode() { return announcementMode; }
+    public void setAnnouncementMode(String announcementMode) { this.announcementMode = announcementMode; }
+    public String getAnnouncementScope() { return announcementScope; }
+    public void setAnnouncementScope(String announcementScope) { this.announcementScope = announcementScope; }
+    public String getAnnouncementContent() { return announcementContent; }
+    public void setAnnouncementContent(String announcementContent) { this.announcementContent = announcementContent; }
 
     public int getBatchQueryMaxCount() { return batchQueryMaxCount; }
     public void setBatchQueryMaxCount(int batchQueryMaxCount) { this.batchQueryMaxCount = batchQueryMaxCount; }

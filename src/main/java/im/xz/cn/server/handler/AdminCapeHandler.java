@@ -1,8 +1,26 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.server.handler;
 
 import im.xz.cn.auth.SessionManager;
 import im.xz.cn.database.DatabaseManager;
 import im.xz.cn.database.TextureDao;
+import im.xz.cn.database.TextureMetaDao;
 import im.xz.cn.database.UserDao;
 import im.xz.cn.model.Texture;
 import im.xz.cn.model.User;
@@ -13,21 +31,20 @@ import im.xz.cn.util.TextureService;
 
 import io.javalin.http.Context;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class AdminCapeHandler {
     private final TextureDao textureDao;
     private final TextureService textureService;
     private final UserDao userDao;
+    private final TextureMetaDao metaDao;
     private final DatabaseManager db;
 
     public AdminCapeHandler(TextureDao textureDao, TextureService textureService, UserDao userDao, DatabaseManager db) {
         this.textureDao = textureDao;
         this.textureService = textureService;
         this.userDao = userDao;
+        this.metaDao = new TextureMetaDao(db);
         this.db = db;
     }
 
@@ -40,21 +57,31 @@ public class AdminCapeHandler {
 
     public void getCapes(Context ctx) {
         if (!isRoot(ctx)) {
-            ctx.status(403).json(Map.of("success", false, "message", "仅 root 管理员可执行此操作"));
+            ctx.json(Map.of("success", false, "message", "仅 root 管理员"));
             return;
         }
-        List<Texture> capes = textureDao.findAll("CAPE");
+        String sql = """
+            SELECT t.hash, t.size,
+                   MIN(t.created_at) AS created_at,
+                   MIN(t.original_name) AS original_name,
+                   COUNT(*) AS ref_count
+            FROM textures t
+            WHERE t.type = 'CAPE'
+            GROUP BY t.hash
+            ORDER BY created_at DESC
+            """;
+        var rows = db.executeQuery(sql);
         List<Map<String, Object>> result = new ArrayList<>();
-        for (Texture t : capes) {
+        for (var row : rows) {
             Map<String, Object> map = new LinkedHashMap<>();
-            map.put("id", t.getId());
-            map.put("userId", t.getUserId());
-            map.put("alias", t.getAlias());
-            map.put("hash", t.getHash());
-            map.put("size", t.getSize());
-            map.put("createdAt", t.getCreatedAt());
-            User user = userDao.findById(t.getUserId());
-            map.put("username", user != null ? user.getUsername() : "");
+            String hash = String.valueOf(row.get("hash"));
+            map.put("hash", hash);
+            String adminAlias = metaDao.getAdminAlias(hash);
+            map.put("adminAlias", adminAlias != null ? adminAlias : "");
+            map.put("originalName", row.get("original_name"));
+            map.put("size", row.get("size"));
+            map.put("refCount", ((Number) row.get("ref_count")).intValue());
+            map.put("createdAt", String.valueOf(row.get("created_at")));
             result.add(map);
         }
         ctx.json(Map.of("success", true, "textures", result));
@@ -62,7 +89,7 @@ public class AdminCapeHandler {
 
     public void uploadCape(Context ctx) {
         if (!isRoot(ctx)) {
-            ctx.status(403).json(Map.of("success", false, "message", "仅 root 管理员可执行此操作"));
+            ctx.json(Map.of("success", false, "message", "仅 root 管理员"));
             return;
         }
         ctx.json(Map.of("success", false, "message", "管理员暂不支持直接上传披风"));
@@ -71,60 +98,53 @@ public class AdminCapeHandler {
     @SuppressWarnings("unchecked")
     public void deleteCape(Context ctx) {
         if (!isRoot(ctx)) {
-            ctx.status(403).json(Map.of("success", false, "message", "仅 root 管理员可执行此操作"));
+            ctx.json(Map.of("success", false, "message", "仅 root 管理员"));
             return;
         }
         Map<String, String> body = ctx.bodyAsClass(Map.class);
-        String id = body.get("id");
-        if (id == null) {
-            ctx.status(400).json(Map.of("success", false, "message", "参数缺失"));
+        String hash = body.get("hash");
+        if (hash == null || hash.isBlank()) {
+            ctx.json(Map.of("success", false, "message", "参数缺失"));
             return;
         }
-        Texture texture = textureDao.findById(id);
-        if (texture == null) {
-            ctx.status(404).json(Map.of("success", false, "message", "披风不存在"));
-            return;
+        List<Texture> all = textureDao.findAll("CAPE");
+        int deleted = 0;
+        for (Texture t : all) {
+            if (t.getHash().equals(hash)) {
+                textureDao.delete(t.getId());
+                deleted++;
+            }
         }
-        textureService.deleteFile("CAPE", texture.getHash());
-        textureDao.delete(id);
-        AuditLogger.logSensitiveOperation(getAdminName(ctx), "DELETE_CAPE:" + id, IpUtil.getClientIp(ctx));
-        ctx.json(Map.of("success", true, "message", "披风已删除"));
+        textureService.deleteFile("CAPE", hash);
+        metaDao.setAdminAlias(hash, null);
+        AuditLogger.logSensitiveOperation(getAdminName(ctx), "DELETE_CAPE_HASH:" + hash, IpUtil.getClientIp(ctx));
+        ctx.json(Map.of("success", true, "message", "已删除 " + deleted + " 条披风记录"));
     }
 
     @SuppressWarnings("unchecked")
     public void updateAlias(Context ctx) {
         if (!isRoot(ctx)) {
-            ctx.status(403).json(Map.of("success", false, "message", "仅 root 管理员可执行此操作"));
+            ctx.json(Map.of("success", false, "message", "仅 root 管理员"));
             return;
         }
         Map<String, String> body = ctx.bodyAsClass(Map.class);
-        String id = body.get("id");
+        String hash = body.get("hash");
         String alias = body.get("alias");
-        if (id == null) {
-            ctx.status(400).json(Map.of("success", false, "message", "参数缺失"));
+        if (hash == null || hash.isBlank()) {
+            ctx.json(Map.of("success", false, "message", "参数缺失"));
             return;
         }
-        Texture texture = textureDao.findById(id);
-        if (texture == null) {
-            ctx.status(404).json(Map.of("success", false, "message", "披风不存在"));
-            return;
-        }
-        textureDao.updateAlias(id, alias);
+        metaDao.setAdminAlias(hash, alias != null && !alias.isBlank() ? alias.trim() : null);
         ctx.json(Map.of("success", true, "message", "别名已更新"));
     }
 
     public void downloadCape(Context ctx) {
-        String id = ctx.queryParam("id");
-        if (id == null) {
+        String hash = ctx.queryParam("hash");
+        if (hash == null || hash.isBlank()) {
             ctx.status(400).json(Map.of("success", false, "message", "参数缺失"));
             return;
         }
-        Texture texture = textureDao.findById(id);
-        if (texture == null) {
-            ctx.status(404).json(Map.of("success", false, "message", "披风不存在"));
-            return;
-        }
-        byte[] data = textureService.readFile("CAPE", texture.getHash());
+        byte[] data = textureService.readFile("CAPE", hash);
         if (data == null) {
             ctx.status(404).json(Map.of("success", false, "message", "文件不存在"));
             return;

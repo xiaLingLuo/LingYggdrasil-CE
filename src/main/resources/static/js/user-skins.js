@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 function showConfirmDialog(message, onConfirm) {
     var overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
@@ -98,7 +115,7 @@ function showToast(message, type) {
                     '<div class="upload-tile-text">上传皮肤</div>' +
                     '<div class="upload-tile-hint">PNG 格式</div>' +
                     '</div>' +
-                    '<p class="empty-hint">暂无皮肤，快上传一个吧~ <i class="fas fa-leaf"></i></p>';
+                    '<p class="empty-hint" style="grid-column:1/-1">暂无皮肤，快上传一个吧~ <i class="fas fa-leaf"></i></p>';
             }
         } catch (err) {
             container.innerHTML = '<p class="empty-hint" style="color:#C62828">加载失败，请刷新重试</p>';

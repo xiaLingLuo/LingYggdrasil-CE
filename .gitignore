@@ -40,3 +40,8 @@ build/
 
 ### Application ###
 sql.yml
+
+.git
+.idea
+.idea/
+.git/

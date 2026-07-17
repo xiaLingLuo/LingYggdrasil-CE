@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.database;
 
 import im.xz.cn.model.User;
@@ -15,10 +32,11 @@ public class UserDao {
 
     public void insert(User user) {
         db.executeUpdate(
-            "INSERT INTO users (id, username, email, password_hash, nickname, role, email_verified, created_at, last_login, registered_ip, last_login_ip) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO users (id, username, email, password_hash, nickname, role, email_verified, created_at, last_login, registered_ip, last_login_ip, friend_code) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             user.getId(), user.getUsername(), user.getEmail(), user.getPasswordHash(),
             user.getNickname(), user.getRole().toDbValue(), user.isEmailVerified() ? 1 : 0,
-            user.getCreatedAt(), user.getLastLogin(), user.getRegisteredIp(), user.getLastLoginIp()
+            user.getCreatedAt(), user.getLastLogin(), user.getRegisteredIp(), user.getLastLoginIp(),
+            user.getId() != null ? im.xz.cn.util.UuidUtil.generateFriendCode(user.getId()) : null
         );
     }
 
@@ -115,6 +133,14 @@ public class UserDao {
             return ((Number) result.get("cnt")).intValue();
         }
         return 0;
+    }
+
+    public User findByFriendCode(String friendCode) {
+        return querySingle("SELECT * FROM users WHERE friend_code = ?", friendCode);
+    }
+
+    public void updateDisplayProfile(String userId, String profileId) {
+        db.executeUpdate("UPDATE users SET display_profile_id = ? WHERE id = ?", profileId, userId);
     }
 
     private User querySingle(String sql, Object... params) {

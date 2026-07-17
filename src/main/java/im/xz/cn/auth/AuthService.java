@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.auth;
 
 import im.xz.cn.database.*;
@@ -177,18 +194,35 @@ public class AuthService {
 
     public PlayerProfile hasJoinedServer(String username, String serverId) {
         PlayerProfile profile = profileDao.findByName(username);
-        if (profile == null) return null;
+        if (profile == null) {
+            System.out.println("[AuthService] hasJoinedServer: username=" + username + " -> profile未找到");
+            return null;
+        }
+
+        System.out.println("[AuthService] hasJoinedServer: username=" + username + ", serverId=" + serverId
+                + ", profileId=" + profile.getId() + ", userId=" + profile.getUserId()
+                + ", skinUrl=" + profile.getSkinUrl());
 
         var tokens = tokenDao.findByUserId(profile.getUserId());
+        System.out.println("[AuthService] hasJoinedServer: 用户tokens数量=" + tokens.size());
         boolean found = false;
         for (AuthToken token : tokens) {
+            System.out.println("[AuthService] hasJoinedServer: 检查token serverId=" + token.getServerId()
+                    + ", expired=" + token.isExpired() + ", accessToken前缀="
+                    + (token.getAccessToken() != null ? token.getAccessToken().substring(0, Math.min(8, token.getAccessToken().length())) : "null"));
             if (serverId.equals(token.getServerId()) && !token.isExpired()) {
                 found = true;
                 tokenDao.updateServerId(token.getAccessToken(), null);
+                System.out.println("[AuthService] hasJoinedServer: 匹配成功! 清除serverId");
                 break;
             }
         }
 
+        if (found) {
+            System.out.println("[AuthService] hasJoinedServer: 成功返回profile, skinUrl=" + profile.getSkinUrl());
+        } else {
+            System.out.println("[AuthService] hasJoinedServer: 未找到匹配的serverId");
+        }
         return found ? profile : null;
     }
 

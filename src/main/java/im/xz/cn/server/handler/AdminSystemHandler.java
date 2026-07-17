@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.server.handler;
 
 import im.xz.cn.auth.SessionManager;
@@ -77,6 +94,10 @@ public class AdminSystemHandler {
 
         settings.put("maxProfilesPerUser", systemConfig.getMaxProfilesPerUser());
         settings.put("maxAccountsPerIp", systemConfig.getMaxAccountsPerIp());
+        settings.put("maxBlockedUsers", systemConfig.getMaxBlockedUsers());
+        settings.put("announcementMode", systemConfig.getAnnouncementMode());
+        settings.put("announcementScope", systemConfig.getAnnouncementScope());
+        settings.put("announcementContent", systemConfig.getAnnouncementContent());
 
         MailConfig mail = AppConfig.getInstance().getMailConfig();
         settings.put("mailEnabled", mail.isEnabled());
@@ -194,6 +215,34 @@ public class AdminSystemHandler {
                 break;
             case "max_accounts_per_ip":
                 systemConfig.setMaxAccountsPerIp(Integer.parseInt(value));
+                break;
+            case "max_blocked_users":
+                int blocked = Integer.parseInt(value);
+                if (blocked < 0 || blocked > 5000) {
+                    ctx.status(400);
+                    ctx.json(Map.of("success", false, "message", "黑名单上限范围为 0~5000"));
+                    return;
+                }
+                systemConfig.setMaxBlockedUsers(blocked);
+                break;
+            case "announcement_mode":
+                if (!value.matches("off|toast|modal|top|top_force")) {
+                    ctx.status(400);
+                    ctx.json(Map.of("success", false, "message", "无效的公告模式"));
+                    return;
+                }
+                systemConfig.setAnnouncementMode(value);
+                break;
+            case "announcement_scope":
+                systemConfig.setAnnouncementScope(value);
+                break;
+            case "announcement_content":
+                if (value != null && value.length() > 10000) {
+                    ctx.status(400);
+                    ctx.json(Map.of("success", false, "message", "公告内容不能超过 10000 字符"));
+                    return;
+                }
+                systemConfig.setAnnouncementContent(value);
                 break;
             default:
                 ctx.status(400);

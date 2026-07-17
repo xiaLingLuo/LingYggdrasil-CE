@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.database;
 
 import im.xz.cn.model.PlayerProfile;
@@ -23,11 +40,23 @@ public class ProfileDao {
     }
 
     public PlayerProfile findById(String id) {
-        return querySingle("SELECT * FROM player_profiles WHERE id = ?", id);
+        PlayerProfile p = querySingle("SELECT * FROM player_profiles WHERE id = ?", id);
+        if (p != null) {
+            System.out.println("[ProfileDao] findById: id=" + id + " -> name=" + p.getName() + ", skinUrl=" + p.getSkinUrl());
+        } else {
+            System.out.println("[ProfileDao] findById: id=" + id + " -> 未找到");
+        }
+        return p;
     }
 
     public PlayerProfile findByName(String name) {
-        return querySingle("SELECT * FROM player_profiles WHERE name = ?", name);
+        PlayerProfile p = querySingle("SELECT * FROM player_profiles WHERE name = ?", name);
+        if (p != null) {
+            System.out.println("[ProfileDao] findByName: name=" + name + " -> id=" + p.getId() + ", skinUrl=" + p.getSkinUrl());
+        } else {
+            System.out.println("[ProfileDao] findByName: name=" + name + " -> 未找到");
+        }
+        return p;
     }
 
     public List<PlayerProfile> findByUserId(String userId) {

@@ -10,7 +10,9 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square" alt="Java" />
-  <img src="https://img.shields.io/badge/License-MIT-green?style=flat-square" alt="MIT License" />
+  <a href="https://www.gnu.org/licenses/agpl-3.0">
+  <img src="https://img.shields.io/badge/License-AGPL%20v3-blue.svg" alt="License: AGPL v3">
+</a>
 </p>
 
 <p align="center">
@@ -21,7 +23,7 @@
 
 ## 简介
 
-**泠 Yggdrasil** 是一个为 Minecraft 打造的 **Yggdrasil 外置鉴权系统**，完整兼容 `authlib.jar` 体系，提供完整的账户注册、登录、角色管理与皮肤披风托管能力。开箱即用的 Web 安装向导、二次元风格的管控面板、多层级加密体系，让你的外置登录系统既安全又好看。
+**泠 Yggdrasil** 是一个为 Minecraft 打造的 **Yggdrasil 外置鉴权系统**，完整兼容 authlib.jar体系，提供完整的账户注册、登录、角色管理与皮肤披风托管能力。开箱即用的 Web 安装向导、二次元风格的管控面板、多层级加密体系，让你的外置登录系统既安全又好看。
 
 > **🌐 [在线预览](https://multimc.cn/)** — 这是一个正在运行最新稳定版本 LingYggdrasil 的站点，在动手部署之前，你可以在这里零成本立即体验。
 

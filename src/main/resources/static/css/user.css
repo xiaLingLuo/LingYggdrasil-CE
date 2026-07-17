@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 body {
     -webkit-user-select: none;
     -moz-user-select: none;
@@ -713,5 +730,236 @@ body select {
     .upload-tile-icon {
         width: 40px;
         height: 40px;
+    }
+}
+
+/* ====== Friend Cards ====== */
+.friend-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+.friend-card {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 20px 16px;
+    box-shadow: 0 2px 12px rgba(255,105,180,0.08);
+    transition: all 0.3s ease;
+    border: 1px solid #FFD6E8;
+    text-align: center;
+    cursor: pointer;
+}
+.friend-card:hover {
+    box-shadow: 0 6px 20px rgba(255,105,180,0.15);
+    transform: translateY(-3px);
+}
+.friend-card:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(255,105,180,0.1);
+}
+.friend-my-card {
+    border: 2px solid #FF69B4;
+}
+.friend-card-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: #333;
+}
+
+.friend-card-label {
+    font-size: 11px;
+    color: #FF69B4;
+    margin-top: 4px;
+    background: #FFF0F5;
+    padding: 2px 8px;
+    border-radius: 8px;
+}
+
+.friend-card-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 0 auto 10px;
+    background: #F5F0FF;
+}
+.friend-card-avatar canvas {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+}
+.friend-card-info {
+    width: 100%;
+    margin-bottom: 4px;
+}
+.friend-card-code {
+    font-size: 12px;
+    color: #999;
+    font-family: 'Consolas', monospace;
+    letter-spacing: 0.5px;
+}
+
+.friend-detail-modal {
+    min-width: 420px;
+    max-width: 520px;
+}
+.friend-detail-body {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+.friend-detail-preview {
+    width: 200px;
+    min-height: 320px;
+    background: #FFF0F5;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.friend-detail-preview canvas {
+    display: block;
+    width: 100%;
+    border-radius: 12px;
+}
+.friend-detail-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.friend-add-tile {
+    background: #FFFFFF;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 2px 12px rgba(255,105,180,0.08);
+    transition: all 0.3s ease;
+    border: 2px dashed #FFB6C1;
+    text-align: center;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+}
+.friend-add-tile:hover {
+    border-color: #FF69B4;
+    box-shadow: 0 6px 20px rgba(255,105,180,0.15);
+    transform: translateY(-3px);
+}
+.friend-add-tile:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(255,105,180,0.1);
+}
+.friend-add-tile-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF69B4, #FF8DC7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    box-shadow: 0 4px 12px rgba(255,105,180,0.2);
+    transition: transform 0.3s ease;
+}
+.friend-add-tile:hover .friend-add-tile-icon {
+    transform: scale(1.1);
+}
+.friend-add-tile-plus {
+    font-size: 28px;
+    color: #FFFFFF;
+    font-weight: 300;
+    line-height: 1;
+}
+.friend-add-tile-text {
+    font-weight: 600;
+    font-size: 14px;
+    color: #FF69B4;
+    margin-bottom: 4px;
+}
+.friend-add-tile-hint {
+    font-size: 11px;
+    color: #B0B0B0;
+}
+
+.friend-profile-modal {
+    min-width: 440px;
+    max-width: 520px;
+}
+.friend-profile-body {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+.friend-profile-preview {
+    width: 180px;
+    min-height: 300px;
+    background: #FFF0F5;
+    border-radius: 12px;
+    overflow: hidden;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.friend-profile-preview canvas {
+    display: block;
+    width: 100%;
+    border-radius: 12px;
+}
+.friend-profile-details {
+    flex: 1;
+    min-width: 0;
+}
+.friend-code-display {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #FFF8FC;
+    border: 1px solid #FFD6E8;
+    border-radius: 8px;
+    font-family: 'Consolas', monospace;
+    font-size: 16px;
+    color: #FF69B4;
+    letter-spacing: 1px;
+}
+.friend-code-display .btn-small {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+@media (max-width: 768px) {
+    .friend-grid {
+        grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    }
+    .friend-profile-body {
+        flex-direction: column;
+        align-items: center;
+    }
+    .friend-profile-preview {
+        width: 160px;
+        height: 260px;
+    }
+    .friend-add-tile {
+        min-height: 160px;
+    }
+    .friend-detail-body {
+        flex-direction: column;
+        align-items: center;
+    }
+    .friend-detail-preview {
+        width: 180px;
+        min-height: 280px;
+    }
+    .friend-profile-preview {
+        width: 160px;
+        min-height: 260px;
     }
 }

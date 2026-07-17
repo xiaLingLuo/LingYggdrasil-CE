@@ -1,10 +1,30 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.server;
 
 import im.xz.cn.auth.AuthService;
 import im.xz.cn.auth.SessionManager;
 import im.xz.cn.config.SystemConfig;
 import im.xz.cn.database.CacheDao;
+import im.xz.cn.database.ConfirmingFriendDao;
+import im.xz.cn.database.BlockDao;
 import im.xz.cn.database.DatabaseManager;
+import im.xz.cn.database.FriendDao;
 import im.xz.cn.database.ProfileDao;
 import im.xz.cn.database.UserDao;
 import im.xz.cn.model.User;
@@ -12,6 +32,7 @@ import im.xz.cn.mail.MailService;
 import im.xz.cn.server.handler.UserAuthHandler;
 import im.xz.cn.server.handler.UserCapeHandler;
 import im.xz.cn.server.handler.UserDashboardHandler;
+import im.xz.cn.server.handler.UserFriendHandler;
 import im.xz.cn.server.handler.UserSkinHandler;
 import im.xz.cn.something.web.UserAuth;
 import im.xz.cn.something.web.Shared;
@@ -48,6 +69,10 @@ public class UserServer {
         UserSkinHandler skinHandler = new UserSkinHandler(textureDao, textureService, userDao);
         UserCapeHandler capeHandler = new UserCapeHandler(textureDao, textureService, userDao);
         UserDashboardHandler dashHandler = new UserDashboardHandler(authService, userDao, profileDao, textureDao, textureService, cacheDao, mailService, sysConfig);
+        FriendDao friendDao = new FriendDao(db);
+        ConfirmingFriendDao confirmingDao = new im.xz.cn.database.ConfirmingFriendDao(db);
+        BlockDao blockDao = new im.xz.cn.database.BlockDao(db);
+        UserFriendHandler friendHandler = new UserFriendHandler(userDao, profileDao, friendDao, confirmingDao, blockDao, textureService, sysConfig);
 
         app = Javalin.create(config -> {
             config.http.defaultContentType = "text/html; charset=utf-8";
@@ -116,6 +141,8 @@ public class UserServer {
                 try (var is = UserServer.class.getResourceAsStream("/index.html")) {
                     if (is != null) {
                         String html = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                        html = html.replace("</head>", "<link rel=\"stylesheet\" href=\"/css/announcement.css\"></head>");
+                        html = html.replace("</body>", "<script src=\"/js/announcement.js\"></script></body>");
                         html = FooterInfo.injectFooterRecords(html);
                         ctx.contentType("text/html; charset=utf-8");
                         ctx.result(html);
@@ -184,6 +211,7 @@ public class UserServer {
             config.routes.get("/profiles", dashHandler::handleProfilesPage);
             config.routes.get("/skins", skinHandler::skinsPage);
             config.routes.get("/capes", capeHandler::capesPage);
+            config.routes.get("/friends", friendHandler::friendsPage);
 
             config.routes.post("/api/login", authHandler::handleLogin);
             config.routes.post("/api/register", authHandler::handleRegister);
@@ -216,6 +244,25 @@ public class UserServer {
             config.routes.post("/api/capes/delete", capeHandler::deleteCape);
             config.routes.post("/api/capes/alias", capeHandler::updateAlias);
             config.routes.get("/api/capes/download", capeHandler::downloadCape);
+            config.routes.get("/api/friends", friendHandler::getFriends);
+            config.routes.get("/api/friends/my-info", friendHandler::getMyInfo);
+            config.routes.post("/api/friends/display-profile", friendHandler::updateDisplayProfile);
+            config.routes.post("/api/friends/add", friendHandler::addFriend);
+            config.routes.post("/api/friends/delete", friendHandler::deleteFriend);
+            config.routes.post("/api/friends/request/accept", friendHandler::acceptRequest);
+            config.routes.post("/api/friends/request/cancel", friendHandler::cancelRequest);
+            config.routes.post("/api/friends/block", friendHandler::blockUser);
+            config.routes.post("/api/friends/unblock", friendHandler::unblockUser);
+            config.routes.get("/api/friends/blocked", friendHandler::getBlocked);
+            config.routes.get("/api/friends/blocked/count", friendHandler::getBlockedCount);
+            config.routes.post("/api/friends/blocked/clear", friendHandler::clearBlocked);
+            config.routes.get("/api/friends/texture/{type}/{hash}", friendHandler::serveTexture);
+            config.routes.get("/api/announcement", ctx -> {
+                SystemConfig sc = SystemConfig.getInstance();
+                String userId = SessionManager.getUserId(ctx);
+                ctx.json(Map.of("mode", sc.getAnnouncementMode(), "scope", sc.getAnnouncementScope(),
+                        "content", sc.getAnnouncementContent(), "loggedIn", userId != null));
+            });
             config.routes.get("/api/footer-info", ctx -> ctx.json(FooterInfo.getFooterData()));
         });
     }

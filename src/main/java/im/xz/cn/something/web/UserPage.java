@@ -1,3 +1,21 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package im.xz.cn.something.web;
 
 import static im.xz.cn.something.web.Shared.esc;
@@ -213,7 +231,14 @@ public class UserPage {
     public static String renderSettingsPage(String csrfToken, String siteName, String nickname, String email) {
         String content = PageRenderer.renderCard("修改昵称", nicknameForm(nickname))
                 + "<br>" + PageRenderer.renderCard("修改邮箱", emailForm(email))
-                + "<br>" + PageRenderer.renderCard("修改密码", passwordForm());
+                + "<br>" + PageRenderer.renderCard("修改密码", passwordForm())
+                + "<br>" + PageRenderer.renderCard("黑名单管理",
+                    "<div style='text-align:center'>"
+                    + "<p id='blockedCountText' style='color:#999;margin-bottom:12px'>加载中...</p>"
+                    + "<div style='display:flex;gap:10px;justify-content:center'>"
+                    + "<button class='btn btn-danger' id='clearBlockedBtn'>清空黑名单</button>"
+                    + "<button class='btn btn-secondary' id='manageBlockedBtn'>细致管理</button>"
+                    + "</div></div>");
         String body = Shared.buildUserLayout(siteName, "settings", content, "settings");
         String csrf = Shared.csrfInject(csrfToken);
         return PageRenderer.renderPage("设置", csrf + body, "user",
@@ -264,6 +289,46 @@ public class UserPage {
         String csrf = Shared.csrfInject(csrfToken)
                 + "<script src=\"/js/skinview3d.bundle.js\"></script>";
         return PageRenderer.renderPage("我的披风", csrf + body, "user",
+                Css.getUserCssLink(), Css.getTextureCss());
+    }
+
+    public static String friendsContent() {
+        return """
+            <div class="friend-grid" id="friendList">
+            <div class="friend-card friend-my-card card-animate" id="friendMyCard">
+            <div class="friend-card-skin" id="mySkinPreview"></div>
+            <div class="friend-card-info">
+            <div class="friend-card-name" id="myName">我</div>
+            <div class="friend-card-code" id="myCode">----</div>
+            </div>
+            </div>
+            <div class="friend-add-tile card-animate" id="friendAddTile">
+            <div class="friend-add-tile-icon">
+            <i class="fas fa-user-plus"></i>
+            </div>
+            <div class="friend-add-tile-text">添加好友</div>
+            <div class="friend-add-tile-hint">输入好友代码</div>
+            </div>
+            <p class="text-muted" style="grid-column:1/-1">加载中...</p>
+            </div>
+            <div id="toast" class="toast" style="display:none"></div>
+            """;
+    }
+
+    public static String renderFriendsPage(String csrfToken) {
+        String content = friendsContent();
+        String navbar = PageRenderer.renderNavbar("用户中心", "user", false);
+        String sidebar = Shared.buildUserSidebar("friends");
+        String body = navbar + """
+            <div class="admin-layout">
+                %s
+                <div class="admin-content">%s</div>
+            </div>
+            <script src="/js/user-friends.js"></script>
+            """.formatted(sidebar, content);
+        String csrf = Shared.csrfInject(csrfToken)
+                + "<script src=\"/js/skinview3d.bundle.js\"></script>";
+        return PageRenderer.renderPage("好友", csrf + body, "user",
                 Css.getUserCssLink(), Css.getTextureCss());
     }
 }

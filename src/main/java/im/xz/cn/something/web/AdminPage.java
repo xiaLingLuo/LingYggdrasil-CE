@@ -1,3 +1,21 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package im.xz.cn.something.web;
 
 import static im.xz.cn.something.web.Shared.esc;
@@ -201,22 +219,21 @@ public class AdminPage {
             </div>
             <div class="card">
                 <div class="card-body" style="padding:0;">
-                    <table class="table admin-table">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>用户</th>
-                                <th>别名</th>
-                                <th>Hash</th>
-                                <th>大小</th>
-                                <th>上传时间</th>
-                                <th>操作</th>
-                            </tr>
-                        </thead>
-                        <tbody id="skinTableBody">
-                            <tr><td colspan="7" class="text-center">加载中...</td></tr>
-                        </tbody>
-                    </table>
+            <table class="table admin-table">
+                <thead>
+                    <tr>
+                        <th>Hash</th>
+                        <th>文件原名</th>
+                        <th>大小</th>
+                        <th>引用用户</th>
+                        <th>上传时间</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody id="skinTableBody">
+                    <tr><td colspan="6" class="text-center">加载中...</td></tr>
+                </tbody>
+            </table>
                 </div>
             </div>
             <div id="toast" class="toast" style="display:none;"></div>
@@ -253,17 +270,16 @@ public class AdminPage {
                     <table class="table admin-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
-                                <th>用户</th>
-                                <th>别名</th>
                                 <th>Hash</th>
+                                <th>文件原名</th>
                                 <th>大小</th>
+                                <th>引用用户</th>
                                 <th>上传时间</th>
                                 <th>操作</th>
                             </tr>
                         </thead>
                         <tbody id="capeTableBody">
-                            <tr><td colspan="7" class="text-center">加载中...</td></tr>
+                            <tr><td colspan="6" class="text-center">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -712,11 +728,12 @@ public class AdminPage {
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">证书模式</div>
-                            <div class="setting-desc">现代模式使用 Ed448；兼容模式使用 RSA-SHA512</div>
+                            <div class="setting-desc">现代和近现代是面向未来的，而Mojang现在仍然抱着老东西啃。<br>除非你知道你在做什么，否则始终选择兼容模式。</div>
                         </div>
-                        <select id="signatureMode" class="form-input setting-select">
-                            <option value="ed448">现代</option>
-                            <option value="rsa-sha512">兼容</option>
+                        <select id="signatureMode" class="form-input setting-select" onchange="onModeChange()">
+                            <option value="ed448">现代 (Ed448)</option>
+                            <option value="rsa-sha512">近现代 (RSA-SHA512)</option>
+                            <option value="rsa-sha1">兼容 (RSA-SHA1)</option>
                         </select>
                     </div>
                     <div class="setting-item">
@@ -735,7 +752,7 @@ public class AdminPage {
                     </div>
                     <div style="display:flex;gap:10px;margin-top:12px;">
                         <button class="btn btn-primary" onclick="regenerateKeys()">重新生成密钥对</button>
-                        <button class="btn btn-danger" onclick="switchMode()">切换证书模式</button>
+                        <button class="btn btn-warning" id="switchModeBtn" onclick="confirmSwitchMode()" style="display:none;">切换证书模式并重新生成密钥</button>
                     </div>
                 </div>
             </div>
@@ -764,15 +781,54 @@ public class AdminPage {
                             <div class="setting-label">站点名称</div>
                             <div class="setting-desc">显示在页面标题和导航栏</div>
                         </div>
-                        <input type="text" id="siteName" class="form-input setting-input" placeholder="站点名称">
+                        <input type="text" id="siteName" class="form-input setting-input" data-setting-key="site_name" placeholder="站点名称">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">站点介绍</div>
                             <div class="setting-desc">站点的简短描述</div>
                         </div>
-                        <textarea id="siteDescription" class="form-input setting-textarea" rows="3" placeholder="站点介绍"></textarea>
+                        <textarea id="siteDescription" class="form-input setting-textarea" data-setting-key="site_description" rows="3" placeholder="站点介绍"></textarea>
                     </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">公告模式</div>
+                            <div class="setting-desc">选择公告的展示方式</div>
+                        </div>
+                        <select id="announcementMode" class="form-input setting-select" data-setting-key="announcement_mode">
+                            <option value="off">关闭</option>
+                            <option value="toast">提示消息</option>
+                            <option value="modal">弹窗</option>
+                            <option value="top">顶端提示</option>
+                            <option value="top_force">顶端提示（强制）</option>
+                        </select>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">公告生效区域</div>
+                            <div class="setting-desc">公告显示的站点范围</div>
+                        </div>
+                        <div style="display:flex;flex-wrap:wrap;gap:12px">
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                                <input type="checkbox" value="user" class="announcement-scope-check"> 用户站
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                                <input type="checkbox" value="admin" class="announcement-scope-check"> 管理站
+                            </label>
+                            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                                <input type="checkbox" value="home" class="announcement-scope-check"> 主页
+                            </label>
+                        </div>
+                        <input type="hidden" id="announcementScope" data-setting-key="announcement_scope">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">公告内容</div>
+                            <div class="setting-desc">支持 Markdown 语法，1~10000 字符</div>
+                        </div>
+                        <textarea id="announcementContent" class="form-input setting-textarea" data-setting-key="announcement_content" rows="4" placeholder="# 标题&#10;内容文字..." maxlength="10000"></textarea>
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
                 </div>
             </div>
             <div class="settings-card card">
@@ -784,7 +840,7 @@ public class AdminPage {
                             <div class="setting-desc">允许新用户注册账号</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="registrationEnabled">
+                            <input type="checkbox" id="registrationEnabled" data-setting-key="registration_enabled">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -794,10 +850,11 @@ public class AdminPage {
                             <div class="setting-desc">用户注册时需要验证邮箱</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="emailVerificationEnabled">
+                            <input type="checkbox" id="emailVerificationEnabled" data-setting-key="email_verification_enabled">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
                 </div>
             </div>
             <div class="settings-card card">
@@ -808,32 +865,33 @@ public class AdminPage {
                             <div class="setting-label">用户页面（homepage）外网域名</div>
                             <div class="setting-desc">用户端页面的外部访问 URL</div>
                         </div>
-                        <input type="text" id="userDomain" class="form-input setting-input" placeholder="例如: https://example.com">
+                        <input type="text" id="userDomain" class="form-input setting-input" data-setting-key="user_domain" placeholder="例如: https://example.com">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">管理页面外网域名</div>
                             <div class="setting-desc">管理后台的外部访问 URL</div>
                         </div>
-                        <input type="text" id="adminDomain" class="form-input setting-input" placeholder="例如: https://admin.example.com">
+                        <input type="text" id="adminDomain" class="form-input setting-input" data-setting-key="admin_domain" placeholder="例如: https://admin.example.com">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">API 外网域名</div>
                             <div class="setting-desc">Yggdrasil API 的外部访问 URL</div>
                         </div>
-                        <input type="text" id="apiDomain" class="form-input setting-input" placeholder="例如: https://api.example.com">
+                        <input type="text" id="apiDomain" class="form-input setting-input" data-setting-key="api_domain" placeholder="例如: https://api.example.com">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">通用外网域名</div>
                             <div class="setting-desc">当上述三项无数据时的通用回退域名</div>
                         </div>
-                        <input type="text" id="commonDomain" class="form-input setting-input" placeholder="例如: https://example.com">
+                        <input type="text" id="commonDomain" class="form-input setting-input" data-setting-key="common_domain" placeholder="例如: https://example.com">
                     </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
                 </div>
             </div>
-            <div class="settings-card card">
+            <div class="settings-card card" data-section="mail">
                 <div class="card-header"><h3 class="card-title">邮箱服务器配置</h3></div>
                 <div class="card-body">
                     <div class="setting-item">
@@ -842,7 +900,7 @@ public class AdminPage {
                             <div class="setting-desc">启用后用户注册时需要验证邮箱</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="mailEnabled">
+                            <input type="checkbox" id="mailEnabled" data-setting-key="mail_enabled">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -851,35 +909,35 @@ public class AdminPage {
                             <div class="setting-label">SMTP 主机</div>
                             <div class="setting-desc">邮件服务器地址</div>
                         </div>
-                        <input type="text" id="mailHost" class="form-input setting-input" placeholder="例如: smtp.example.com">
+                        <input type="text" id="mailHost" class="form-input setting-input" data-setting-key="mail_host" placeholder="例如: smtp.example.com">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">SMTP 端口</div>
                             <div class="setting-desc">邮件服务器端口，常见: 465 (SSL), 587 (TLS)</div>
                         </div>
-                        <input type="number" id="mailPort" class="form-input setting-input" placeholder="465">
+                        <input type="number" id="mailPort" class="form-input setting-input" data-setting-key="mail_port" placeholder="465">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">SMTP 用户名</div>
                             <div class="setting-desc">登录邮件服务器的用户名</div>
                         </div>
-                        <input type="text" id="mailUsername" class="form-input setting-input" placeholder="用户名或邮箱地址">
+                        <input type="text" id="mailUsername" class="form-input setting-input" data-setting-key="mail_username" placeholder="用户名或邮箱地址">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">SMTP 密码</div>
                             <div class="setting-desc">登录邮件服务器的密码或授权码</div>
                         </div>
-                        <input type="password" id="mailPassword" class="form-input setting-input" placeholder="密码">
+                        <input type="password" id="mailPassword" class="form-input setting-input" data-setting-key="mail_password" placeholder="密码">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">发件人地址</div>
                             <div class="setting-desc">发送邮件时显示的发件人地址</div>
                         </div>
-                        <input type="email" id="mailFrom" class="form-input setting-input" placeholder="noreply@example.com">
+                        <input type="email" id="mailFrom" class="form-input setting-input" data-setting-key="mail_from" placeholder="noreply@example.com">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
@@ -887,10 +945,11 @@ public class AdminPage {
                             <div class="setting-desc">启用后使用 TLS/SSL 加密连接邮件服务器</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="mailTls">
+                            <input type="checkbox" id="mailTls" data-setting-key="mail_tls">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
                 </div>
             </div>
             <div class="settings-card card">
@@ -901,7 +960,7 @@ public class AdminPage {
                             <div class="setting-label">用户名黑名单</div>
                             <div class="setting-desc">每行一个用户名，支持通配符 *（如 *admin* 表示包含 admin 即禁）</div>
                         </div>
-                        <textarea id="usernameBlacklist" class="form-input setting-textarea" rows="5" placeholder="admin&#10;root&#10;system"></textarea>
+                        <textarea id="usernameBlacklist" class="form-input setting-textarea" data-setting-key="username_blacklist" rows="5" placeholder="admin&#10;root&#10;system"></textarea>
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
@@ -909,10 +968,11 @@ public class AdminPage {
                             <div class="setting-desc">启用后黑名单将区分大小写</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="usernameBlacklistCaseSensitive">
+                            <input type="checkbox" id="usernameBlacklistCaseSensitive" data-setting-key="username_blacklist_case_sensitive">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
                 </div>
             </div>
             <div class="settings-card card">
@@ -923,18 +983,19 @@ public class AdminPage {
                             <div class="setting-label">域名列表</div>
                             <div class="setting-desc">每行一个域名，支持通配符 *（如 *.evil.com）</div>
                         </div>
-                        <textarea id="emailDomainList" class="form-input setting-textarea" rows="5" placeholder="example.com&#10;test.com"></textarea>
+                        <textarea id="emailDomainList" class="form-input setting-textarea" data-setting-key="email_domain_list" rows="5" placeholder="example.com&#10;test.com"></textarea>
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">域名过滤模式</div>
                             <div class="setting-desc">黑名单模式下不允许列表中的域名注册；白名单模式下只允许列表中的域名注册</div>
                         </div>
-                        <select id="emailDomainMode" class="form-input setting-select">
+                        <select id="emailDomainMode" class="form-input setting-select" data-setting-key="email_domain_mode">
                             <option value="blacklist">黑名单模式</option>
                             <option value="whitelist">白名单模式</option>
                         </select>
                     </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
                 </div>
             </div>
             <div class="settings-card card">
@@ -945,15 +1006,16 @@ public class AdminPage {
                             <div class="setting-label">ICP 备案号</div>
                             <div class="setting-desc">显示在页面底部 footer 中，为空时不显示</div>
                         </div>
-                        <input type="text" id="icpRecord" class="form-input setting-input" placeholder="例如：京ICP备12345678号">
+                        <input type="text" id="icpRecord" class="form-input setting-input" data-setting-key="icp_record" placeholder="例如：京ICP备12345678号">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label"> 公网安备号</div>
                             <div class="setting-desc">显示在页面底部 footer 中，为空时不显示</div>
                         </div>
-                        <input type="text" id="publicSecurityRecord" class="form-input setting-input" placeholder="例如：京公网安备11010502030143号">
+                        <input type="text" id="publicSecurityRecord" class="form-input setting-input" data-setting-key="public_security_record" placeholder="例如：京公网安备11010502030143号">
                     </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
                 </div>
             </div>
             <div class="settings-card card">
@@ -964,15 +1026,16 @@ public class AdminPage {
                             <div class="setting-label">每用户最大角色数量</div>
                             <div class="setting-desc">每个用户最多可创建的角色数量</div>
                         </div>
-                        <input type="number" id="maxProfilesPerUser" class="form-input setting-input" placeholder="10">
+                        <input type="number" id="maxProfilesPerUser" class="form-input setting-input" data-setting-key="max_profiles_per_user" placeholder="10">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">同 IP 最大可注册账号数量</div>
                             <div class="setting-desc">同一 IP 地址最多可注册的账号数量</div>
                         </div>
-                        <input type="number" id="maxAccountsPerIp" class="form-input setting-input" placeholder="3">
+                        <input type="number" id="maxAccountsPerIp" class="form-input setting-input" data-setting-key="max_accounts_per_ip" placeholder="3">
                     </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
                 </div>
             </div>
             <div class="settings-card card">
@@ -983,70 +1046,70 @@ public class AdminPage {
                             <div class="setting-label">皮肤最大大小（KiB）</div>
                             <div class="setting-desc">单个皮肤文件的最大大小</div>
                         </div>
-                        <input type="number" id="skinMaxSize" class="form-input setting-input" placeholder="64">
+                        <input type="number" id="skinMaxSize" class="form-input setting-input" data-setting-key="skin_max_size" placeholder="64">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">皮肤最大数量</div>
                             <div class="setting-desc">每个用户最多可上传的皮肤数量</div>
                         </div>
-                        <input type="number" id="skinMaxCount" class="form-input setting-input" placeholder="10">
+                        <input type="number" id="skinMaxCount" class="form-input setting-input" data-setting-key="skin_max_count" placeholder="10">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">皮肤总大小限制（KiB）</div>
                             <div class="setting-desc">每个用户皮肤总大小上限</div>
                         </div>
-                        <input type="number" id="skinMaxTotalSize" class="form-input setting-input" placeholder="640">
+                        <input type="number" id="skinMaxTotalSize" class="form-input setting-input" data-setting-key="skin_max_total_size" placeholder="640">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">皮肤上传频率限制（每天，-1=无限制）</div>
                             <div class="setting-desc">每个用户每天最多上传皮肤次数</div>
                         </div>
-                        <input type="number" id="skinRateLimit" class="form-input setting-input" placeholder="24">
+                        <input type="number" id="skinRateLimit" class="form-input setting-input" data-setting-key="skin_rate_limit" placeholder="24">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">皮肤存储路径</div>
                             <div class="setting-desc">皮肤文件存储目录</div>
                         </div>
-                        <input type="text" id="skinStoragePath" class="form-input setting-input" placeholder="skins">
+                        <input type="text" id="skinStoragePath" class="form-input setting-input" data-setting-key="skin_storage_path" placeholder="skins">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">披风最大大小（KiB）</div>
                             <div class="setting-desc">单个披风文件的最大大小</div>
                         </div>
-                        <input type="number" id="capeMaxSize" class="form-input setting-input" placeholder="64">
+                        <input type="number" id="capeMaxSize" class="form-input setting-input" data-setting-key="cape_max_size" placeholder="64">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">披风最大数量</div>
                             <div class="setting-desc">每个用户最多可上传的披风数量</div>
                         </div>
-                        <input type="number" id="capeMaxCount" class="form-input setting-input" placeholder="10">
+                        <input type="number" id="capeMaxCount" class="form-input setting-input" data-setting-key="cape_max_count" placeholder="10">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">披风总大小限制（KiB）</div>
                             <div class="setting-desc">每个用户披风总大小上限</div>
                         </div>
-                        <input type="number" id="capeMaxTotalSize" class="form-input setting-input" placeholder="640">
+                        <input type="number" id="capeMaxTotalSize" class="form-input setting-input" data-setting-key="cape_max_total_size" placeholder="640">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">披风上传频率限制（每天，-1=无限制）</div>
                             <div class="setting-desc">每个用户每天最多上传披风次数</div>
                         </div>
-                        <input type="number" id="capeRateLimit" class="form-input setting-input" placeholder="24">
+                        <input type="number" id="capeRateLimit" class="form-input setting-input" data-setting-key="cape_rate_limit" placeholder="24">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
                             <div class="setting-label">披风存储路径</div>
                             <div class="setting-desc">披风文件存储目录</div>
                         </div>
-                        <input type="text" id="capeStoragePath" class="form-input setting-input" placeholder="capes">
+                        <input type="text" id="capeStoragePath" class="form-input setting-input" data-setting-key="cape_storage_path" placeholder="capes">
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
@@ -1054,7 +1117,7 @@ public class AdminPage {
                             <div class="setting-desc">是否允许通过 Yggdrasil API 下载皮肤</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="allowDownloadSkin">
+                            <input type="checkbox" id="allowDownloadSkin" data-setting-key="allow_download_skin">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
@@ -1064,10 +1127,24 @@ public class AdminPage {
                             <div class="setting-desc">是否允许通过 Yggdrasil API 下载披风</div>
                         </div>
                         <label class="toggle-switch">
-                            <input type="checkbox" id="allowDownloadCape">
+                            <input type="checkbox" id="allowDownloadCape" data-setting-key="allow_download_cape">
                             <span class="toggle-slider"></span>
                         </label>
                     </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
+                </div>
+            </div>
+            <div class="settings-card card">
+                <div class="card-header"><h3 class="card-title">黑名单设置</h3></div>
+                <div class="card-body">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">最大黑名单用户数</div>
+                            <div class="setting-desc">每人可设置的黑名单上限（0=禁用黑名单，最大5000）</div>
+                        </div>
+                        <input type="number" class="form-input setting-input" id="maxBlockedUsers" data-setting-key="max_blocked_users" value="2000" min="0" max="5000" style="width:120px">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
                 </div>
             </div>
             <div class="settings-card card">
@@ -1081,9 +1158,6 @@ public class AdminPage {
                         <button class="btn btn-danger" onclick="clearCache()">清除缓存</button>
                     </div>
                 </div>
-            </div>
-            <div class="settings-actions">
-                <button class="btn btn-primary" onclick="saveSettings()">保存设置</button>
             </div>
             <div id="toast" class="toast" style="display:none;"></div>
             <script src="/js/admin-system.js"></script>

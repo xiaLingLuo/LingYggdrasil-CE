@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.server.handler;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -74,44 +91,57 @@ public class UserSkinHandler {
             return;
         }
 
+        byte[] data;
         try {
-            byte[] data = file.content().readAllBytes();
-            if (!TextureService.isPng(data)) {
-                ctx.json(Map.of("success", false, "message", "文件内容不是有效的 PNG 图片"));
-                return;
-            }
-            long size = data.length;
-            int maxSize = textureService.getMaxSize("SKIN");
-            if (size > maxSize * 1024L) {
-                ctx.json(Map.of("success", false, "message", "文件大小超过限制 (最大 " + maxSize + " KiB)"));
-                return;
+            data = file.content().readAllBytes();
+        } catch (Exception e) {
+            ctx.json(Map.of("success", false, "message", "上传失败: 无法读取文件内容"));
+            return;
+        }
+
+        if (!TextureService.isPng(data)) {
+            ctx.json(Map.of("success", false, "message", "文件内容不是有效的 PNG 图片"));
+            return;
+        }
+
+        long size = data.length;
+        int maxSize = textureService.getMaxSize("SKIN");
+        if (size > maxSize * 1024L) {
+            ctx.json(Map.of("success", false, "message", "文件大小超过限制 (最大 " + maxSize + " KiB)"));
+            return;
+        }
+
+        if (!textureService.checkRateLimit(user.getId(), "SKIN")) {
+            ctx.json(Map.of("success", false, "message", "上传频率超限"));
+            return;
+        }
+
+        int currentCount = textureDao.countByUserId(user.getId(), "SKIN");
+        if (!textureService.checkCountLimit(user.getId(), "SKIN", currentCount, 0)) {
+            ctx.json(Map.of("success", false, "message", "皮肤数量已达上限"));
+            return;
+        }
+
+        long currentSize = textureDao.sumSizeByUserId(user.getId(), "SKIN");
+        if (!textureService.checkTotalSizeLimit(user.getId(), "SKIN", currentSize, size, 0)) {
+            ctx.json(Map.of("success", false, "message", "皮肤总大小已达上限"));
+            return;
+        }
+
+        String hash = textureService.computeHash(data);
+
+        Texture sameUserExisting = textureDao.findByUserAndHash(user.getId(), "SKIN", hash);
+        if (sameUserExisting != null) {
+            ctx.json(Map.of("success", false, "message", "该皮肤已存在"));
+            return;
+        }
+
+        try {
+            Texture globalExisting = textureDao.findByHash("SKIN", hash);
+            if (globalExisting == null) {
+                textureService.saveFile("SKIN", hash, data);
             }
 
-            if (!textureService.checkRateLimit(user.getId(), "SKIN")) {
-                ctx.json(Map.of("success", false, "message", "上传频率超限"));
-                return;
-            }
-
-            int currentCount = textureDao.countByUserId(user.getId(), "SKIN");
-            if (!textureService.checkCountLimit(user.getId(), "SKIN", currentCount, 0)) {
-                ctx.json(Map.of("success", false, "message", "皮肤数量已达上限"));
-                return;
-            }
-
-            long currentSize = textureDao.sumSizeByUserId(user.getId(), "SKIN");
-            if (!textureService.checkTotalSizeLimit(user.getId(), "SKIN", currentSize, size, 0)) {
-                ctx.json(Map.of("success", false, "message", "皮肤总大小已达上限"));
-                return;
-            }
-
-            String hash = textureService.computeHash(data);
-            Texture existing = textureDao.findByHash("SKIN", hash);
-            if (existing != null) {
-                ctx.json(Map.of("success", false, "message", "该皮肤已存在"));
-                return;
-            }
-
-            textureService.saveFile("SKIN", hash, data);
             textureService.recordUpload(user.getId(), "SKIN");
 
             String alias = ctx.formParam("alias");
@@ -153,8 +183,10 @@ public class UserSkinHandler {
                 ctx.json(Map.of("success", false, "message", "皮肤不存在或无权操作"));
                 return;
             }
-            textureService.deleteFile("SKIN", texture.getHash());
             textureDao.delete(id);
+            if (textureDao.countByHash("SKIN", texture.getHash()) == 0) {
+                textureService.deleteFile("SKIN", texture.getHash());
+            }
             ctx.json(Map.of("success", true, "message", "皮肤已删除"));
         } catch (Exception e) {
             ctx.json(Map.of("success", false, "message", "请求格式错误"));

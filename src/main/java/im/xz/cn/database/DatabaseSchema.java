@@ -1,9 +1,29 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.database;
 
 import im.xz.cn.auth.AuthService;
+import im.xz.cn.util.UuidUtil;
 
 import java.sql.Connection;
 import java.sql.Statement;
+import java.util.List;
+import java.util.Map;
 
 public class DatabaseSchema {
 
@@ -17,6 +37,9 @@ public class DatabaseSchema {
         migrateYggdrasilToken(db);
         migrateRegisteredIp(db);
         migrateLastLoginIp(db);
+        migrateTextureUniqueConstraint(db);
+        migrateDisplayProfileId(db);
+        migrateFriendCode(db);
     }
 
     private static void migrateYggdrasilToken(DatabaseManager db) {
@@ -77,6 +100,111 @@ public class DatabaseSchema {
             }
         } catch (Exception ignored) {
 
+        }
+    }
+
+    private static void migrateTextureUniqueConstraint(DatabaseManager db) {
+        try {
+            String dbType = db.getDbType();
+            switch (dbType) {
+                case "mysql" -> {
+                    try {
+                        db.executeUpdate("ALTER TABLE textures DROP INDEX uk_type_hash");
+                        db.executeUpdate("ALTER TABLE textures ADD UNIQUE INDEX uk_user_type_hash (user_id, type, hash)");
+                        System.out.println("[DB Migration] Updated textures UNIQUE constraint (MySQL)");
+                    } catch (Exception e) {
+                        try {
+                            db.executeUpdate("ALTER TABLE textures ADD UNIQUE INDEX uk_user_type_hash (user_id, type, hash)");
+                            System.out.println("[DB Migration] Added textures UNIQUE constraint (MySQL, old was missing)");
+                        } catch (Exception ex) {
+                            // constraint already exists
+                        }
+                    }
+                }
+                case "pgsql" -> {
+                    try {
+                        db.executeUpdate("ALTER TABLE textures DROP CONSTRAINT IF EXISTS textures_type_hash_key");
+                        db.executeUpdate("ALTER TABLE textures ADD CONSTRAINT textures_user_type_hash_key UNIQUE (user_id, type, hash)");
+                        System.out.println("[DB Migration] Updated textures UNIQUE constraint (PostgreSQL)");
+                    } catch (Exception e) {
+                        // ok
+                    }
+                }
+                default -> {
+                    boolean hasOldConstraint = false;
+                    try {
+                        var rows = db.executeQuery("SELECT sql FROM sqlite_master WHERE type='table' AND name='textures'");
+                        if (!rows.isEmpty()) {
+                            String sql = String.valueOf(rows.get(0).get("sql"));
+                            if (sql != null && sql.contains("UNIQUE(type, hash)") && !sql.contains("UNIQUE(user_id, type, hash)")) {
+                                hasOldConstraint = true;
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                    if (hasOldConstraint) {
+                        System.out.println("[DB Migration] Migrating textures table (SQLite)...");
+                        db.executeUpdate("CREATE TABLE textures_new ("
+                                + "id TEXT PRIMARY KEY,"
+                                + "user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,"
+                                + "type TEXT NOT NULL,"
+                                + "hash TEXT NOT NULL,"
+                                + "alias TEXT,"
+                                + "original_name TEXT,"
+                                + "size INTEGER,"
+                                + "content_type TEXT,"
+                                + "created_at TEXT NOT NULL,"
+                                + "UNIQUE(user_id, type, hash)"
+                                + ")");
+                        db.executeUpdate("INSERT INTO textures_new SELECT * FROM textures");
+                        db.executeUpdate("DROP TABLE textures");
+                        db.executeUpdate("ALTER TABLE textures_new RENAME TO textures");
+                        System.out.println("[DB Migration] Successfully migrated textures table (SQLite)");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[DB Migration] migrateTextureUniqueConstraint failed: " + e.getMessage());
+        }
+    }
+
+    private static void migrateDisplayProfileId(DatabaseManager db) {
+        try {
+            String alterSql = switch (db.getDbType()) {
+                case "mysql" -> "ALTER TABLE users ADD COLUMN display_profile_id VARCHAR(36)";
+                case "pgsql" -> "ALTER TABLE users ADD COLUMN display_profile_id TEXT";
+                default -> "ALTER TABLE users ADD COLUMN display_profile_id TEXT";
+            };
+            try (Connection conn = db.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute(alterSql);
+                System.out.println("[DB Migration] Added display_profile_id column to users");
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private static void migrateFriendCode(DatabaseManager db) {
+        try {
+            String alterSql = switch (db.getDbType()) {
+                case "mysql" -> "ALTER TABLE users ADD COLUMN friend_code VARCHAR(16)";
+                case "pgsql" -> "ALTER TABLE users ADD COLUMN friend_code TEXT";
+                default -> "ALTER TABLE users ADD COLUMN friend_code TEXT";
+            };
+            try (Connection conn = db.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute(alterSql);
+                System.out.println("[DB Migration] Added friend_code column to users");
+            }
+        } catch (Exception ignored) {}
+        try {
+            List<Map<String, Object>> rows = db.executeQuery("SELECT id FROM users WHERE friend_code IS NULL");
+            if (!rows.isEmpty()) {
+                System.out.println("[DB Migration] Generating friend_code for " + rows.size() + " existing users");
+                for (var row : rows) {
+                    String id = String.valueOf(row.get("id"));
+                    String code = UuidUtil.generateFriendCode(id);
+                    db.executeUpdate("UPDATE users SET friend_code = ? WHERE id = ?", code, id);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[DB Migration] Failed to populate friend_code: " + e.getMessage());
         }
     }
 
@@ -161,7 +289,44 @@ public class DatabaseSchema {
                 size INTEGER,
                 content_type TEXT,
                 created_at TEXT NOT NULL,
-                UNIQUE(type, hash)
+                UNIQUE(user_id, type, hash)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS friends (
+                id TEXT PRIMARY KEY,
+                user_id_lower TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                user_id_higher TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL,
+                UNIQUE(user_id_lower, user_id_higher)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS confirming_friends (
+                id TEXT PRIMARY KEY,
+                sender_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                receiver_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL,
+                UNIQUE(sender_id, receiver_id)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS blocked_users (
+                id TEXT PRIMARY KEY,
+                blocker_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                blocked_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL,
+                UNIQUE(blocker_id, blocked_id)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_meta (
+                hash TEXT PRIMARY KEY,
+                admin_alias TEXT
             )
         """);
     }
@@ -250,7 +415,50 @@ public class DatabaseSchema {
                 content_type VARCHAR(100),
                 created_at DATETIME NOT NULL,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                UNIQUE KEY uk_type_hash (type, hash)
+                UNIQUE KEY uk_user_type_hash (user_id, type, hash)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS friends (
+                id VARCHAR(36) PRIMARY KEY,
+                user_id_lower VARCHAR(36) NOT NULL,
+                user_id_higher VARCHAR(36) NOT NULL,
+                created_at DATETIME NOT NULL,
+                FOREIGN KEY (user_id_lower) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (user_id_higher) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE KEY uk_friends_pair (user_id_lower, user_id_higher)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS confirming_friends (
+                id VARCHAR(36) PRIMARY KEY,
+                sender_id VARCHAR(36) NOT NULL,
+                receiver_id VARCHAR(36) NOT NULL,
+                created_at DATETIME NOT NULL,
+                FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE KEY uk_confirming_pair (sender_id, receiver_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS blocked_users (
+                id VARCHAR(36) PRIMARY KEY,
+                blocker_id VARCHAR(36) NOT NULL,
+                blocked_id VARCHAR(36) NOT NULL,
+                created_at DATETIME NOT NULL,
+                FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE,
+                UNIQUE KEY uk_blocked_pair (blocker_id, blocked_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_meta (
+                hash VARCHAR(64) PRIMARY KEY,
+                admin_alias VARCHAR(255)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """);
     }
@@ -336,7 +544,44 @@ public class DatabaseSchema {
                 size BIGINT,
                 content_type TEXT,
                 created_at TIMESTAMP NOT NULL,
-                UNIQUE(type, hash)
+                UNIQUE(user_id, type, hash)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS friends (
+                id TEXT PRIMARY KEY,
+                user_id_lower TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                user_id_higher TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMP NOT NULL,
+                UNIQUE(user_id_lower, user_id_higher)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS confirming_friends (
+                id TEXT PRIMARY KEY,
+                sender_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                receiver_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMP NOT NULL,
+                UNIQUE(sender_id, receiver_id)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS blocked_users (
+                id TEXT PRIMARY KEY,
+                blocker_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                blocked_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                created_at TIMESTAMP NOT NULL,
+                UNIQUE(blocker_id, blocked_id)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_meta (
+                hash TEXT PRIMARY KEY,
+                admin_alias TEXT
             )
         """);
     }

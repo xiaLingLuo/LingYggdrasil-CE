@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.model;
 
 import im.xz.cn.model.enums.UserRole;
@@ -17,20 +34,27 @@ public class User {
     private String lastLogin;
     private String registeredIp;
     private String lastLoginIp;
+    private String displayProfileId;
 
     public User(String id, String username, String email, String passwordHash, String nickname,
                 UserRole role, boolean emailVerified, String createdAt, String lastLogin) {
-        this(id, username, email, passwordHash, nickname, role, emailVerified, createdAt, lastLogin, null, null);
+        this(id, username, email, passwordHash, nickname, role, emailVerified, createdAt, lastLogin, null, null, null);
     }
 
     public User(String id, String username, String email, String passwordHash, String nickname,
                 UserRole role, boolean emailVerified, String createdAt, String lastLogin, String registeredIp) {
-        this(id, username, email, passwordHash, nickname, role, emailVerified, createdAt, lastLogin, registeredIp, null);
+        this(id, username, email, passwordHash, nickname, role, emailVerified, createdAt, lastLogin, registeredIp, null, null);
     }
 
     public User(String id, String username, String email, String passwordHash, String nickname,
                 UserRole role, boolean emailVerified, String createdAt, String lastLogin,
                 String registeredIp, String lastLoginIp) {
+        this(id, username, email, passwordHash, nickname, role, emailVerified, createdAt, lastLogin, registeredIp, lastLoginIp, null);
+    }
+
+    public User(String id, String username, String email, String passwordHash, String nickname,
+                UserRole role, boolean emailVerified, String createdAt, String lastLogin,
+                String registeredIp, String lastLoginIp, String displayProfileId) {
         this.id = id;
         this.username = username;
         this.email = email;
@@ -42,6 +66,7 @@ public class User {
         this.lastLogin = lastLogin;
         this.registeredIp = registeredIp;
         this.lastLoginIp = lastLoginIp;
+        this.displayProfileId = displayProfileId;
     }
 
     public static User fromResultSet(ResultSet rs) throws SQLException {
@@ -58,7 +83,8 @@ public class User {
         String lastLogin = rs.getString("last_login");
         String registeredIp = rs.getString("registered_ip");
         String lastLoginIp = rs.getString("last_login_ip");
-        return new User(id, username, email, passwordHash, nickname, role, emailVerified, createdAt, lastLogin, registeredIp, lastLoginIp);
+        String displayProfileId = rs.getString("display_profile_id");
+        return new User(id, username, email, passwordHash, nickname, role, emailVerified, createdAt, lastLogin, registeredIp, lastLoginIp, displayProfileId);
     }
 
     public String getDisplayName() {
@@ -97,4 +123,7 @@ public class User {
 
     public String getLastLoginIp() { return lastLoginIp; }
     public void setLastLoginIp(String lastLoginIp) { this.lastLoginIp = lastLoginIp; }
+
+    public String getDisplayProfileId() { return displayProfileId; }
+    public void setDisplayProfileId(String displayProfileId) { this.displayProfileId = displayProfileId; }
 }

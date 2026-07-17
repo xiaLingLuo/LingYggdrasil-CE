@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.server.handler;
 
 import im.xz.cn.auth.SessionManager;
@@ -141,7 +158,9 @@ public class AdminYggdrasilHandler {
         Map<String, String> body = ctx.bodyAsClass(Map.class);
         String newMode = body.get("mode");
 
-        if (!YggdrasilKeyManager.MODE_ED448.equals(newMode) && !YggdrasilKeyManager.MODE_RSA_SHA512.equals(newMode)) {
+        if (!YggdrasilKeyManager.MODE_ED448.equals(newMode)
+                && !YggdrasilKeyManager.MODE_RSA_SHA512.equals(newMode)
+                && !YggdrasilKeyManager.MODE_RSA_SHA1.equals(newMode)) {
             ctx.status(400);
             ctx.json(Map.of("success", false, "message", "无效的签名模式"));
             return;

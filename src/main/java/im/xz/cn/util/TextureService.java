@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.util;
 
 import im.xz.cn.config.SystemConfig;
@@ -96,9 +113,18 @@ public class TextureService {
     public String getPublicUrl(String type, String hash) {
         String domain = systemConfig.getApiDomain();
         if (domain == null || domain.isEmpty()) {
+            domain = systemConfig.getCommonDomain();
+        }
+        if (domain == null || domain.isEmpty()) {
             domain = "http://localhost:35577";
         }
-        return domain + "/textures/" + type + "/" + hash;
+        while (domain.endsWith("/")) {
+            domain = domain.substring(0, domain.length() - 1);
+        }
+        String url = domain + "/textures/" + type + "/" + hash;
+        System.out.println("[TextureService] getPublicUrl: type=" + type + ", apiDomain=" + systemConfig.getApiDomain()
+                + ", commonDomain=" + systemConfig.getCommonDomain() + " -> " + url);
+        return url;
     }
 
     public boolean isDownloadAllowed(String type) {

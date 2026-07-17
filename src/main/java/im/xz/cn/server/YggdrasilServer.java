@@ -1,3 +1,21 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package im.xz.cn.server;
 
 import io.javalin.Javalin;
@@ -77,25 +95,28 @@ public class YggdrasilServer {
 
             routes.get("/api/profiles/lookup/minecraft/name/{username}", ctx -> {
                 String username = ctx.pathParam("username");
-                logger.info("[Yggdrasil] 查询角色名: {}", username);
+                logger.info("[Yggdrasil] === 查询角色名 === username={}, Remote={}", username, IpUtil.getClientIp(ctx));
                 ProfileDao profileDao = new ProfileDao(db);
                 PlayerProfile profile = profileDao.findByName(username);
                 if (profile != null) {
+                    logger.info("[Yggdrasil] 查询角色名 成功: name={}, id={}", profile.getName(), UuidUtil.toHex(profile.getId()));
                     ctx.contentType("application/json");
                     ctx.json(Map.of(
                         "id", UuidUtil.toHex(profile.getId()),
                         "name", profile.getName()
                     ));
                 } else {
+                    logger.warn("[Yggdrasil] 查询角色名 未找到: {}", username);
                     ctx.status(204);
                 }
             });
 
             routes.post("/api/profiles/lookup/minecraft", ctx -> {
-                logger.info("[Yggdrasil] 批量查询角色");
+                logger.info("[Yggdrasil] === 批量查询角色 === Body: {}", ctx.body());
                 com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
                 @SuppressWarnings("unchecked")
                 List<String> names = mapper.readValue(ctx.body(), List.class);
+                logger.info("[Yggdrasil] 批量查询角色 名称列表: {}", names);
                 ProfileDao profileDao = new ProfileDao(db);
                 List<PlayerProfile> profiles = profileDao.findByNames(names);
                 List<Map<String, String>> result = new ArrayList<>();
@@ -105,23 +126,32 @@ public class YggdrasilServer {
                         "name", p.getName()
                     ));
                 }
+                logger.info("[Yggdrasil] 批量查询角色 结果: 请求{}个, 找到{}个", names.size(), result.size());
                 ctx.contentType("application/json");
                 ctx.json(result);
             });
 
             routes.get("/api/user/profile/profiles/minecraft/{uuid}", ctx -> {
                 String uuidRaw = ctx.pathParam("uuid");
-                logger.info("[Yggdrasil] 查询UUID对应角色: {}", uuidRaw);
+                logger.info("[Yggdrasil] === 查询UUID角色 === uuidRaw={}, Remote={}", uuidRaw, IpUtil.getClientIp(ctx));
                 String uuidHex = UuidUtil.toHex(uuidRaw);
+                String unsignedParam = ctx.queryParam("unsigned");
+                boolean unsigned = unsignedParam == null || "true".equals(unsignedParam);
+                logger.info("[Yggdrasil] 查询UUID角色: uuidHex={}, unsigned={}", uuidHex, unsigned);
                 ProfileDao profileDao = new ProfileDao(db);
                 PlayerProfile profile = profileDao.findById(uuidHex);
                 if (profile == null) {
-                    profile = profileDao.findById(UuidUtil.fromHex(uuidHex));
+                    String hexWithDash = UuidUtil.fromHex(uuidHex);
+                    logger.info("[Yggdrasil] 查询UUID角色 hex查找失败, 尝试dash: {}", hexWithDash);
+                    profile = profileDao.findById(hexWithDash);
                 }
                 if (profile != null) {
+                    logger.info("[Yggdrasil] 查询UUID角色 成功: name={}, skinUrl={}",
+                            profile.getName(), profile.getSkinUrl());
                     ctx.contentType("application/json");
-                    ctx.json(YggdrasilUtil.buildProfileResponse(profile));
+                    ctx.json(YggdrasilUtil.buildProfileResponse(profile, unsigned));
                 } else {
+                    logger.warn("[Yggdrasil] 查询UUID角色 未找到: uuidRaw={}, uuidHex={}", uuidRaw, uuidHex);
                     ctx.status(204);
                 }
             });
@@ -129,12 +159,16 @@ public class YggdrasilServer {
             routes.get("/textures/{type}/{hash}", ctx -> {
                 String type = ctx.pathParam("type").toUpperCase();
                 String hash = ctx.pathParam("hash");
+                logger.info("[Yggdrasil] === 材质下载 === type={}, hash={}, Remote={}",
+                        type, hash, IpUtil.getClientIp(ctx));
                 SystemConfig sysConfig = SystemConfig.getInstance();
                 if ("SKIN".equals(type) && !sysConfig.isAllowDownloadSkin()) {
+                    logger.warn("[Yggdrasil] 材质下载 被禁止: 皮肤下载已禁用");
                     ctx.status(403).json(Map.of("error", "Skin download is disabled"));
                     return;
                 }
                 if ("CAPE".equals(type) && !sysConfig.isAllowDownloadCape()) {
+                    logger.warn("[Yggdrasil] 材质下载 被禁止: 披风下载已禁用");
                     ctx.status(403).json(Map.of("error", "Cape download is disabled"));
                     return;
                 }
@@ -143,9 +177,13 @@ public class YggdrasilServer {
                 TextureService textureService = new TextureService(sysConfig, cacheDao);
                 byte[] data = textureService.readFile(type, hash);
                 if (data == null) {
+                    String storageDir = "CAPE".equalsIgnoreCase(type) ? sysConfig.getCapeStoragePath() : sysConfig.getSkinStoragePath();
+                    logger.warn("[Yggdrasil] 材质下载 文件不存在: type={}, hash={}, storageDir={}",
+                            type, hash, storageDir);
                     ctx.status(404).json(Map.of("error", "Texture not found"));
                     return;
                 }
+                logger.info("[Yggdrasil] 材质下载 成功: type={}, hash={}, size={}bytes", type, hash, data.length);
                 ctx.contentType("image/png");
                 ctx.result(data);
             });
@@ -195,41 +233,45 @@ public class YggdrasilServer {
         List<String> skinDomains = new ArrayList<>();
         String apiDomain = sysConfig.getApiDomain();
         String commonDomain = sysConfig.getCommonDomain();
+        logger.info("[Yggdrasil] === Metadata === apiDomain='{}', commonDomain='{}'", apiDomain, commonDomain);
         if (!apiDomain.isEmpty()) {
-            addDomainWithPort(skinDomains, apiDomain);
+            addDomainToSkinDomains(skinDomains, apiDomain);
         } else if (!commonDomain.isEmpty()) {
-            addDomainWithPort(skinDomains, commonDomain);
+            addDomainToSkinDomains(skinDomains, commonDomain);
         } else {
             skinDomains.add("localhost");
         }
+        logger.info("[Yggdrasil] Metadata skinDomains={}", skinDomains);
 
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("meta", meta);
         response.put("skinDomains", skinDomains);
 
         YggdrasilKeyManager km = YggdrasilKeyManager.getInstance();
-        String pubKeyBase64 = km.getPublicKeyBase64();
-        if (pubKeyBase64 != null && !pubKeyBase64.isEmpty()) {
-            response.put("signaturePublickeys", List.of(pubKeyBase64));
+        String pubKeyPem = km.getPublicKeyPem();
+        if (pubKeyPem != null && !pubKeyPem.isEmpty()) {
+            response.put("signaturePublickey", pubKeyPem);
+            response.put("signaturePublickeys", List.of(pubKeyPem));
+            logger.info("[Yggdrasil] Metadata signaturePublickey: PEM格式(长度={}), 签名模式={}",
+                    pubKeyPem.length(), km.getMode());
         } else {
             response.put("signaturePublickeys", List.of());
+            logger.warn("[Yggdrasil] Metadata signaturePublickey: 缺失! 签名模块未加载");
         }
 
+        logger.info("[Yggdrasil] Metadata 完整响应: skinDomains={}, hasSignature={}, apiDomain={}",
+                skinDomains, pubKeyPem != null && !pubKeyPem.isEmpty(), apiDomain);
         ctx.contentType("application/json");
         ctx.json(response);
     }
 
-    private void addDomainWithPort(List<String> domains, String domainUrl) {
+    private void addDomainToSkinDomains(List<String> domains, String domainUrl) {
         if (domainUrl == null || domainUrl.isEmpty()) return;
         try {
             java.net.URI uri = new java.net.URI(domainUrl);
             String host = uri.getHost();
-            if (host != null) {
-                int port = uri.getPort();
-                String entry = (port > 0 && port != 80 && port != 443) ? host + ":" + port : host;
-                if (!domains.contains(entry)) {
-                    domains.add(entry);
-                }
+            if (host != null && !domains.contains(host)) {
+                domains.add(host);
             }
         } catch (Exception ignored) {}
     }

@@ -1,3 +1,20 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
 package im.xz.cn.server.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,14 +47,15 @@ public class YggdrasilAuthHandler {
     @SuppressWarnings("unchecked")
     public static void authenticate(Context ctx) {
         try {
-            logger.info("[Yggdrasil Auth] authenticate 请求开始, Remote: {}", IpUtil.getClientIp(ctx));
-            logger.debug("[Yggdrasil Auth] Request Body: {}", ctx.body());
+            logger.info("[Yggdrasil Auth] === authenticate 请求 === Remote: {}", IpUtil.getClientIp(ctx));
+            logger.info("[Yggdrasil Auth] authenticate Body: {}", ctx.body());
             if (!checkContentType(ctx)) return;
 
             Map<String, Object> body;
             try {
                 body = mapper.readValue(ctx.body(), Map.class);
             } catch (Exception e) {
+                logger.warn("[Yggdrasil Auth] authenticate JSON解析失败: {}", e.getMessage());
                 sendError(ctx, 400, "IllegalArgumentException",
                         "Invalid request body");
                 return;
@@ -48,56 +66,61 @@ public class YggdrasilAuthHandler {
             String clientToken = (String) body.get("clientToken");
             Boolean requestUser = (Boolean) body.get("requestUser");
 
+            logger.info("[Yggdrasil Auth] authenticate 参数: profileName={}, clientToken={}, requestUser={}",
+                    profileName, clientToken, requestUser);
+
             if (profileName == null || token == null) {
                 sendError(ctx, 400, "IllegalArgumentException",
                         "Missing username or password");
                 return;
             }
 
-            logger.info("[Yggdrasil Auth] authenticate 角色名: {}", profileName);
-
             profileName = profileName.trim();
             token = token.trim();
 
             PlayerProfile selectedProfile = authService.getProfileDao().findByNameAndToken(profileName, token);
             if (selectedProfile == null) {
-                logger.warn("[Yggdrasil Auth] 认证失败: 角色名或Token无效, 角色名='{}'", profileName);
+                logger.warn("[Yggdrasil Auth] authenticate 失败: 角色名或Token无效, name={}", profileName);
                 sendError(ctx, 403, "ForbiddenOperationException",
                         "Invalid credentials. Invalid username or password.");
                 return;
             }
+            logger.info("[Yggdrasil Auth] authenticate Profile找到: name={}, id={}", selectedProfile.getName(), UuidUtil.toHex(selectedProfile.getId()));
 
             User user = authService.getUserDao().findById(selectedProfile.getUserId());
             if (user == null) {
-                logger.warn("[Yggdrasil Auth] 认证失败: 角色所属用户不存在, userId={}", selectedProfile.getUserId());
+                logger.warn("[Yggdrasil Auth] authenticate 失败: 用户不存在, userId={}", selectedProfile.getUserId());
                 sendError(ctx, 403, "ForbiddenOperationException",
                         "Invalid credentials. Invalid username or password.");
                 return;
             }
 
             if (sysConfig != null && sysConfig.isEmailVerificationEnabled() && !user.isEmailVerified()) {
-                logger.warn("[Yggdrasil Auth] 认证失败: 用户邮箱未验证, user={}", user.getUsername());
+                logger.warn("[Yggdrasil Auth] authenticate 失败: 邮箱未验证, user={}", user.getUsername());
                 sendError(ctx, 403, "ForbiddenOperationException",
                         "Email not verified");
                 return;
             }
 
-            logger.info("[Yggdrasil Auth] 认证成功: 角色={}, 用户={}", profileName, user.getUsername());
-
             List<PlayerProfile> profiles = authService.getProfileDao().findByUserId(user.getId());
             if (profiles.isEmpty()) {
+                logger.warn("[Yggdrasil Auth] authenticate 失败: 无可用角色");
                 sendError(ctx, 403, "ForbiddenOperationException",
                         "No profile available");
                 return;
             }
+            logger.info("[Yggdrasil Auth] authenticate 可用角色数: {}", profiles.size());
 
             if (clientToken == null || clientToken.isEmpty()) {
                 clientToken = UUID.randomUUID().toString().replace("-", "");
+                logger.info("[Yggdrasil Auth] authenticate 自动生成clientToken: {}", clientToken);
             }
 
             String profileId = UuidUtil.toHex(selectedProfile.getId());
-            AuthToken authToken = authService.createToken(
-                    user.getId(), clientToken, profileId);
+            AuthToken authToken = authService.createToken(user.getId(), clientToken, profileId);
+            logger.info("[Yggdrasil Auth] authenticate Token创建: accessToken前缀={}, profileId={}",
+                    authToken.getAccessToken().substring(0, Math.min(8, authToken.getAccessToken().length())) + "...",
+                    profileId);
 
             Map<String, Object> response = buildAuthResponse(
                     authToken, profiles, selectedProfile, user,
@@ -105,10 +128,11 @@ public class YggdrasilAuthHandler {
 
             ctx.contentType("application/json");
             ctx.json(response);
-            logger.info("[Yggdrasil Auth] authenticate 成功, 角色: {}", selectedProfile.getName());
+            logger.info("[Yggdrasil Auth] authenticate 成功: 角色={}, availableProfiles={}",
+                    selectedProfile.getName(), profiles.size());
 
         } catch (Exception e) {
-            logger.error("authenticate error: {}", e.getMessage(), e);
+            logger.error("[Yggdrasil Auth] authenticate 异常: {}", e.getMessage(), e);
             sendError(ctx, 500, "InternalServerException",
                     "Internal server error");
         }
