@@ -442,4 +442,48 @@ public class Css {
     public static String getInstallCssImport() {
         return "@import url('/css/install.css');";
     }
+
+    public static String getWorldCss() {
+        return """
+            .world-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+            .world-tab { padding: 8px 20px; border-radius: 20px; border: 1px solid #FFD6E8;
+                background: #fff; color: #666; cursor: pointer; font-size: 14px;
+                transition: all 0.3s ease; }
+            .world-tab:hover { border-color: #FF69B4; color: #FF69B4; }
+            .world-tab.active { background: linear-gradient(135deg, #FF69B4, #FF8DC7);
+                color: #fff; border-color: transparent; }
+            .world-loading { display: flex; align-items: center; justify-content: center;
+                gap: 10px; padding: 24px; color: #999; }
+            .spinner { width: 24px; height: 24px; border: 3px solid #FFD6E8;
+                border-top-color: #FF69B4; border-radius: 50%; animation: spin 0.8s linear infinite; }
+            @keyframes spin { to { transform: rotate(360deg); } }
+            .world-end { text-align: center; padding: 16px; color: #bbb; font-size: 13px; }
+            .texture-item .like-btn, .texture-item .fav-btn {
+                display: inline-flex; align-items: center; gap: 4px;
+                background: none; border: none; cursor: pointer; font-size: 13px;
+                padding: 4px 8px; border-radius: 12px; transition: all 0.2s; }
+            .texture-item .like-btn { color: #999; }
+            .texture-item .like-btn:hover { color: #E53935; background: #FFF0F0; }
+            .texture-item .like-btn.liked { color: #E53935; }
+            .texture-item .fav-btn { color: #999; }
+            .texture-item .fav-btn:hover { color: #F9A825; background: #FFFDE7; }
+            .texture-item .fav-btn.favorited { color: #F9A825; }
+            .texture-card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 6px; }
+            .texture-card-owner { font-size: 11px; color: #999; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; text-align: left; }
+            .like-heart { transition: transform 0.2s; }
+            .liked .like-heart { animation: heartBeat 0.3s ease; }
+            @keyframes heartBeat { 0%% { transform: scale(1); } 50%% { transform: scale(1.3); } 100%% { transform: scale(1); } }
+            .visibility-switch { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #666; margin: 8px 0; }
+            .visibility-switch input[type="checkbox"] { width: 40px; height: 22px; appearance: none; background: #ddd; border-radius: 11px; position: relative; cursor: pointer; transition: all 0.3s; }
+            .visibility-switch input[type="checkbox"]:checked { background: #FF69B4; }
+            .visibility-switch input[type="checkbox"]::before { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #fff; top: 2px; left: 2px; transition: all 0.3s; }
+            .visibility-switch input[type="checkbox"]:checked::before { left: 20px; }
+            .shared-section-title { font-size: 16px; font-weight: 600; color: #333; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+            .shared-section-title i { color: #FF69B4; }
+            @media (max-width: 768px) {
+                .world-tabs { justify-content: center; }
+                .world-tab { padding: 6px 14px; font-size: 13px; }
+            }
+            """;
+    }
 }

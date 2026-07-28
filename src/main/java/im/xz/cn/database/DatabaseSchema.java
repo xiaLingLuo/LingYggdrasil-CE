@@ -40,6 +40,10 @@ public class DatabaseSchema {
         migrateTextureUniqueConstraint(db);
         migrateDisplayProfileId(db);
         migrateFriendCode(db);
+        migrateTextureLikes(db);
+        migrateTextureFavorites(db);
+        migrateTextureVisibility(db);
+        migrateFriendSharedTextures(db);
     }
 
     private static void migrateYggdrasilToken(DatabaseManager db) {
@@ -208,6 +212,58 @@ public class DatabaseSchema {
         }
     }
 
+    private static void migrateTextureLikes(DatabaseManager db) {
+        try {
+            String sql = switch (db.getDbType()) {
+                case "mysql" -> "CREATE TABLE IF NOT EXISTS texture_likes (id VARCHAR(36) PRIMARY KEY, user_id VARCHAR(36) NOT NULL, texture_id VARCHAR(36) NOT NULL, created_at DATETIME NOT NULL, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY (texture_id) REFERENCES textures(id) ON DELETE CASCADE, UNIQUE KEY uk_user_texture_like (user_id, texture_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+                case "pgsql" -> "CREATE TABLE IF NOT EXISTS texture_likes (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE, created_at TIMESTAMP NOT NULL, UNIQUE(user_id, texture_id))";
+                default -> "CREATE TABLE IF NOT EXISTS texture_likes (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE, created_at TEXT NOT NULL, UNIQUE(user_id, texture_id))";
+            };
+            try (Connection conn = db.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute(sql);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private static void migrateTextureFavorites(DatabaseManager db) {
+        try {
+            String sql = switch (db.getDbType()) {
+                case "mysql" -> "CREATE TABLE IF NOT EXISTS texture_favorites (id VARCHAR(36) PRIMARY KEY, user_id VARCHAR(36) NOT NULL, texture_id VARCHAR(36) NOT NULL, alias VARCHAR(255), created_at DATETIME NOT NULL, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY (texture_id) REFERENCES textures(id) ON DELETE CASCADE, UNIQUE KEY uk_user_texture_fav (user_id, texture_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+                case "pgsql" -> "CREATE TABLE IF NOT EXISTS texture_favorites (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE, alias TEXT, created_at TIMESTAMP NOT NULL, UNIQUE(user_id, texture_id))";
+                default -> "CREATE TABLE IF NOT EXISTS texture_favorites (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE, alias TEXT, created_at TEXT NOT NULL, UNIQUE(user_id, texture_id))";
+            };
+            try (Connection conn = db.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute(sql);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private static void migrateTextureVisibility(DatabaseManager db) {
+        try {
+            String sql = switch (db.getDbType()) {
+                case "mysql" -> "CREATE TABLE IF NOT EXISTS texture_visibility (id VARCHAR(36) PRIMARY KEY, user_id VARCHAR(36) NOT NULL, texture_id VARCHAR(36) NOT NULL, is_public TINYINT(1) NOT NULL DEFAULT 0, created_at DATETIME NOT NULL, FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY (texture_id) REFERENCES textures(id) ON DELETE CASCADE, UNIQUE KEY uk_user_texture_vis (user_id, texture_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+                case "pgsql" -> "CREATE TABLE IF NOT EXISTS texture_visibility (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE, is_public BOOLEAN NOT NULL DEFAULT FALSE, created_at TIMESTAMP NOT NULL, UNIQUE(user_id, texture_id))";
+                default -> "CREATE TABLE IF NOT EXISTS texture_visibility (id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE, is_public INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL, UNIQUE(user_id, texture_id))";
+            };
+            try (Connection conn = db.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute(sql);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private static void migrateFriendSharedTextures(DatabaseManager db) {
+        try {
+            String sql = switch (db.getDbType()) {
+                case "mysql" -> "CREATE TABLE IF NOT EXISTS friend_shared_textures (id VARCHAR(36) PRIMARY KEY, owner_id VARCHAR(36) NOT NULL, friend_id VARCHAR(36) NOT NULL, texture_id VARCHAR(36) NOT NULL, created_at DATETIME NOT NULL, FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE, FOREIGN KEY (texture_id) REFERENCES textures(id) ON DELETE CASCADE, UNIQUE KEY uk_owner_friend_texture (owner_id, friend_id, texture_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+                case "pgsql" -> "CREATE TABLE IF NOT EXISTS friend_shared_textures (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, friend_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE, created_at TIMESTAMP NOT NULL, UNIQUE(owner_id, friend_id, texture_id))";
+                default -> "CREATE TABLE IF NOT EXISTS friend_shared_textures (id TEXT PRIMARY KEY, owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, friend_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE, created_at TEXT NOT NULL, UNIQUE(owner_id, friend_id, texture_id))";
+            };
+            try (Connection conn = db.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute(sql);
+            }
+        } catch (Exception ignored) {}
+    }
+
     private static void initializeSQLite(DatabaseManager db) {
         db.executeRaw("""
             CREATE TABLE IF NOT EXISTS admins (
@@ -327,6 +383,49 @@ public class DatabaseSchema {
             CREATE TABLE IF NOT EXISTS texture_meta (
                 hash TEXT PRIMARY KEY,
                 admin_alias TEXT
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_likes (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL,
+                UNIQUE(user_id, texture_id)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_favorites (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE,
+                alias TEXT,
+                created_at TEXT NOT NULL,
+                UNIQUE(user_id, texture_id)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_visibility (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE,
+                is_public INTEGER NOT NULL DEFAULT 0,
+                created_at TEXT NOT NULL,
+                UNIQUE(user_id, texture_id)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS friend_shared_textures (
+                id TEXT PRIMARY KEY,
+                owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                friend_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL,
+                UNIQUE(owner_id, friend_id, texture_id)
             )
         """);
     }
@@ -461,6 +560,58 @@ public class DatabaseSchema {
                 admin_alias VARCHAR(255)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
         """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_likes (
+                id VARCHAR(36) PRIMARY KEY,
+                user_id VARCHAR(36) NOT NULL,
+                texture_id VARCHAR(36) NOT NULL,
+                created_at DATETIME NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (texture_id) REFERENCES textures(id) ON DELETE CASCADE,
+                UNIQUE KEY uk_user_texture_like (user_id, texture_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_favorites (
+                id VARCHAR(36) PRIMARY KEY,
+                user_id VARCHAR(36) NOT NULL,
+                texture_id VARCHAR(36) NOT NULL,
+                alias VARCHAR(255),
+                created_at DATETIME NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (texture_id) REFERENCES textures(id) ON DELETE CASCADE,
+                UNIQUE KEY uk_user_texture_fav (user_id, texture_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_visibility (
+                id VARCHAR(36) PRIMARY KEY,
+                user_id VARCHAR(36) NOT NULL,
+                texture_id VARCHAR(36) NOT NULL,
+                is_public TINYINT(1) NOT NULL DEFAULT 0,
+                created_at DATETIME NOT NULL,
+                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (texture_id) REFERENCES textures(id) ON DELETE CASCADE,
+                UNIQUE KEY uk_user_texture_vis (user_id, texture_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS friend_shared_textures (
+                id VARCHAR(36) PRIMARY KEY,
+                owner_id VARCHAR(36) NOT NULL,
+                friend_id VARCHAR(36) NOT NULL,
+                texture_id VARCHAR(36) NOT NULL,
+                created_at DATETIME NOT NULL,
+                FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (friend_id) REFERENCES users(id) ON DELETE CASCADE,
+                FOREIGN KEY (texture_id) REFERENCES textures(id) ON DELETE CASCADE,
+                UNIQUE KEY uk_owner_friend_texture (owner_id, friend_id, texture_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """);
     }
 
     private static void initializePostgreSQL(DatabaseManager db) {
@@ -582,6 +733,49 @@ public class DatabaseSchema {
             CREATE TABLE IF NOT EXISTS texture_meta (
                 hash TEXT PRIMARY KEY,
                 admin_alias TEXT
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_likes (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE,
+                created_at TIMESTAMP NOT NULL,
+                UNIQUE(user_id, texture_id)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_favorites (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE,
+                alias TEXT,
+                created_at TIMESTAMP NOT NULL,
+                UNIQUE(user_id, texture_id)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_visibility (
+                id TEXT PRIMARY KEY,
+                user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE,
+                is_public BOOLEAN NOT NULL DEFAULT FALSE,
+                created_at TIMESTAMP NOT NULL,
+                UNIQUE(user_id, texture_id)
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS friend_shared_textures (
+                id TEXT PRIMARY KEY,
+                owner_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                friend_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                texture_id TEXT NOT NULL REFERENCES textures(id) ON DELETE CASCADE,
+                created_at TIMESTAMP NOT NULL,
+                UNIQUE(owner_id, friend_id, texture_id)
             )
         """);
     }

@@ -88,7 +88,7 @@ function showToast(message, type) {
                         ' data-original-name="' + escAttr(s.originalName || '') + '"' +
                         ' data-hash="' + escAttr(s.hash) + '"' +
                         ' data-size="' + escAttr(String(s.size)) + '">' +
-                        '<div class="texture-thumb"><img src="' + previewUrl + '" alt="skin preview"></div>' +
+                        '<div class="texture-thumb"><canvas></canvas></div>' +
                         '<div class="texture-name">\u273F ' + escapeHtml(displayName) + '</div>' +
                         '<div class="texture-meta">' + formatSize(s.size) + '</div>' +
                         '</div>';
@@ -106,6 +106,12 @@ function showToast(message, type) {
                             this.dataset.size
                         );
                     });
+                });
+
+                container.querySelectorAll('.texture-thumb canvas').forEach(function(c) {
+                    var card = c.closest('.texture-card-clickable');
+                    var url = '/api/skins/download?id=' + encodeURIComponent(card.dataset.id);
+                    drawFace(c, url);
                 });
             } else {
                 container.innerHTML = '<div class="upload-tile card-animate" id="skinUploadTile">' +
@@ -225,6 +231,24 @@ function showToast(message, type) {
         delBtn.textContent = '\u5220\u9664';
         delBtn.addEventListener('click', function() { deleteSkin(id, displayName); });
         actionsDiv.appendChild(delBtn);
+
+        var visLabel = document.createElement('label');
+        visLabel.className = 'visibility-switch';
+        visLabel.style.marginTop = '8px';
+        visLabel.style.display = 'flex';
+        visLabel.style.justifyContent = 'center';
+        visLabel.style.width = '100%';
+        var visCheckbox = document.createElement('input');
+        visCheckbox.type = 'checkbox';
+        visCheckbox.id = 'visCheckbox-' + id;
+        visCheckbox.addEventListener('change', function() { toggleVisibility(id, this.checked); });
+        visLabel.appendChild(visCheckbox);
+        var visSpan = document.createElement('span');
+        visSpan.textContent = '\u516C\u5F00\u5230\u6750\u8D28\u5E93';
+        visLabel.appendChild(visSpan);
+        actionsDiv.appendChild(visLabel);
+
+        fetchVisibility(id, visCheckbox);
 
         modalBox.querySelector('#detailCloseBtn').addEventListener('click', function() { closeDetailModal(); });
         overlay.addEventListener('click', function(e) {
@@ -437,4 +461,48 @@ function showToast(message, type) {
 
     window.escapeHtml = escapeHtml;
     window.escAttr = escAttr;
+
+    window.toggleVisibility = async function(id, isPublic) {
+        try {
+            var resp = await fetch('/api/textures/visibility', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
+                body: JSON.stringify({ textureId: id, isPublic: isPublic })
+            });
+            var data = await resp.json();
+            if (!data.success) {
+                showToast(data.message || '\u64CD\u4F5C\u5931\u8D25', 'error');
+            }
+        } catch (err) {
+            showToast('\u7F51\u7EDC\u9519\u8BEF', 'error');
+        }
+    };
+
+    window.fetchVisibility = async function(id, checkbox) {
+        try {
+            var resp = await fetch('/api/textures/visibility?id=' + encodeURIComponent(id));
+            if (resp.status === 401) return;
+            var data = await resp.json();
+            if (data.success && checkbox) {
+                checkbox.checked = data.isPublic === true;
+            }
+        } catch (err) {}
+    };
+
+    window.showToast = showToast;
+
+    function drawFace(canvas, url) {
+        canvas.width = 64; canvas.height = 64;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFF0F5'; ctx.fillRect(0, 0, 64, 64);
+        var img = new Image();
+        img.onload = function() {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, 8, 8, 8, 8, 0, 0, 64, 64);
+            if (!(img.width === 64 && img.height === 32)) {
+                ctx.drawImage(img, 40, 8, 8, 8, 0, 0, 64, 64);
+            }
+        };
+        img.src = url;
+    }
 })();

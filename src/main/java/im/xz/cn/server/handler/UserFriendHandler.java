@@ -23,6 +23,7 @@ import im.xz.cn.auth.SessionManager;
 import im.xz.cn.config.SystemConfig;
 import im.xz.cn.database.*;
 import im.xz.cn.model.PlayerProfile;
+import im.xz.cn.model.Texture;
 import im.xz.cn.model.User;
 import im.xz.cn.something.web.UserPage;
 import im.xz.cn.util.TextureService;
@@ -40,10 +41,15 @@ public class UserFriendHandler {
     private final BlockDao blockDao;
     private final TextureService textureService;
     private final SystemConfig sysConfig;
+    private final TextureDao textureDao;
+    private final TextureVisibilityDao visibilityDao;
+    private final FriendSharedTextureDao friendSharedDao;
 
     public UserFriendHandler(UserDao userDao, ProfileDao profileDao, FriendDao friendDao,
                               ConfirmingFriendDao confirmingDao, BlockDao blockDao,
-                              TextureService textureService, SystemConfig sysConfig) {
+                              TextureService textureService, SystemConfig sysConfig,
+                              TextureDao textureDao, TextureVisibilityDao visibilityDao,
+                              FriendSharedTextureDao friendSharedDao) {
         this.userDao = userDao;
         this.profileDao = profileDao;
         this.friendDao = friendDao;
@@ -51,6 +57,9 @@ public class UserFriendHandler {
         this.blockDao = blockDao;
         this.textureService = textureService;
         this.sysConfig = sysConfig;
+        this.textureDao = textureDao;
+        this.visibilityDao = visibilityDao;
+        this.friendSharedDao = friendSharedDao;
     }
 
     public void friendsPage(Context ctx) {
@@ -384,6 +393,27 @@ public class UserFriendHandler {
         byte[] data = textureService.readFile(type, hash);
         if (data == null) {
             ctx.status(404).json(Map.of("success", false, "message", "材质不存在"));
+            return;
+        }
+        String userId = SessionManager.getUserId(ctx);
+        java.util.List<Texture> textures = textureDao.findAllByHash(type, hash);
+        boolean allowed = false;
+        for (Texture t : textures) {
+            if (visibilityDao.isPublic(t.getUserId(), t.getId())) {
+                allowed = true;
+                break;
+            }
+            if (userId != null && t.getUserId().equals(userId)) {
+                allowed = true;
+                break;
+            }
+            if (userId != null && friendSharedDao.exists(t.getUserId(), userId, t.getId())) {
+                allowed = true;
+                break;
+            }
+        }
+        if (!allowed) {
+            ctx.status(403).json(Map.of("success", false, "message", "无权访问此材质"));
             return;
         }
         ctx.contentType("image/png");

@@ -331,4 +331,70 @@ public class UserPage {
         return PageRenderer.renderPage("好友", csrf + body, "user",
                 Css.getUserCssLink(), Css.getTextureCss());
     }
+
+    public static String renderWorldPage(String csrfToken, String userId) {
+        String content = """
+            <div class="world-tabs" id="worldTabs">
+                <button class="world-tab active" data-type="">全部</button>
+                <button class="world-tab" data-type="SKIN">皮肤</button>
+                <button class="world-tab" data-type="CAPE">披风</button>
+            </div>
+            <div class="texture-grid" id="worldTextureGrid"></div>
+            <div id="worldLoading" class="world-loading" style="display:none">
+                <div class="spinner"></div><span>加载中...</span>
+            </div>
+            <div id="worldEnd" class="world-end" style="display:none">— 没有更多了 —</div>
+            <div id="toast" class="toast" style="display:none"></div>
+            """;
+
+        String siteName = im.xz.cn.config.SystemConfig.getInstance().getSiteName();
+        String navbar = """
+            <nav class="navbar">
+                <div class="navbar-inner">
+                    <div class="navbar-brand">
+                        <span class="brand-icon">✿</span>
+                        <span class="brand-text">%s</span>
+                    </div>
+                    <div class="navbar-links">
+                        <a href="/world" class="nav-link active">材质库</a>
+                        <a href="/dashboard" class="nav-link">个人中心</a>
+                        <a href="/" class="nav-link">首页</a>
+                    </div>
+                </div>
+            </nav>
+            """.formatted(esc(siteName));
+
+        String body = navbar + """
+            <div style="max-width:1200px;margin:24px auto;padding:0 24px">%s</div>
+            <script src="/js/user-world.js"></script>
+            """.formatted(content);
+
+        String csrf = Shared.csrfInject(csrfToken)
+                + "<script src=\"/js/skinview3d.bundle.js\"></script>";
+        return PageRenderer.renderPage("材质库", csrf + body, "user",
+                Css.getUserCssLink(), Css.getTextureCss(), Css.getWorldCss());
+    }
+
+    public static String renderSharedPage(String csrfToken) {
+        String content = """
+            <h3 class="shared-section-title"><i class="fas fa-user-group"></i> 好友共享的材质</h3>
+            <div class="texture-grid" id="friendSharedGrid"><p class="text-muted" style="grid-column:1/-1">加载中...</p></div>
+            <h3 class="shared-section-title" style="margin-top:24px"><i class="fas fa-bookmark"></i> 我的收藏</h3>
+            <div class="texture-grid" id="myFavoritesGrid"><p class="text-muted" style="grid-column:1/-1">加载中...</p></div>
+            <div id="toast" class="toast" style="display:none"></div>
+            """;
+        String navbar = PageRenderer.renderNavbar("用户中心", "user", false);
+        String sidebar = Shared.buildUserSidebar("shared");
+        String body = navbar + """
+            <div class="admin-layout">
+                %s
+                <div class="admin-content">%s</div>
+            </div>
+            <script src="/js/user-shared.js"></script>
+            """.formatted(sidebar, content);
+        String csrf = Shared.csrfInject(csrfToken)
+                + "<script src=\"/js/skinview3d.bundle.js\"></script>";
+        return PageRenderer.renderPage("共享材质", csrf + body, "user",
+                Css.getUserCssLink(), Css.getTextureCss(), Css.getWorldCss());
+    }
 }

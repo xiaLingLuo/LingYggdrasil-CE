@@ -25,7 +25,12 @@ import im.xz.cn.database.ConfirmingFriendDao;
 import im.xz.cn.database.BlockDao;
 import im.xz.cn.database.DatabaseManager;
 import im.xz.cn.database.FriendDao;
+import im.xz.cn.database.FriendSharedTextureDao;
 import im.xz.cn.database.ProfileDao;
+import im.xz.cn.database.TextureDao;
+import im.xz.cn.database.TextureFavoriteDao;
+import im.xz.cn.database.TextureLikeDao;
+import im.xz.cn.database.TextureVisibilityDao;
 import im.xz.cn.database.UserDao;
 import im.xz.cn.model.User;
 import im.xz.cn.mail.MailService;
@@ -34,6 +39,7 @@ import im.xz.cn.server.handler.UserCapeHandler;
 import im.xz.cn.server.handler.UserDashboardHandler;
 import im.xz.cn.server.handler.UserFriendHandler;
 import im.xz.cn.server.handler.UserSkinHandler;
+import im.xz.cn.server.handler.UserWorldHandler;
 import im.xz.cn.something.web.UserAuth;
 import im.xz.cn.something.web.Shared;
 import im.xz.cn.util.FooterInfo;
@@ -66,13 +72,18 @@ public class UserServer {
         UserAuthHandler authHandler = new UserAuthHandler(authService, userDao, cacheDao, mailService, sysConfig);
         im.xz.cn.database.TextureDao textureDao = new im.xz.cn.database.TextureDao(db);
         TextureService textureService = new TextureService(sysConfig, cacheDao);
-        UserSkinHandler skinHandler = new UserSkinHandler(textureDao, textureService, userDao);
-        UserCapeHandler capeHandler = new UserCapeHandler(textureDao, textureService, userDao);
-        UserDashboardHandler dashHandler = new UserDashboardHandler(authService, userDao, profileDao, textureDao, textureService, cacheDao, mailService, sysConfig);
+        TextureVisibilityDao visibilityDao = new TextureVisibilityDao(db);
+        TextureFavoriteDao favoriteDao = new TextureFavoriteDao(db);
+        FriendSharedTextureDao friendSharedDao = new FriendSharedTextureDao(db);
+        UserSkinHandler skinHandler = new UserSkinHandler(textureDao, textureService, userDao, visibilityDao);
+        UserCapeHandler capeHandler = new UserCapeHandler(textureDao, textureService, userDao, visibilityDao);
+        UserDashboardHandler dashHandler = new UserDashboardHandler(authService, userDao, profileDao, textureDao, textureService, cacheDao, mailService, sysConfig, favoriteDao, friendSharedDao, visibilityDao);
         FriendDao friendDao = new FriendDao(db);
         ConfirmingFriendDao confirmingDao = new im.xz.cn.database.ConfirmingFriendDao(db);
         BlockDao blockDao = new im.xz.cn.database.BlockDao(db);
-        UserFriendHandler friendHandler = new UserFriendHandler(userDao, profileDao, friendDao, confirmingDao, blockDao, textureService, sysConfig);
+        UserFriendHandler friendHandler = new UserFriendHandler(userDao, profileDao, friendDao, confirmingDao, blockDao, textureService, sysConfig, textureDao, visibilityDao, friendSharedDao);
+        TextureLikeDao likeDao = new TextureLikeDao(db);
+        UserWorldHandler worldHandler = new UserWorldHandler(userDao, profileDao, textureDao, likeDao, favoriteDao, visibilityDao, friendSharedDao, friendDao, textureService, sysConfig);
 
         app = Javalin.create(config -> {
             config.http.defaultContentType = "text/html; charset=utf-8";
@@ -97,7 +108,7 @@ public class UserServer {
             config.routes.before(ctx -> {
                 var session = ctx.req().getSession(false);
                 if (session != null) {
-                    session.setMaxInactiveInterval(30 * 60);
+                    session.setMaxInactiveInterval(30 * 24 * 60 * 60);
                 }
             });
 
@@ -107,7 +118,7 @@ public class UserServer {
                 if (method.equals("POST") || method.equals("PUT") || method.equals("DELETE")) {
                     if (!path.equals("/api/login") && !path.equals("/api/register")
                             && !path.equals("/api/verify-email") && !path.equals("/api/resend-code")) {
-                        if (!SessionManager.validateCsrfToken(ctx)) {
+                        if (ctx.req().getSession(false) != null && !SessionManager.validateCsrfToken(ctx)) {
                             ctx.status(403);
                             ctx.json(Map.of("success", false, "message", "CSRF 验证失败"));
                             ctx.skipRemainingHandlers();
@@ -121,7 +132,7 @@ public class UserServer {
                 String userId = SessionManager.getUserId(ctx);
                 if (userId == null) return;
                 String path = ctx.path();
-                if (path.equals("/email-required") || path.equals("/logout")) return;
+                if (path.equals("/email-required") || path.equals("/logout") || path.equals("/world")) return;
                 if (path.equals("/api/send-email-verify") || path.equals("/api/verify-my-email")) return;
                 User user = userDao.findById(userId);
                 if (user != null && !user.isEmailVerified()) {
@@ -213,6 +224,20 @@ public class UserServer {
             config.routes.get("/capes", capeHandler::capesPage);
             config.routes.get("/friends", friendHandler::friendsPage);
 
+            config.routes.get("/world", worldHandler::worldPage);
+            config.routes.get("/shared", worldHandler::sharedPage);
+            config.routes.get("/api/world/textures", worldHandler::getPublicTextures);
+            config.routes.post("/api/world/like", worldHandler::toggleLike);
+            config.routes.post("/api/world/favorite", worldHandler::toggleFavorite);
+            config.routes.post("/api/world/favorite/alias", worldHandler::updateFavoriteAlias);
+            config.routes.post("/api/textures/visibility", worldHandler::setVisibility);
+            config.routes.get("/api/textures/visibility", worldHandler::getVisibility);
+            config.routes.get("/api/shared/my", worldHandler::getSharedTextures);
+            config.routes.get("/api/friends/{friendId}/shared-textures", worldHandler::getFriendSharedTextures);
+            config.routes.get("/api/friends/{friendId}/my-shared", worldHandler::getMySharedToFriend);
+            config.routes.post("/api/friends/share-texture", worldHandler::shareToFriend);
+            config.routes.post("/api/friends/unshare-texture", worldHandler::unshareFromFriend);
+
             config.routes.post("/api/login", authHandler::handleLogin);
             config.routes.post("/api/register", authHandler::handleRegister);
             config.routes.post("/api/verify-email", authHandler::handleVerifyEmail);
@@ -257,6 +282,7 @@ public class UserServer {
             config.routes.get("/api/friends/blocked/count", friendHandler::getBlockedCount);
             config.routes.post("/api/friends/blocked/clear", friendHandler::clearBlocked);
             config.routes.get("/api/friends/texture/{type}/{hash}", friendHandler::serveTexture);
+            config.routes.get("/api/publicTexture/{type}/{hash}", friendHandler::serveTexture);
             config.routes.get("/api/announcement", ctx -> {
                 SystemConfig sc = SystemConfig.getInstance();
                 String userId = SessionManager.getUserId(ctx);

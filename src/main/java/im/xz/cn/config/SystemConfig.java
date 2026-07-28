@@ -66,6 +66,7 @@ public class SystemConfig {
     private int maxProfilesPerUser = 10;
     private int maxAccountsPerIp = 3;
     private int maxBlockedUsers = 2000;
+    private int maxFavorites = 32;
     private String announcementMode = "off";
     private String announcementScope = "user";
     private String announcementContent = "";
@@ -133,6 +134,7 @@ public class SystemConfig {
             upsertSetting(db, "max_profiles_per_user", String.valueOf(maxProfilesPerUser));
             upsertSetting(db, "max_accounts_per_ip", String.valueOf(maxAccountsPerIp));
             upsertSetting(db, "max_blocked_users", String.valueOf(maxBlockedUsers));
+            upsertSetting(db, "max_favorites", String.valueOf(maxFavorites));
             upsertSetting(db, "announcement_mode", announcementMode);
             upsertSetting(db, "announcement_scope", announcementScope);
             upsertSetting(db, "announcement_content", announcementContent);
@@ -190,6 +192,7 @@ public class SystemConfig {
             case "max_profiles_per_user" -> maxProfilesPerUser = parseInt(value, 10);
             case "max_accounts_per_ip" -> maxAccountsPerIp = parseInt(value, 3);
             case "max_blocked_users" -> maxBlockedUsers = Math.clamp(parseInt(value, 2000), 0, 5000);
+            case "max_favorites" -> maxFavorites = Math.clamp(parseInt(value, 32), -1, 1000);
             case "announcement_mode" -> announcementMode = value;
             case "announcement_scope" -> announcementScope = value;
             case "announcement_content" -> announcementContent = value;
@@ -337,6 +340,9 @@ public class SystemConfig {
 
     public int getMaxBlockedUsers() { return maxBlockedUsers; }
     public void setMaxBlockedUsers(int maxBlockedUsers) { this.maxBlockedUsers = Math.clamp(maxBlockedUsers, 0, 5000); }
+
+    public int getMaxFavorites() { return maxFavorites; }
+    public void setMaxFavorites(int maxFavorites) { this.maxFavorites = Math.clamp(maxFavorites, -1, 1000); }
 
     public String getAnnouncementMode() { return announcementMode; }
     public void setAnnouncementMode(String announcementMode) { this.announcementMode = announcementMode; }

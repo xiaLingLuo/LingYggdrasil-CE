@@ -21,14 +21,13 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import im.xz.cn.auth.SessionManager;
 import im.xz.cn.database.TextureDao;
+import im.xz.cn.database.TextureVisibilityDao;
 import im.xz.cn.database.UserDao;
 import im.xz.cn.model.Texture;
 import im.xz.cn.model.User;
 import im.xz.cn.util.TextureService;
 import im.xz.cn.util.TimeUtil;
 import im.xz.cn.something.web.UserPage;
-import im.xz.cn.something.web.Shared;
-import im.xz.cn.web.PageRenderer;
 
 import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
@@ -42,11 +41,13 @@ public class UserCapeHandler {
     private final TextureDao textureDao;
     private final TextureService textureService;
     private final UserDao userDao;
+    private final TextureVisibilityDao visibilityDao;
 
-    public UserCapeHandler(TextureDao textureDao, TextureService textureService, UserDao userDao) {
+    public UserCapeHandler(TextureDao textureDao, TextureService textureService, UserDao userDao, TextureVisibilityDao visibilityDao) {
         this.textureDao = textureDao;
         this.textureService = textureService;
         this.userDao = userDao;
+        this.visibilityDao = visibilityDao;
     }
 
     public void capesPage(Context ctx) {
@@ -69,6 +70,7 @@ public class UserCapeHandler {
             map.put("hash", t.getHash());
             map.put("size", t.getSize());
             map.put("createdAt", t.getCreatedAt());
+            map.put("isPublic", visibilityDao.isPublic(user.getId(), t.getId()));
             return map;
         }).toList()));
     }
@@ -153,6 +155,9 @@ public class UserCapeHandler {
                     alias = originalName;
                 }
             }
+            if (alias != null && alias.length() > 100) {
+                alias = alias.substring(0, 100);
+            }
 
             String id = UUID.randomUUID().toString();
             String createdAt = TimeUtil.now();
@@ -161,7 +166,8 @@ public class UserCapeHandler {
 
             ctx.json(Map.of("success", true, "message", "上传成功"));
         } catch (Exception e) {
-            ctx.json(Map.of("success", false, "message", "上传失败: " + e.getMessage()));
+            System.err.println("[UserCapeHandler] upload failed: " + e.getMessage());
+            ctx.json(Map.of("success", false, "message", "上传失败，请稍后重试"));
         }
     }
 

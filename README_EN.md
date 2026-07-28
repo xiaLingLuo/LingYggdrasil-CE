@@ -44,8 +44,7 @@
 ### 🎨 Exquisite User Interface
 
 - **Anime-Style Design** — Pink and white color scheme, rounded card layouts, and delicate CSS animations.
-- **Responsive Layout** — Fully adapted for both desktop and mobile devices.
-- **3D Character Preview** — Integrated with skinview3d for real-time skin and cape previews during character editing.
+- **3D Character Preview** — Integrated with skinview3d for real-time skin and cape previews during character editing. Thumbnails use face/cape extraction matching Minecraft's native visual style.
 
 ### 🔐 Security System
 
@@ -58,8 +57,13 @@
 
 ### 👤 User Features
 
-- **Character Management** — Create multiple game characters, each with its own independent Yggdrasil Token.
-- **Skins & Capes** — Upload and manage personal skin and cape resources, supporting alias naming.
+- **Character Management** — Create multiple game characters, each with its own independent Yggdrasil Token. Profile cards display face extraction previews.
+- **Skins & Capes** — Upload and manage personal skin and cape resources, with alias naming and public/private visibility control.
+- **Material Library** — Public texture gallery, browse all public skins and capes sorted by popularity (likes + favorites × 5), infinite scroll with lazy loading. Anonymous users can preview up to 100 items.
+- **Likes & Favorites** — Like textures to boost their visibility, favorite them into your personal shared material library. Favorite limit is configurable by administrators.
+- **Shared Materials** — Dual-section view: friend-shared + my favorites. One-click apply to character, with custom alias support.
+- **Friend System** — Add friends by friend code, friend detail cards, block management, and texture sharing to friends via checkbox lists.
+- **3D Skin Preview** — Integrated with skinview3d. Thumbnails use face/cape extraction matching Minecraft's native visual style. Detail modals support 360° rotation.
 - **Security Settings** — Self-manage password changes, email verification, and Token viewing/regeneration.
 - **Dashboard Guide** — Built-in quick start guide, making it easy for new users to get started.
 

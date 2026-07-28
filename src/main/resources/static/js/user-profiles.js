@@ -93,11 +93,15 @@ function showToast(message, type) {
                         ' data-model="' + escAttr(p.skinModel) + '"' +
                         ' data-skin="' + escAttr(p.skinUrl || '') + '"' +
                         ' data-cape="' + escAttr(p.capeUrl || '') + '"' +
+                        ' data-skin-hash="' + escAttr(p.skinHash || '') + '"' +
                         ' data-token="' + escAttr(p.yggdrasilToken || '') + '">' +
                         modelBadge +
-                        '<div class="profile-name"><i class="fas fa-user-astronaut"></i> ' + escapeHtml(p.name) + '</div>' +
-                        '<div class="profile-uuid">' + escapeHtml(p.id) + '</div>' +
-                        '<div class="text-muted" style="font-size:12px;margin-bottom:8px">' + skinLabel + ' 搭配 ' + capeLabel + '</div>' +
+                        '<div style="display:flex;align-items:center;gap:12px">' +
+                        '<div style="width:56px;height:56px;border-radius:10px;overflow:hidden;background:#fff0f5;flex-shrink:0"><canvas></canvas></div>' +
+                        '<div style="flex:1;min-width:0">' +
+                        '<div class="profile-name" style="margin-bottom:2px">' + escapeHtml(p.name) + '</div>' +
+                        '<div class="text-muted" style="font-size:12px">' + skinLabel + ' 搭配 ' + capeLabel + '</div>' +
+                        '</div></div>' +
                         '</div>';
                 });
                 html += '</div>';
@@ -114,6 +118,13 @@ function showToast(message, type) {
                             this.dataset.token
                         );
                     });
+                    var canvas = card.querySelector('canvas');
+                    var skinHash = card.dataset.skinHash;
+                    if (skinHash) {
+                        drawFace(canvas, '/api/publicTexture/skin/' + skinHash);
+                    } else {
+                        drawFace(canvas, '/img/juststeve.png');
+                    }
                 });
             } else {
                 container.innerHTML = '<p class="empty-hint">\u6682\u65E0\u89D2\u8272\uFF0C\u4F7F\u7528\u4E0A\u65B9\u8868\u5355\u521B\u5EFA\u4E00\u4E2A\u5427 \u273F</p>';
@@ -223,6 +234,7 @@ function showToast(message, type) {
             '</div>' +
             '<div id="editMsg" class="msg-area"></div>' +
             '<div class="modal-actions modal-actions-split" id="editModalActions"></div>' +
+            '<div style="font-size:11px;color:#bbb;font-family:monospace;word-break:break-all">' + escapeHtml(id) + '</div>' +
             '</div>' +
             '<div class="profile-edit-right">' +
             rightCol +
@@ -315,29 +327,67 @@ function showToast(message, type) {
             if (data.success) {
                 var skinSelect = document.getElementById('editSkinHash');
                 var capeSelect = document.getElementById('editCapeHash');
-                if (skinSelect && data.skins) {
-                    data.skins.forEach(function(s) {
+
+                function populateSelect(select, items, favItems, sharedItems) {
+                    var mineGroup = document.createElement('optgroup');
+                    mineGroup.label = '我的材质';
+                    (items || []).forEach(function(s) {
                         var option = document.createElement('option');
                         option.value = s.hash;
                         option.dataset.textureId = s.id;
-                        option.textContent = escapeHtml(s.alias || s.hash);
-                        if (s.hash === currentSkinHash) option.selected = true;
-                        skinSelect.appendChild(option);
+                        option.textContent = s.alias || s.hash;
+                        mineGroup.appendChild(option);
                     });
+                    if (mineGroup.children.length > 0) select.appendChild(mineGroup);
+
+                    if (favItems && favItems.length > 0) {
+                        var favGroup = document.createElement('optgroup');
+                        favGroup.label = '收藏材质';
+                        favItems.forEach(function(s) {
+                            var option = document.createElement('option');
+                            option.value = s.hash;
+                            option.dataset.textureId = s.id;
+                            option.textContent = s.alias + ' ⭐';
+                            favGroup.appendChild(option);
+                        });
+                        select.appendChild(favGroup);
+                    }
+
+                    if (sharedItems && sharedItems.length > 0) {
+                        var sharedGroup = document.createElement('optgroup');
+                        sharedGroup.label = '好友共享';
+                        sharedItems.forEach(function(s) {
+                            var option = document.createElement('option');
+                            option.value = s.hash;
+                            option.dataset.textureId = s.id;
+                            option.textContent = s.alias + ' 🔗';
+                            sharedGroup.appendChild(option);
+                        });
+                        select.appendChild(sharedGroup);
+                    }
                 }
-                if (capeSelect && data.capes) {
-                    data.capes.forEach(function(c) {
-                        var option = document.createElement('option');
-                        option.value = c.hash;
-                        option.dataset.textureId = c.id;
-                        option.textContent = escapeHtml(c.alias || c.hash);
-                        if (c.hash === currentCapeHash) option.selected = true;
-                        capeSelect.appendChild(option);
-                    });
+
+                if (skinSelect) {
+                    populateSelect(skinSelect, data.skins || [], data.favoriteSkins || [], data.sharedSkins || []);
+                    for (var i = 0; i < skinSelect.options.length; i++) {
+                        if (skinSelect.options[i].value === currentSkinHash) {
+                            skinSelect.options[i].selected = true;
+                            break;
+                        }
+                    }
+                }
+                if (capeSelect) {
+                    populateSelect(capeSelect, data.capes || [], data.favoriteCapes || [], data.sharedCapes || []);
+                    for (var i = 0; i < capeSelect.options.length; i++) {
+                        if (capeSelect.options[i].value === currentCapeHash) {
+                            capeSelect.options[i].selected = true;
+                            break;
+                        }
+                    }
                 }
             }
         } catch (err) {
-            console.error('\u52A0\u8F7D\u7EB9\u7406\u5217\u8868\u5931\u8D25:', err);
+            console.error('加载纹理列表失败:', err);
         }
     }
 
@@ -358,6 +408,11 @@ function showToast(message, type) {
         return type === 'SKIN'
             ? '/api/skins/download?id=' + encodeURIComponent(id)
             : '/api/capes/download?id=' + encodeURIComponent(id);
+    }
+
+    function getTextureUrl(type, hash) {
+        if (!hash) return null;
+        return '/api/publicTexture/' + type.toLowerCase() + '/' + encodeURIComponent(hash);
     }
 
     function initProfile3dPreview(skinUrl, capeUrl, model) {
@@ -381,10 +436,8 @@ function showToast(message, type) {
             var m2 = capeUrl.match(/\/textures\/CAPE\/([a-fA-F0-9]+)$/);
             if (m2) capeHash = m2[1];
         }
-        var skinId = skinHash ? findTextureId(skinHash, 'SKIN') : null;
-        var capeId = capeHash ? findTextureId(capeHash, 'CAPE') : null;
-        var skinDownloadUrl = skinId ? getDownloadUrl('SKIN', skinId) : null;
-        var capeDownloadUrl = capeId ? getDownloadUrl('CAPE', capeId) : null;
+        var skinDownloadUrl = skinHash ? getTextureUrl('SKIN', skinHash) : null;
+        var capeDownloadUrl = capeHash ? getTextureUrl('CAPE', capeHash) : null;
 
         var effectiveSkin = hasSkin ? skinDownloadUrl : (hasCape ? DEFAULT_SKIN_URL : null);
         if (!effectiveSkin) return;
@@ -410,13 +463,7 @@ function showToast(message, type) {
                     var hash = this.value;
                     var capeHash = document.getElementById('editCapeHash').value;
                     if (!hash && !capeHash) return;
-                    var url;
-                    if (hash) {
-                        var id = findTextureId(hash, 'SKIN');
-                        url = id ? getDownloadUrl('SKIN', id) : null;
-                    } else {
-                        url = DEFAULT_SKIN_URL;
-                    }
+                    var url = hash ? getTextureUrl('SKIN', hash) : DEFAULT_SKIN_URL;
                     if (url && window._profileViewer) {
                         var isSlim = document.getElementById('editModel').value === 'slim';
                         window._profileViewer.loadSkin(url, { model: isSlim ? 'slim' : 'default' });
@@ -427,12 +474,7 @@ function showToast(message, type) {
                 capeSelect.addEventListener('change', function() {
                     var hash = this.value;
                     if (window._profileViewer) {
-                        if (hash) {
-                            var id = findTextureId(hash, 'CAPE');
-                            window._profileViewer.loadCape(id ? getDownloadUrl('CAPE', id) : null);
-                        } else {
-                            window._profileViewer.loadCape(null);
-                        }
+                        window._profileViewer.loadCape(hash ? getTextureUrl('CAPE', hash) : null);
                     }
                 });
             }
@@ -441,13 +483,7 @@ function showToast(message, type) {
                     var isSlim = this.value === 'slim';
                     var skinHash = document.getElementById('editSkinHash').value;
                     var capeHash = document.getElementById('editCapeHash').value;
-                    var url;
-                    if (skinHash) {
-                        var id = findTextureId(skinHash, 'SKIN');
-                        url = id ? getDownloadUrl('SKIN', id) : null;
-                    } else if (capeHash) {
-                        url = DEFAULT_SKIN_URL;
-                    }
+                    var url = skinHash ? getTextureUrl('SKIN', skinHash) : (capeHash ? DEFAULT_SKIN_URL : null);
                     if (url && window._profileViewer) {
                         window._profileViewer.loadSkin(url, { model: isSlim ? 'slim' : 'default' });
                     }
@@ -575,4 +611,19 @@ function showToast(message, type) {
 
     window.escapeHtml = escapeHtml;
     window.escAttr = escAttr;
+
+    function drawFace(canvas, url) {
+        canvas.width = 56; canvas.height = 56;
+        var ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#FFF0F5'; ctx.fillRect(0, 0, 56, 56);
+        var img = new Image();
+        img.onload = function() {
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(img, 8, 8, 8, 8, 0, 0, 56, 56);
+            if (!(img.width === 64 && img.height === 32)) {
+                ctx.drawImage(img, 40, 8, 8, 8, 0, 0, 56, 56);
+            }
+        };
+        img.src = url;
+    }
 })();

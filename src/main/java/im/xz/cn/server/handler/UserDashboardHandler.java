@@ -24,8 +24,11 @@ import im.xz.cn.auth.AuthService;
 import im.xz.cn.auth.SessionManager;
 import im.xz.cn.config.SystemConfig;
 import im.xz.cn.database.CacheDao;
+import im.xz.cn.database.FriendSharedTextureDao;
 import im.xz.cn.database.ProfileDao;
 import im.xz.cn.database.TextureDao;
+import im.xz.cn.database.TextureFavoriteDao;
+import im.xz.cn.database.TextureVisibilityDao;
 import im.xz.cn.database.UserDao;
 import im.xz.cn.mail.MailService;
 import im.xz.cn.model.PlayerProfile;
@@ -56,11 +59,16 @@ public class UserDashboardHandler {
     private final CacheDao cacheDao;
     private final MailService mailService;
     private final SystemConfig sysConfig;
+    private final TextureFavoriteDao favoriteDao;
+    private final FriendSharedTextureDao friendSharedDao;
+    private final TextureVisibilityDao visibilityDao;
     private final ObjectMapper mapper = new ObjectMapper();
 
     public UserDashboardHandler(AuthService authService, UserDao userDao, ProfileDao profileDao,
                                  TextureDao textureDao, TextureService textureService,
-                                 CacheDao cacheDao, MailService mailService, SystemConfig sysConfig) {
+                                 CacheDao cacheDao, MailService mailService, SystemConfig sysConfig,
+                                 TextureFavoriteDao favoriteDao, FriendSharedTextureDao friendSharedDao,
+                                 TextureVisibilityDao visibilityDao) {
         this.authService = authService;
         this.userDao = userDao;
         this.profileDao = profileDao;
@@ -69,6 +77,9 @@ public class UserDashboardHandler {
         this.cacheDao = cacheDao;
         this.mailService = mailService;
         this.sysConfig = sysConfig;
+        this.favoriteDao = favoriteDao;
+        this.friendSharedDao = friendSharedDao;
+        this.visibilityDao = visibilityDao;
     }
 
     public User checkAuth(Context ctx) {
@@ -413,11 +424,19 @@ public class UserDashboardHandler {
                 profile.setSkinModel(skinModel);
             }
             if (skinHash != null && !skinHash.isBlank()) {
+                if (!canReferenceTexture(user, "SKIN", skinHash)) {
+                    jsonResponse(ctx, Map.of("success", false, "message", "无权使用此皮肤材质"));
+                    return;
+                }
                 profile.setSkinUrl(textureService.getPublicUrl("SKIN", skinHash));
             } else if (skinHash != null && skinHash.isEmpty()) {
                 profile.setSkinUrl(null);
             }
             if (capeHash != null && !capeHash.isBlank()) {
+                if (!canReferenceTexture(user, "CAPE", capeHash)) {
+                    jsonResponse(ctx, Map.of("success", false, "message", "无权使用此披风材质"));
+                    return;
+                }
                 profile.setCapeUrl(textureService.getPublicUrl("CAPE", capeHash));
             } else if (capeHash != null && capeHash.isEmpty()) {
                 profile.setCapeUrl(null);
@@ -437,28 +456,35 @@ public class UserDashboardHandler {
         ctx.json(Map.of("success", true, "profiles", profiles.stream().map(p -> {
             String skinName = "";
             String capeName = "";
+            String skinHash = "";
+            String capeHash = "";
             String skinUrl = p.getSkinUrl() != null ? p.getSkinUrl() : "";
             String capeUrl = p.getCapeUrl() != null ? p.getCapeUrl() : "";
             if (!skinUrl.isEmpty()) {
                 String hash = skinUrl.substring(Math.max(0, skinUrl.length() - 64));
+                skinHash = hash;
                 Texture tex = textureDao.findByHash("SKIN", hash);
                 if (tex != null && tex.getAlias() != null) skinName = tex.getAlias();
             }
             if (!capeUrl.isEmpty()) {
                 String hash = capeUrl.substring(Math.max(0, capeUrl.length() - 64));
+                capeHash = hash;
                 Texture tex = textureDao.findByHash("CAPE", hash);
                 if (tex != null && tex.getAlias() != null) capeName = tex.getAlias();
             }
-            return Map.of(
-                "id", p.getId(), "name", p.getName(),
-                "skinModel", p.getSkinModel() != null ? p.getSkinModel() : "default",
-                "skinUrl", skinUrl,
-                "capeUrl", capeUrl,
-                "skinName", skinName,
-                "capeName", capeName,
-                "yggdrasilToken", p.getYggdrasilToken() != null ? p.getYggdrasilToken() : "",
-                "createdAt", p.getCreatedAt() != null ? p.getCreatedAt() : ""
-            );
+            java.util.Map<String, Object> m = new java.util.LinkedHashMap<>();
+            m.put("id", p.getId());
+            m.put("name", p.getName());
+            m.put("skinModel", p.getSkinModel() != null ? p.getSkinModel() : "default");
+            m.put("skinUrl", skinUrl);
+            m.put("capeUrl", capeUrl);
+            m.put("skinHash", skinHash);
+            m.put("capeHash", capeHash);
+            m.put("skinName", skinName);
+            m.put("capeName", capeName);
+            m.put("yggdrasilToken", p.getYggdrasilToken() != null ? p.getYggdrasilToken() : "");
+            m.put("createdAt", p.getCreatedAt() != null ? p.getCreatedAt() : "");
+            return m;
         }).toList()));
     }
 
@@ -495,14 +521,77 @@ public class UserDashboardHandler {
         if (user == null) return;
         List<Texture> skins = textureDao.findByUserId(user.getId(), "SKIN");
         List<Texture> capes = textureDao.findByUserId(user.getId(), "CAPE");
+
+        java.util.List<java.util.Map<String, Object>> favoriteSkins = new java.util.ArrayList<>();
+        java.util.List<java.util.Map<String, Object>> favoriteCapes = new java.util.ArrayList<>();
+        var favorites = favoriteDao.findByUserId(user.getId());
+        for (var f : favorites) {
+            String type = String.valueOf(f.get("type"));
+            var item = new java.util.LinkedHashMap<String, Object>();
+            item.put("id", String.valueOf(f.get("texture_id")));
+            item.put("hash", String.valueOf(f.get("hash")));
+            String fa = (String) f.get("alias");
+            String ta = (String) f.get("texture_alias");
+            String on = (String) f.get("original_name");
+            String hash = String.valueOf(f.get("hash"));
+            item.put("alias", displayAlias(fa, ta, on, hash, "收藏"));
+            item.put("source", "favorite");
+            if ("SKIN".equals(type)) favoriteSkins.add(item);
+            else if ("CAPE".equals(type)) favoriteCapes.add(item);
+        }
+
+        java.util.List<java.util.Map<String, Object>> sharedSkins = new java.util.ArrayList<>();
+        java.util.List<java.util.Map<String, Object>> sharedCapes = new java.util.ArrayList<>();
+        var shared = friendSharedDao.findSharedByFriends(user.getId());
+        for (var s : shared) {
+            String type = String.valueOf(s.get("type"));
+            var item = new java.util.LinkedHashMap<String, Object>();
+            item.put("id", String.valueOf(s.get("texture_id")));
+            item.put("hash", String.valueOf(s.get("hash")));
+            String ta = (String) s.get("texture_alias");
+            String on = (String) s.get("original_name");
+            String hash = String.valueOf(s.get("hash"));
+            item.put("alias", displayAlias(null, ta, on, hash, "共享"));
+            item.put("source", "shared");
+            if ("SKIN".equals(type)) sharedSkins.add(item);
+            else if ("CAPE".equals(type)) sharedCapes.add(item);
+        }
+
         ctx.json(Map.of("success", true,
             "skins", skins.stream().map(t -> Map.of(
-                "id", t.getId(), "hash", t.getHash(), "alias", t.getAlias() != null ? t.getAlias() : t.getHash()
+                "id", t.getId(), "hash", t.getHash(), "alias", t.getAlias() != null && !t.getAlias().isBlank() ? t.getAlias() : t.getHash(), "source", "mine"
             )).toList(),
             "capes", capes.stream().map(t -> Map.of(
-                "id", t.getId(), "hash", t.getHash(), "alias", t.getAlias() != null ? t.getAlias() : t.getHash()
-            )).toList()
+                "id", t.getId(), "hash", t.getHash(), "alias", t.getAlias() != null && !t.getAlias().isBlank() ? t.getAlias() : t.getHash(), "source", "mine"
+            )).toList(),
+            "favoriteSkins", favoriteSkins,
+            "favoriteCapes", favoriteCapes,
+            "sharedSkins", sharedSkins,
+            "sharedCapes", sharedCapes
         ));
+    }
+
+    private static String displayAlias(String favAlias, String texAlias, String origName, String hash, String prefix) {
+        String alias = favAlias;
+        if (alias == null || alias.isBlank()) alias = texAlias;
+        if (alias == null || alias.isBlank()) alias = origName;
+        if (alias == null || alias.isBlank()) {
+            String safeHash = (hash != null && !"null".equals(hash) && hash.length() >= 8) ? hash.substring(0, 8) : "未知";
+            alias = prefix + "-" + safeHash;
+        }
+        return alias;
+    }
+
+    private boolean canReferenceTexture(User user, String type, String hash) {
+        List<Texture> textures = textureDao.findAllByHash(type, hash);
+        if (textures.isEmpty()) return false;
+        for (Texture tex : textures) {
+            String ownerId = tex.getUserId();
+            if (ownerId.equals(user.getId())) return true;
+            if (visibilityDao.isPublic(ownerId, tex.getId())) return true;
+            if (friendSharedDao.exists(ownerId, user.getId(), tex.getId())) return true;
+        }
+        return false;
     }
 
     private void jsonResponse(Context ctx, Map<String, Object> data) {

@@ -32,6 +32,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+import im.xz.cn.util.Treasure;
 import im.xz.cn.util.YggdrasilKeyManager;
 import im.xz.cn.database.TokenDao;
 
@@ -58,6 +59,7 @@ public class Main {
     private static YggdrasilServer yggdrasilServer;
     private static AdminServer adminServer;
     private static DatabaseManager databaseManager;
+    private static Treasure treasure;
     private static ScheduledExecutorService scheduler;
 
     public static void main(String[] args) {
@@ -136,6 +138,8 @@ public class Main {
             logger.info("[KeyManager] 已加载 {} 签名密钥", sysConfig.getSignatureMode());
         }
 
+        treasure = Treasure.init(databaseManager);
+
         TokenDao tokenDao = new TokenDao(databaseManager);
         scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "token-cleaner");
@@ -209,6 +213,7 @@ public class Main {
             if (yggdrasilServer != null) yggdrasilServer.stop();
             if (adminServer != null) adminServer.stop();
             if (databaseManager != null) databaseManager.close();
+            Treasure.shutdown();
         } catch (Exception e) {
             logger.error("Error during shutdown: {}", e.getMessage(), e);
         }

@@ -119,7 +119,7 @@
             html += '<div class="friend-add-tile card-animate" id="friendAddTile">' +
                 '<div class="friend-add-tile-icon"><span class="friend-add-tile-plus">+</span></div>' +
                 '<div class="friend-add-tile-text">\u6DFB\u52A0\u597D\u53CB</div>' +
-                '<div class="friend-add-tile-hint">1002-3004-5006-7008</div></div>';
+                '<div class="friend-add-tile-hint">喵~</div></div>';
 
             if (friendsData.success && friendsData.friends && friendsData.friends.length > 0) {
                 friendsData.friends.forEach(function(f) {
@@ -254,8 +254,13 @@
             '<span>' + escapeHtml(dataset.friendCode || '----') + '</span>' +
             '<button class="btn btn-secondary btn-small" id="friendCodeCopyBtn"><i class="fas fa-copy"></i></button>' +
             '</div>' +
+            '<div class="form-group" style="margin-top:8px">' +
+            '<label class="form-label" style="margin-bottom:4px"><i class="fas fa-share-nodes"></i> 共享材质</label>' +
+            '<div id="friendSharedList" style="max-height:160px;overflow-y:auto;border:1px solid #FFD6E8;border-radius:8px;padding:4px">' +
+            '<p class="text-muted" style="padding:8px;font-size:12px">加载中...</p></div>' +
+            '</div>' +
             '<div class="modal-actions">' +
-            '<button class="btn btn-danger" id="friendDetailDeleteBtn">\u5220\u9664\u597D\u53CB</button>' +
+            '<button class="btn btn-danger" id="friendDetailDeleteBtn">删除好友</button>' +
             '</div></div></div>';
 
         overlay.appendChild(box);
@@ -271,12 +276,85 @@
         overlay.addEventListener('click', function(e) { if (e.target === overlay) closeAllModals(); });
         document.getElementById('friendCodeCopyBtn').addEventListener('click', function() {
             navigator.clipboard.writeText(dataset.friendCodeRaw || '').then(function() {
-                showToast('\u597D\u53CB\u4EE3\u7801\u5DF2\u590D\u5236', 'success');
-            }).catch(function() { showToast('\u590D\u5236\u5931\u8D25', 'error'); });
+                showToast('好友代码已复制', 'success');
+            }).catch(function() { showToast('复制失败', 'error'); });
         });
         document.getElementById('friendDetailDeleteBtn').addEventListener('click', function() {
             deleteFriend(dataset.friendId);
         });
+
+        loadFriendShared(dataset.friendId);
+    }
+
+    async function loadFriendShared(friendId) {
+        var container = document.getElementById('friendSharedList');
+        if (!container) return;
+        try {
+            var [skinsResp, capesResp, mySharedResp] = await Promise.all([
+                fetch('/api/skins'),
+                fetch('/api/capes'),
+                fetch('/api/friends/' + encodeURIComponent(friendId) + '/my-shared')
+            ]);
+            if (skinsResp.status === 401) return;
+            var skinsData = await skinsResp.json();
+            var capesData = await capesResp.json();
+            var mySharedData = await mySharedResp.json();
+
+            var mySkins = (skinsData.success && skinsData.skins) ? skinsData.skins : [];
+            var myCapes = (capesData.success && capesData.capes) ? capesData.capes : [];
+            var sharedIds = {};
+            if (mySharedData.success && mySharedData.textures) {
+                mySharedData.textures.forEach(function(t) { sharedIds[t.id] = true; });
+            }
+
+            var allTextures = [];
+            mySkins.forEach(function(s) { s.type = 'SKIN'; allTextures.push(s); });
+            myCapes.forEach(function(c) { c.type = 'CAPE'; allTextures.push(c); });
+
+            if (allTextures.length === 0) {
+                container.innerHTML = '<p class="text-muted" style="padding:8px;font-size:12px">暂无材质</p>';
+                return;
+            }
+
+            var html = '';
+            allTextures.forEach(function(t) {
+                var displayName = t.alias || t.originalName || t.hash;
+                var checked = sharedIds[t.id] ? ' checked' : '';
+                var typeLabel = t.type === 'CAPE' ? '披风' : '皮肤';
+                html += '<label style="display:flex;align-items:center;gap:6px;padding:4px 6px;cursor:pointer;font-size:12px;border-radius:4px;' +
+                    '" onmouseover="this.style.background=\'#FFF8FC\'" onmouseout="this.style.background=\'\'">' +
+                    '<input type="checkbox" class="friend-share-check"' + checked +
+                    ' data-tid="' + escapeHtml(t.id) + '" data-fid="' + escapeHtml(friendId) + '">' +
+                    '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(displayName) + '</span>' +
+                    '<span style="color:#999;font-size:10px">' + typeLabel + '</span></label>';
+            });
+            container.innerHTML = html;
+
+            container.querySelectorAll('.friend-share-check').forEach(function(cb) {
+                cb.addEventListener('change', function() {
+                    toggleShareTextureToFriend(this.dataset.fid, this.dataset.tid, this.checked);
+                });
+            });
+        } catch (err) {
+            container.innerHTML = '<p class="text-muted" style="padding:8px;font-size:12px">加载失败</p>';
+        }
+    }
+
+    async function toggleShareTextureToFriend(friendId, textureId, share) {
+        try {
+            var url = share ? '/api/friends/share-texture' : '/api/friends/unshare-texture';
+            var resp = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
+                body: JSON.stringify({ friendId: friendId, textureId: textureId })
+            });
+            var data = await resp.json();
+            if (!data.success) {
+                showToast(data.message || '操作失败', 'error');
+            }
+        } catch (err) {
+            showToast('网络错误', 'error');
+        }
     }
 
     function closeAllModals() {

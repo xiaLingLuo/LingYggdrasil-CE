@@ -258,6 +258,12 @@ body select {
     transform: translateY(0);
     box-shadow: 0 2px 8px rgba(255,105,180,0.1);
 }
+.profile-item canvas {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    display: block;
+}
 .profile-item .profile-name {
     font-weight: 600;
     font-size: 16px;
@@ -317,6 +323,12 @@ body select {
     height: 100%;
     object-fit: cover;
     image-rendering: pixelated;
+}
+.texture-thumb canvas {
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    display: block;
 }
 .texture-name {
     font-weight: 600;
@@ -464,6 +476,18 @@ body select {
     .form-row, .inline-form {
         flex-direction: column;
     }
+    .sidebar { display: none; }
+    .admin-layout { flex-direction: column; padding: 0 12px; }
+    .modal-box { width: 95vw; max-width: 95vw; border-radius: 12px; padding: 20px; }
+    .modal-overlay { align-items: flex-end; align-items: center; }
+    .friend-detail-body, .friend-profile-body { flex-direction: column; align-items: center; }
+    .friend-detail-preview { width: 180px; min-height: 280px; }
+    .friend-profile-preview { width: 160px; min-height: 260px; }
+    .profile-edit-layout { flex-direction: column; }
+    .profile-edit-right { width: 100%; }
+    .form-row-group { flex-direction: column; }
+    .btn { min-height: 44px; min-width: 44px; }
+    .form-input { font-size: 16px; }
 }
 
 .modal-overlay {
@@ -962,4 +986,39 @@ body select {
         width: 160px;
         min-height: 260px;
     }
+}
+
+.mobile-bottom-nav { display: none; }
+@media (max-width: 768px) {
+    .mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        box-shadow: 0 -2px 12px rgba(255,105,180,0.1);
+        z-index: 1000;
+        justify-content: space-around;
+        padding: 6px 0;
+        padding-bottom: max(6px, env(safe-area-inset-bottom));
+    }
+    .mobile-bottom-nav a {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 2px;
+        text-decoration: none;
+        color: #999;
+        font-size: 10px;
+        padding: 4px 8px;
+        transition: color 0.2s;
+    }
+    .mobile-bottom-nav a.active { color: #FF69B4; }
+    .mobile-bottom-nav a i { font-size: 18px; }
+    .admin-content { padding-bottom: 70px; }
+    .page-footer { padding-bottom: 80px; }
+    .sidebar { display: none !important; }
+    .texture-card-footer { flex-wrap: wrap; }
+    .friend-detail-modal { min-width: auto; max-width: 95vw; }
 }

@@ -25,6 +25,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class TextureDao {
     private final DatabaseManager db;
@@ -50,6 +51,23 @@ public class TextureDao {
         return querySingle("SELECT * FROM textures WHERE type = ? AND hash = ?", type, hash);
     }
 
+    public List<Texture> findAllByHash(String type, String hash) {
+        List<Texture> list = new ArrayList<>();
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM textures WHERE type = ? AND hash = ?")) {
+            ps.setString(1, type);
+            ps.setString(2, hash);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(Texture.fromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("TextureDao.findAllByHash failed: " + e.getMessage());
+        }
+        return list;
+    }
+
     public Texture findByUserAndHash(String userId, String type, String hash) {
         return querySingle("SELECT * FROM textures WHERE user_id = ? AND type = ? AND hash = ?", userId, type, hash);
     }
@@ -67,6 +85,45 @@ public class TextureDao {
             }
         } catch (SQLException e) {
             System.err.println("TextureDao.findByUserId failed: " + e.getMessage());
+        }
+        return list;
+    }
+
+    public List<Texture> findPublicTextures(String type, String afterCreatedAt, int limit) {
+        List<Texture> list = new ArrayList<>();
+        try (Connection conn = db.getConnection()) {
+            String orderExpr = "(SELECT COUNT(*) FROM texture_likes tl WHERE tl.texture_id = t.id) + (SELECT COUNT(*) FROM texture_favorites tf WHERE tf.texture_id = t.id) * 5";
+            String sql;
+            if (type != null && !type.isEmpty()) {
+                if (afterCreatedAt != null && !afterCreatedAt.isEmpty()) {
+                    sql = "SELECT t.* FROM textures t JOIN texture_visibility tv ON t.id = tv.texture_id WHERE tv.is_public = 1 AND t.type = ? AND t.created_at < ? ORDER BY " + orderExpr + " DESC, t.created_at DESC LIMIT ?";
+                } else {
+                    sql = "SELECT t.* FROM textures t JOIN texture_visibility tv ON t.id = tv.texture_id WHERE tv.is_public = 1 AND t.type = ? ORDER BY " + orderExpr + " DESC, t.created_at DESC LIMIT ?";
+                }
+            } else {
+                if (afterCreatedAt != null && !afterCreatedAt.isEmpty()) {
+                    sql = "SELECT t.* FROM textures t JOIN texture_visibility tv ON t.id = tv.texture_id WHERE tv.is_public = 1 AND t.created_at < ? ORDER BY " + orderExpr + " DESC, t.created_at DESC LIMIT ?";
+                } else {
+                    sql = "SELECT t.* FROM textures t JOIN texture_visibility tv ON t.id = tv.texture_id WHERE tv.is_public = 1 ORDER BY " + orderExpr + " DESC, t.created_at DESC LIMIT ?";
+                }
+            }
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                int idx = 1;
+                if (type != null && !type.isEmpty()) {
+                    ps.setString(idx++, type);
+                }
+                if (afterCreatedAt != null && !afterCreatedAt.isEmpty()) {
+                    ps.setString(idx++, afterCreatedAt);
+                }
+                ps.setInt(idx, limit);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        list.add(Texture.fromResultSet(rs));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("TextureDao.findPublicTextures failed: " + e.getMessage());
         }
         return list;
     }
@@ -141,6 +198,10 @@ public class TextureDao {
 
     public void updateAlias(String id, String alias) {
         db.executeUpdate("UPDATE textures SET alias = ? WHERE id = ?", alias, id);
+    }
+
+    public List<Map<String, Object>> queryRaw(String sql, Object... params) {
+        return db.executeQuery(sql, params);
     }
 
     private Texture querySingle(String sql, Object... params) {

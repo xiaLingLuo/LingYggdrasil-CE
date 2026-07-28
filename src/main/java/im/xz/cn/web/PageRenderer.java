@@ -96,6 +96,13 @@ public class PageRenderer {
             <a href="/admin" class="nav-link %s">管理后台</a>
             """.formatted("admin".equals(currentPage) ? "active" : "") : "";
 
+        String worldLink = "";
+        if (!isAdmin) {
+            worldLink = """
+            <a href="/world" class="nav-link">材质库</a>
+            """;
+        }
+
         return """
             <nav class="navbar">
                 <div class="navbar-inner">
@@ -106,11 +113,13 @@ public class PageRenderer {
                     <div class="navbar-links">
                         <a href="/" class="nav-link %s">首页</a>
                         %s
+                        %s
                     </div>
                 </div>
             </nav>
             """.formatted(escapeHtml(siteName),
                 "home".equals(currentPage) ? "active" : "",
+                worldLink,
                 adminLink);
     }
 

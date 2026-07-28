@@ -27,6 +27,7 @@ public class Shared {
         String profActive = "profiles".equals(currentPage) ? "active" : "";
         String skinActive = "skins".equals(currentPage) ? "active" : "";
         String capeActive = "capes".equals(currentPage) ? "active" : "";
+        String sharedActive = "shared".equals(currentPage) ? "active" : "";
         String friendsActive = "friends".equals(currentPage) ? "active" : "";
         String setActive = "settings".equals(currentPage) ? "active" : "";
         return """
@@ -40,12 +41,13 @@ public class Shared {
                     <a href="/profiles" class="sidebar-item %s"><span><i class="fas fa-users"></i> 角色管理</span></a>
                     <a href="/skins" class="sidebar-item %s"><span><i class="fas fa-shirt"></i> 我的皮肤</span></a>
                     <a href="/capes" class="sidebar-item %s"><span><i class="fas fa-vest-patches"></i> 我的披风</span></a>
+                    <a href="/shared" class="sidebar-item %s"><span><i class="fas fa-share-nodes"></i> 共享材质</span></a>
                     <a href="/friends" class="sidebar-item %s"><span><i class="fas fa-user-group"></i> 好友</span></a>
                     <a href="/settings" class="sidebar-item %s"><span><i class="fas fa-gear"></i> 设置</span></a>
                     <a href="/logout" class="sidebar-item"><span><i class="fas fa-right-from-bracket"></i> 登出</span></a>
                 </div>
             </aside>
-            """.formatted(dashActive, profActive, skinActive, capeActive, friendsActive, setActive);
+            """.formatted(dashActive, profActive, skinActive, capeActive, sharedActive, friendsActive, setActive);
     }
 
     public static String buildUserLayout(String siteName, String currentPage, String content, String jsName) {
