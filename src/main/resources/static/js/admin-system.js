@@ -96,6 +96,7 @@ function setElValue(el, value) {
         setElValue(document.getElementById('maxProfilesPerUser'), s.maxProfilesPerUser);
         setElValue(document.getElementById('maxAccountsPerIp'), s.maxAccountsPerIp);
         setElValue(document.getElementById('maxBlockedUsers'), s.maxBlockedUsers);
+        setElValue(document.getElementById('maxFavorites'), s.maxFavorites);
         setElValue(document.getElementById('announcementMode'), s.announcementMode || 'off');
         setElValue(document.getElementById('announcementScope'), s.announcementScope || 'user');
         setElValue(document.getElementById('announcementContent'), s.announcementContent || '');

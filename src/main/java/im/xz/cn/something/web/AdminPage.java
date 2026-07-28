@@ -88,8 +88,21 @@ public class AdminPage {
                             <div class="sidebar-user-info">
                                 <div class="sidebar-username">%s</div>
                                 <div class="sidebar-role">%s</div>
-                            </div>
+                </div>
+            </div>
+            <div class="settings-card card">
+                <div class="card-header"><h3 class="card-title">收藏设置</h3></div>
+                <div class="card-body">
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">收藏数量上限</div>
+                            <div class="setting-desc">每人可收藏的材质数量上限（0=禁用收藏，-1=不限制）</div>
                         </div>
+                        <input type="number" class="form-input setting-input" id="maxFavorites" data-setting-key="max_favorites" value="32" min="-1" max="1000" style="width:120px">
+                    </div>
+                    <button class="btn btn-primary" onclick="saveSection(this)" style="margin-top:16px">保存</button>
+                </div>
+            </div>
                         <a href="/admin/logout" class="sidebar-link sidebar-logout">
                             <span class="sidebar-link-icon"><i class="fas fa-right-from-bracket"></i></span>
                             <span>登出</span>

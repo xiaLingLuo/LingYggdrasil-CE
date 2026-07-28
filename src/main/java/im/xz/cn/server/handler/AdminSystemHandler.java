@@ -95,6 +95,7 @@ public class AdminSystemHandler {
         settings.put("maxProfilesPerUser", systemConfig.getMaxProfilesPerUser());
         settings.put("maxAccountsPerIp", systemConfig.getMaxAccountsPerIp());
         settings.put("maxBlockedUsers", systemConfig.getMaxBlockedUsers());
+        settings.put("maxFavorites", systemConfig.getMaxFavorites());
         settings.put("announcementMode", systemConfig.getAnnouncementMode());
         settings.put("announcementScope", systemConfig.getAnnouncementScope());
         settings.put("announcementContent", systemConfig.getAnnouncementContent());
@@ -224,6 +225,15 @@ public class AdminSystemHandler {
                     return;
                 }
                 systemConfig.setMaxBlockedUsers(blocked);
+                break;
+            case "max_favorites":
+                int favs = Integer.parseInt(value);
+                if (favs < -1 || favs > 1000) {
+                    ctx.status(400);
+                    ctx.json(Map.of("success", false, "message", "收藏上限范围为 -1~1000"));
+                    return;
+                }
+                systemConfig.setMaxFavorites(favs);
                 break;
             case "announcement_mode":
                 if (!value.matches("off|toast|modal|top|top_force")) {
