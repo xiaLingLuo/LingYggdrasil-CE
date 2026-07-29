@@ -48,25 +48,34 @@ var shared = (function() {
             var data = await resp.json();
             if (!data.success) { showToast('加载失败', 'error'); return; }
 
-            renderSection(data.friendShared || [], 'friendSharedGrid', '暂无好友共享的材质');
-            renderSection(data.favorites || [], 'myFavoritesGrid', '暂无收藏的材质');
+            var friendTex = (data.friendShared || []).map(function(t) { t.source = 'friend'; return t; });
+            var favTex = (data.favorites || []).map(function(t) { t.source = 'favorite'; return t; });
+            var seen = {};
+            var all = [];
+            friendTex.concat(favTex).forEach(function(t) {
+                if (!seen[t.id]) { seen[t.id] = true; all.push(t); }
+            });
+            renderAll(all);
         } catch (err) {
             showToast('网络错误', 'error');
         }
     }
 
-    function renderSection(textures, gridId, emptyMsg) {
-        var grid = document.getElementById(gridId);
+    function renderAll(textures) {
+        var grid = document.getElementById('sharedGrid');
         if (!grid) return;
 
         if (!textures || textures.length === 0) {
-            grid.innerHTML = '<p class="text-muted" style="grid-column:1/-1">' + emptyMsg + '</p>';
+            grid.innerHTML = '<p class="text-muted" style="grid-column:1/-1">暂无共享材质</p>';
             return;
         }
 
         grid.innerHTML = '';
         textures.forEach(function(t) {
             var displayName = t.favoriteAlias || t.alias || t.originalName || t.hash;
+            var isFriend = t.source === 'friend';
+            var badgeColor = isFriend ? '#5897fb' : '#0bda51';
+            var badgeLabel = isFriend ? '\u597D\u53CB' : '\u6536\u85CF';
             var card = document.createElement('div');
             card.className = 'texture-item card-animate texture-card-clickable';
             card.setAttribute('data-id', t.id);
@@ -77,7 +86,8 @@ var shared = (function() {
             card.innerHTML =
                 '<div class="texture-thumb"><canvas></canvas></div>' +
                 '<div class="texture-name">' + escapeHtml(displayName) + '</div>' +
-                '<div class="texture-meta">' + (t.ownerName ? escapeHtml(t.ownerName) + ' &middot; ' : '') + (t.type === 'CAPE' ? '披风' : '皮肤') + '</div>';
+                '<div class="texture-meta">' + (t.ownerName ? escapeHtml(t.ownerName) + ' &middot; ' : '') + (t.type === 'CAPE' ? '\u62AB\u98CE' : '\u76AE\u80A4') + '</div>' +
+                '<span style="position:absolute;top:8px;right:8px;font-size:10px;padding:1px 6px;border-radius:8px;border:1px solid ' + badgeColor + ';color:' + badgeColor + '">' + badgeLabel + '</span>';
 
             card.addEventListener('click', function() {
                 showSharedDetail(t);
@@ -97,6 +107,8 @@ var shared = (function() {
         if (existing) existing.remove();
 
         var displayName = t.favoriteAlias || t.alias || t.originalName || t.hash;
+        var isFriend = t.source === 'friend';
+        var sourceLabel = isFriend ? ('\u6765\u81EA ' + (t.ownerName || '\u597D\u53CB')) : ('\u6765\u81EA ' + (t.ownerName || '\u6750\u8D28\u5E93'));
 
         var overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -107,9 +119,9 @@ var shared = (function() {
         box.innerHTML =
             '<button class="modal-close-btn">&times;</button>' +
             '<div class="detail-alias">' + escapeHtml(displayName) + '</div>' +
-            '<div class="detail-meta">' + (t.ownerName ? escapeHtml(t.ownerName) + ' &middot; ' : '') + (t.type === 'CAPE' ? '披风' : '皮肤') + '</div>' +
+            '<div class="detail-meta">' + escapeHtml(sourceLabel) + ' &middot; ' + (t.type === 'CAPE' ? '\u62AB\u98CE' : '\u76AE\u80A4') + '</div>' +
             '<div class="detail-preview"><canvas id="shared3dCanvas"></canvas></div>' +
-            '<div class="form-group" style="text-align:left"><label class="form-label">别名</label>' +
+            '<div class="form-group" style="text-align:left"><label class="form-label">\u522B\u540D</label>' +
             '<input type="text" class="form-input" id="sharedAliasInput" value="' + escapeHtml(t.favoriteAlias || t.alias || '') + '">' +
             '</div>' +
             '<div id="aliasMsg" class="msg-area"></div>' +
@@ -141,21 +153,33 @@ var shared = (function() {
 
         var actionsDiv = box.querySelector('#sharedDetailActions');
 
-        var saveAliasBtn = document.createElement('button');
-        saveAliasBtn.className = 'btn btn-primary';
-        saveAliasBtn.textContent = '保存别名';
-        saveAliasBtn.addEventListener('click', function() {
-            saveAlias(t.id, document.getElementById('sharedAliasInput').value.trim());
-        });
-        actionsDiv.appendChild(saveAliasBtn);
+        if (!isFriend) {
+            var saveAliasBtn = document.createElement('button');
+            saveAliasBtn.className = 'btn btn-primary';
+            saveAliasBtn.textContent = '\u4FDD\u5B58\u522B\u540D';
+            saveAliasBtn.addEventListener('click', function() {
+                saveAlias(t.id, document.getElementById('sharedAliasInput').value.trim());
+            });
+            actionsDiv.appendChild(saveAliasBtn);
+        }
 
-        var unfavBtn = document.createElement('button');
-        unfavBtn.className = 'btn btn-danger';
-        unfavBtn.textContent = '取消收藏';
-        unfavBtn.addEventListener('click', function() {
-            removeFavorite(t.id);
-        });
-        actionsDiv.appendChild(unfavBtn);
+        if (isFriend) {
+            var returnBtn = document.createElement('button');
+            returnBtn.className = 'btn btn-danger';
+            returnBtn.textContent = '\u8FD4\u8FD8';
+            returnBtn.addEventListener('click', function() {
+                returnShared(t.id);
+            });
+            actionsDiv.appendChild(returnBtn);
+        } else {
+            var unfavBtn = document.createElement('button');
+            unfavBtn.className = 'btn btn-danger';
+            unfavBtn.textContent = '\u53D6\u6D88\u6536\u85CF';
+            unfavBtn.addEventListener('click', function() {
+                removeFavorite(t.id);
+            });
+            actionsDiv.appendChild(unfavBtn);
+        }
 
         box.querySelector('.modal-close-btn').addEventListener('click', closeDetail);
         overlay.addEventListener('click', function(e) { if (e.target === overlay) closeDetail(); });
@@ -193,6 +217,26 @@ var shared = (function() {
             var data = await resp.json();
             if (data.success) {
                 showToast('已取消收藏', 'success');
+                closeDetail();
+                loadShared();
+            } else {
+                showToast(data.message || '操作失败', 'error');
+            }
+        } catch (err) {
+            showToast('网络错误', 'error');
+        }
+    }
+
+    async function returnShared(textureId) {
+        try {
+            var resp = await fetch('/api/friends/return-texture', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
+                body: JSON.stringify({ textureId: textureId })
+            });
+            var data = await resp.json();
+            if (data.success) {
+                showToast('已返还', 'success');
                 closeDetail();
                 loadShared();
             } else {

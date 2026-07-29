@@ -519,8 +519,8 @@ public class UserDashboardHandler {
     public void handleMyTextures(Context ctx) {
         User user = checkAuth(ctx);
         if (user == null) return;
-        List<Texture> skins = textureDao.findByUserId(user.getId(), "SKIN");
-        List<Texture> capes = textureDao.findByUserId(user.getId(), "CAPE");
+        List<Texture> skins = textureDao.findSelfUploaded(user.getId(), "SKIN");
+        List<Texture> capes = textureDao.findSelfUploaded(user.getId(), "CAPE");
 
         java.util.List<java.util.Map<String, Object>> favoriteSkins = new java.util.ArrayList<>();
         java.util.List<java.util.Map<String, Object>> favoriteCapes = new java.util.ArrayList<>();
@@ -583,13 +583,11 @@ public class UserDashboardHandler {
     }
 
     private boolean canReferenceTexture(User user, String type, String hash) {
+        if (textureDao.hasReference(user.getId(), type, hash)) return true;
         List<Texture> textures = textureDao.findAllByHash(type, hash);
-        if (textures.isEmpty()) return false;
         for (Texture tex : textures) {
-            String ownerId = tex.getUserId();
-            if (ownerId.equals(user.getId())) return true;
-            if (visibilityDao.isPublic(ownerId, tex.getId())) return true;
-            if (friendSharedDao.exists(ownerId, user.getId(), tex.getId())) return true;
+            if (visibilityDao.isPublic(tex.getUserId(), tex.getId())) return true;
+            if (friendSharedDao.exists(tex.getUserId(), user.getId(), tex.getId())) return true;
         }
         return false;
     }

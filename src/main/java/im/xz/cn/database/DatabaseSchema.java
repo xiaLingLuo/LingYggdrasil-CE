@@ -44,6 +44,7 @@ public class DatabaseSchema {
         migrateTextureFavorites(db);
         migrateTextureVisibility(db);
         migrateFriendSharedTextures(db);
+        migrateTextureReferenceType(db);
     }
 
     private static void migrateYggdrasilToken(DatabaseManager db) {
@@ -157,6 +158,9 @@ public class DatabaseSchema {
                                 + "size INTEGER,"
                                 + "content_type TEXT,"
                                 + "created_at TEXT NOT NULL,"
+                                + "reference_type TEXT DEFAULT 'self',"
+                                + "ref_owner_id TEXT,"
+                                + "ref_created_at TEXT,"
                                 + "UNIQUE(user_id, type, hash)"
                                 + ")");
                         db.executeUpdate("INSERT INTO textures_new SELECT * FROM textures");
@@ -264,6 +268,39 @@ public class DatabaseSchema {
         } catch (Exception ignored) {}
     }
 
+    private static void migrateTextureReferenceType(DatabaseManager db) {
+        try {
+            String sql = switch (db.getDbType()) {
+                case "mysql" -> "ALTER TABLE textures ADD COLUMN reference_type VARCHAR(10) DEFAULT 'self'";
+                case "pgsql" -> "ALTER TABLE textures ADD COLUMN reference_type TEXT DEFAULT 'self'";
+                default -> "ALTER TABLE textures ADD COLUMN reference_type TEXT DEFAULT 'self'";
+            };
+            try (Connection conn = db.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute(sql);
+            }
+        } catch (Exception ignored) {}
+        try {
+            String sql = switch (db.getDbType()) {
+                case "mysql" -> "ALTER TABLE textures ADD COLUMN ref_owner_id VARCHAR(36)";
+                case "pgsql" -> "ALTER TABLE textures ADD COLUMN ref_owner_id TEXT";
+                default -> "ALTER TABLE textures ADD COLUMN ref_owner_id TEXT";
+            };
+            try (Connection conn = db.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute(sql);
+            }
+        } catch (Exception ignored) {}
+        try {
+            String sql = switch (db.getDbType()) {
+                case "mysql" -> "ALTER TABLE textures ADD COLUMN ref_created_at DATETIME";
+                case "pgsql" -> "ALTER TABLE textures ADD COLUMN ref_created_at TIMESTAMP";
+                default -> "ALTER TABLE textures ADD COLUMN ref_created_at TEXT";
+            };
+            try (Connection conn = db.getConnection(); Statement stmt = conn.createStatement()) {
+                stmt.execute(sql);
+            }
+        } catch (Exception ignored) {}
+    }
+
     private static void initializeSQLite(DatabaseManager db) {
         db.executeRaw("""
             CREATE TABLE IF NOT EXISTS admins (
@@ -345,6 +382,9 @@ public class DatabaseSchema {
                 size INTEGER,
                 content_type TEXT,
                 created_at TEXT NOT NULL,
+                reference_type TEXT DEFAULT 'self',
+                ref_owner_id TEXT,
+                ref_created_at TEXT,
                 UNIQUE(user_id, type, hash)
             )
         """);
@@ -513,6 +553,9 @@ public class DatabaseSchema {
                 size BIGINT,
                 content_type VARCHAR(100),
                 created_at DATETIME NOT NULL,
+                reference_type VARCHAR(10) DEFAULT 'self',
+                ref_owner_id VARCHAR(36),
+                ref_created_at DATETIME,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
                 UNIQUE KEY uk_user_type_hash (user_id, type, hash)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
@@ -695,6 +738,9 @@ public class DatabaseSchema {
                 size BIGINT,
                 content_type TEXT,
                 created_at TIMESTAMP NOT NULL,
+                reference_type TEXT DEFAULT 'self',
+                ref_owner_id TEXT,
+                ref_created_at TIMESTAMP,
                 UNIQUE(user_id, type, hash)
             )
         """);

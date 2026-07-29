@@ -295,6 +295,7 @@ body select {
     transition: all 0.3s ease;
     border: 1px solid #FFD6E8;
     text-align: center;
+    position: relative;
 }
 .texture-item:hover {
     box-shadow: 0 6px 20px rgba(255,105,180,0.15);
@@ -479,7 +480,7 @@ body select {
     .sidebar { display: none; }
     .admin-layout { flex-direction: column; padding: 0 12px; }
     .modal-box { width: 95vw; max-width: 95vw; border-radius: 12px; padding: 20px; }
-    .modal-overlay { align-items: flex-end; align-items: center; }
+    .modal-overlay { align-items: center; }
     .friend-detail-body, .friend-profile-body { flex-direction: column; align-items: center; }
     .friend-detail-preview { width: 180px; min-height: 280px; }
     .friend-profile-preview { width: 160px; min-height: 260px; }

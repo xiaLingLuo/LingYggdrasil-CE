@@ -64,7 +64,9 @@ public class Shared {
 
     public static String csrfInject(String csrfToken) {
         if (csrfToken == null) return "";
-        return "<meta name=\"csrf-token\" content=\"" + csrfToken + "\"><script>window.CSRF_TOKEN='" + csrfToken + "';</script>";
+        String safeToken = esc(csrfToken);
+        String jsToken = csrfToken.replace("\\", "\\\\").replace("'", "\\'");
+        return "<meta name=\"csrf-token\" content=\"" + safeToken + "\"><script>window.CSRF_TOKEN='" + jsToken + "';</script>";
     }
 
     public static String esc(String s) {

@@ -25,6 +25,7 @@ import im.xz.cn.database.*;
 import im.xz.cn.model.PlayerProfile;
 import im.xz.cn.model.Texture;
 import im.xz.cn.model.User;
+import im.xz.cn.model.enums.UserRole;
 import im.xz.cn.something.web.UserPage;
 import im.xz.cn.util.TextureService;
 import im.xz.cn.util.UuidUtil;
@@ -292,6 +293,7 @@ public class UserFriendHandler {
                 return;
             }
             friendDao.deleteFriend(user.getId(), friendId);
+            textureDao.deleteFriendRefs(user.getId(), friendId);
             ctx.json(Map.of("success", true, "message", "好友已删除"));
         } catch (Exception e) {
             ctx.json(Map.of("success", false, "message", "请求格式错误"));
@@ -322,6 +324,7 @@ public class UserFriendHandler {
                 return;
             }
             blockDao.block(user.getId(), targetId);
+            textureDao.deleteAllRefsBetweenUsers(user.getId(), targetId);
             // Clean up any pending request with this person
             var pending = confirmingDao.findByUser(user.getId());
             for (var p : pending) {
@@ -396,18 +399,14 @@ public class UserFriendHandler {
             return;
         }
         String userId = SessionManager.getUserId(ctx);
-        java.util.List<Texture> textures = textureDao.findAllByHash(type, hash);
         boolean allowed = false;
+        java.util.List<Texture> textures = textureDao.findAllByHash(type, hash);
         for (Texture t : textures) {
             if (visibilityDao.isPublic(t.getUserId(), t.getId())) {
                 allowed = true;
                 break;
             }
-            if (userId != null && t.getUserId().equals(userId)) {
-                allowed = true;
-                break;
-            }
-            if (userId != null && friendSharedDao.exists(t.getUserId(), userId, t.getId())) {
+            if (userId != null && textureDao.hasReference(userId, type, hash)) {
                 allowed = true;
                 break;
             }
@@ -434,7 +433,7 @@ public class UserFriendHandler {
             return null;
         }
         User user = userDao.findById(userId);
-        if (user == null) {
+        if (user == null || user.getRole() == UserRole.BANNED) {
             SessionManager.invalidate(ctx);
             ctx.redirect("/login");
             return null;

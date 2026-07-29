@@ -51,6 +51,32 @@ public class CacheDao {
         }
     }
 
+    public boolean putIfAbsent(String key, String value, String type, int ttlSeconds) {
+        String now = TimeUtil.now();
+        String expiresAt = TimeUtil.plusSeconds(ttlSeconds);
+
+        String dbType = db.getDbType();
+        int affected;
+        if ("mysql".equalsIgnoreCase(dbType)) {
+            affected = db.executeUpdate(
+                "INSERT IGNORE INTO cache_store (cache_key, cache_value, cache_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?)",
+                key, value, type, now, expiresAt
+            );
+        } else if ("pgsql".equalsIgnoreCase(dbType)) {
+            affected = db.executeUpdate(
+                "INSERT INTO cache_store (cache_key, cache_value, cache_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?) " +
+                "ON CONFLICT (cache_key) DO NOTHING",
+                key, value, type, now, expiresAt
+            );
+        } else {
+            affected = db.executeUpdate(
+                "INSERT OR IGNORE INTO cache_store (cache_key, cache_value, cache_type, created_at, expires_at) VALUES (?, ?, ?, ?, ?)",
+                key, value, type, now, expiresAt
+            );
+        }
+        return affected > 0;
+    }
+
     public String get(String key) {
         String now = TimeUtil.now();
         var result = db.executeQuerySingle(
@@ -86,5 +112,21 @@ public class CacheDao {
             return ((Number) result.get("cnt")).intValue() > 0;
         }
         return false;
+    }
+
+    public int incrementAndGet(String key, String type, int ttlSeconds) {
+        String now = TimeUtil.now();
+        String castType = "mysql".equalsIgnoreCase(db.getDbType()) ? "SIGNED" : "INTEGER";
+        int affected = db.executeUpdate("UPDATE cache_store SET cache_value = CAST(cache_value AS " + castType + ") + 1 WHERE cache_key = ? AND expires_at > ?", key, now);
+        if (affected == 0) {
+            if (putIfAbsent(key, "1", type, ttlSeconds)) return 1;
+            affected = db.executeUpdate("UPDATE cache_store SET cache_value = CAST(cache_value AS " + castType + ") + 1 WHERE cache_key = ? AND expires_at > ?", key, now);
+        }
+        String val = get(key);
+        try {
+            return (val != null) ? Integer.parseInt(val) : 1;
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 }

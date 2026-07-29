@@ -82,15 +82,19 @@ function showToast(message, type) {
                 data.skins.forEach(function(s) {
                     var displayName = s.alias || s.originalName || s.hash;
                     var previewUrl = '/api/skins/download?id=' + encodeURIComponent(s.id);
+                    var visColor = s.isPublic ? '#0bda51' : '#5897fb';
+                    var visLabel = s.isPublic ? '\u516C\u5F00' : '\u79C1\u6709';
                     html += '<div class="texture-item card-animate texture-card-clickable" id="skin-' + escapeHtml(s.id) + '"' +
                         ' data-id="' + escAttr(s.id) + '"' +
                         ' data-alias="' + escAttr(s.alias || '') + '"' +
                         ' data-original-name="' + escAttr(s.originalName || '') + '"' +
                         ' data-hash="' + escAttr(s.hash) + '"' +
-                        ' data-size="' + escAttr(String(s.size)) + '">' +
+                        ' data-size="' + escAttr(String(s.size)) + '"' +
+                        ' data-vis="' + (s.isPublic ? '1' : '0') + '">' +
                         '<div class="texture-thumb"><canvas></canvas></div>' +
                         '<div class="texture-name">\u273F ' + escapeHtml(displayName) + '</div>' +
                         '<div class="texture-meta">' + formatSize(s.size) + '</div>' +
+                        '<span style="position:absolute;top:8px;right:8px;font-size:10px;padding:1px 6px;border-radius:8px;border:1px solid ' + visColor + ';color:' + visColor + '">' + visLabel + '</span>' +
                         '</div>';
                 });
                 html += '';
@@ -472,9 +476,13 @@ function showToast(message, type) {
             var data = await resp.json();
             if (!data.success) {
                 showToast(data.message || '\u64CD\u4F5C\u5931\u8D25', 'error');
+                var cb = document.getElementById('visCheckbox-' + id);
+                if (cb) cb.checked = !isPublic;
             }
         } catch (err) {
             showToast('\u7F51\u7EDC\u9519\u8BEF', 'error');
+            var cb = document.getElementById('visCheckbox-' + id);
+            if (cb) cb.checked = !isPublic;
         }
     };
 

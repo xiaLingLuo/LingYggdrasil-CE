@@ -130,6 +130,16 @@ public class ProfileDao {
         db.executeUpdate("UPDATE player_profiles SET skin_url = NULL, cape_url = NULL, skin_model = ? WHERE id = ?", "default", id);
     }
 
+    public void clearTextureRefByHash(String userId, String type, String hash) {
+        String col = "SKIN".equalsIgnoreCase(type) ? "skin_url" : "cape_url";
+        db.executeUpdate("UPDATE player_profiles SET " + col + " = NULL WHERE user_id = ? AND " + col + " LIKE ?", userId, "%/textures/" + type.toUpperCase() + "/" + hash);
+    }
+
+    public void clearTextureRefByHashForAll(String type, String hash, String excludeUserId) {
+        String col = "SKIN".equalsIgnoreCase(type) ? "skin_url" : "cape_url";
+        db.executeUpdate("UPDATE player_profiles SET " + col + " = NULL WHERE user_id != ? AND " + col + " LIKE ?", excludeUserId, "%/textures/" + type.toUpperCase() + "/" + hash);
+    }
+
     public void updateUserId(String id, String newUserId) {
         db.executeUpdate("UPDATE player_profiles SET user_id = ? WHERE id = ?", newUserId, id);
     }

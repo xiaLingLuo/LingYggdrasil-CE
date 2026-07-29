@@ -30,6 +30,20 @@ public class Texture {
     private long size;
     private String contentType;
     private String createdAt;
+    /*
+     * reference_type 仅代表材质的引用来源，与权限管理无关。
+     *   self   — 来自自己上传
+     *   friend — 来自好友共享
+     *   public — 来自公共材质库收藏
+     *
+     * 无论何种引用类型，使用者只能操作自己这个引用的"副本"：
+     *   - 可以修改自己的别名
+     *   - 拥有对该材质文件的访问权
+     *   - 不能直接对原始材质文件进行任何变更
+     */
+    private String referenceType;
+    private String refOwnerId;
+    private String refCreatedAt;
 
     public Texture() {}
 
@@ -44,10 +58,11 @@ public class Texture {
         this.size = size;
         this.contentType = contentType;
         this.createdAt = createdAt;
+        this.referenceType = "self";
     }
 
     public static Texture fromResultSet(ResultSet rs) throws SQLException {
-        return new Texture(
+        Texture t = new Texture(
             rs.getString("id"),
             rs.getString("user_id"),
             rs.getString("type"),
@@ -58,6 +73,10 @@ public class Texture {
             rs.getString("content_type"),
             rs.getString("created_at")
         );
+        try { t.setReferenceType(rs.getString("reference_type")); } catch (SQLException ignored) {}
+        try { t.setRefOwnerId(rs.getString("ref_owner_id")); } catch (SQLException ignored) {}
+        try { t.setRefCreatedAt(rs.getString("ref_created_at")); } catch (SQLException ignored) {}
+        return t;
     }
 
     public String getId() { return id; }
@@ -86,4 +105,13 @@ public class Texture {
 
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public String getReferenceType() { return referenceType; }
+    public void setReferenceType(String referenceType) { this.referenceType = referenceType; }
+
+    public String getRefOwnerId() { return refOwnerId; }
+    public void setRefOwnerId(String refOwnerId) { this.refOwnerId = refOwnerId; }
+
+    public String getRefCreatedAt() { return refCreatedAt; }
+    public void setRefCreatedAt(String refCreatedAt) { this.refCreatedAt = refCreatedAt; }
 }

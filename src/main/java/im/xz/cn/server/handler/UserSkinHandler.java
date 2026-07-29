@@ -25,6 +25,7 @@ import im.xz.cn.database.TextureVisibilityDao;
 import im.xz.cn.database.UserDao;
 import im.xz.cn.model.Texture;
 import im.xz.cn.model.User;
+import im.xz.cn.model.enums.UserRole;
 import im.xz.cn.util.TextureService;
 import im.xz.cn.util.TimeUtil;
 import im.xz.cn.something.web.UserPage;
@@ -61,7 +62,7 @@ public class UserSkinHandler {
     public void getSkins(Context ctx) {
         User user = checkAuth(ctx);
         if (user == null) return;
-        List<Texture> skins = textureDao.findByUserId(user.getId(), "SKIN");
+        List<Texture> skins = textureDao.findSelfUploaded(user.getId(), "SKIN");
         ctx.json(Map.of("success", true, "skins", skins.stream().map(t -> {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", t.getId());
@@ -254,7 +255,7 @@ public class UserSkinHandler {
             return null;
         }
         User user = userDao.findById(userId);
-        if (user == null) {
+        if (user == null || user.getRole() == UserRole.BANNED) {
             SessionManager.invalidate(ctx);
             ctx.redirect("/login");
             return null;

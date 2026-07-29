@@ -318,7 +318,8 @@ var world = (function() {
         dlBtn.textContent = '下载';
         dlBtn.addEventListener('click', function() {
             if (!window.CSRF_TOKEN) { showToast('请先登录，正在跳转到注册页...', 'info'); setTimeout(function(){window.location.href='/register'}, 3000); return; }
-            window.open('/api/skins/download?id=' + encodeURIComponent(t.id), '_blank');
+            var dlUrL = t.type === 'CAPE' ? '/api/capes/download?id=' : '/api/skins/download?id=';
+            window.open(dlUrL + encodeURIComponent(t.id), '_blank');
         });
         actionsDiv.appendChild(dlBtn);
 

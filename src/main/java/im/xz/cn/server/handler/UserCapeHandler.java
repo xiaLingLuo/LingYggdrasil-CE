@@ -25,6 +25,7 @@ import im.xz.cn.database.TextureVisibilityDao;
 import im.xz.cn.database.UserDao;
 import im.xz.cn.model.Texture;
 import im.xz.cn.model.User;
+import im.xz.cn.model.enums.UserRole;
 import im.xz.cn.util.TextureService;
 import im.xz.cn.util.TimeUtil;
 import im.xz.cn.something.web.UserPage;
@@ -61,7 +62,7 @@ public class UserCapeHandler {
     public void getCapes(Context ctx) {
         User user = checkAuth(ctx);
         if (user == null) return;
-        List<Texture> capes = textureDao.findByUserId(user.getId(), "CAPE");
+        List<Texture> capes = textureDao.findSelfUploaded(user.getId(), "CAPE");
         ctx.json(Map.of("success", true, "capes", capes.stream().map(t -> {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", t.getId());
@@ -254,7 +255,7 @@ public class UserCapeHandler {
             return null;
         }
         User user = userDao.findById(userId);
-        if (user == null) {
+        if (user == null || user.getRole() == UserRole.BANNED) {
             SessionManager.invalidate(ctx);
             ctx.redirect("/login");
             return null;

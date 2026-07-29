@@ -43,6 +43,8 @@ import im.xz.cn.server.handler.UserWorldHandler;
 import im.xz.cn.something.web.UserAuth;
 import im.xz.cn.something.web.Shared;
 import im.xz.cn.util.FooterInfo;
+import im.xz.cn.util.IpUtil;
+import im.xz.cn.util.RateLimiter;
 import im.xz.cn.util.TextureService;
 
 import io.javalin.Javalin;
@@ -84,6 +86,7 @@ public class UserServer {
         UserFriendHandler friendHandler = new UserFriendHandler(userDao, profileDao, friendDao, confirmingDao, blockDao, textureService, sysConfig, textureDao, visibilityDao, friendSharedDao);
         TextureLikeDao likeDao = new TextureLikeDao(db);
         UserWorldHandler worldHandler = new UserWorldHandler(userDao, profileDao, textureDao, likeDao, favoriteDao, visibilityDao, friendSharedDao, friendDao, textureService, sysConfig);
+        RateLimiter rateLimiter = new RateLimiter(cacheDao);
 
         app = Javalin.create(config -> {
             config.http.defaultContentType = "text/html; charset=utf-8";
@@ -143,6 +146,29 @@ public class UserServer {
                         ctx.redirect("/email-required");
                     }
                     ctx.skipRemainingHandlers();
+                }
+            });
+
+            config.routes.before(ctx -> {
+                String path = ctx.path();
+                String method = ctx.method().name();
+                String userId = SessionManager.getUserId(ctx);
+                String key = (userId != null ? userId : IpUtil.getClientIp(ctx)) + ":" + method + ":" + path;
+
+                if (method.equals("GET")) {
+                    Integer maxReq = RateLimiter.getRateLimit(path);
+                    if (maxReq != null && !rateLimiter.checkRate(key, maxReq, 60000)) {
+                        ctx.status(429);
+                        ctx.json(Map.of("success", false, "message", "操作过于频繁，请稍后再试"));
+                        ctx.skipRemainingHandlers();
+                    }
+                } else if (method.equals("POST")) {
+                    Integer interval = RateLimiter.getInterval(method, path);
+                    if (interval != null && !rateLimiter.check(key, interval)) {
+                        ctx.status(429);
+                        ctx.json(Map.of("success", false, "message", "操作过于频繁，请稍后再试"));
+                        ctx.skipRemainingHandlers();
+                    }
                 }
             });
 
@@ -237,6 +263,7 @@ public class UserServer {
             config.routes.get("/api/friends/{friendId}/my-shared", worldHandler::getMySharedToFriend);
             config.routes.post("/api/friends/share-texture", worldHandler::shareToFriend);
             config.routes.post("/api/friends/unshare-texture", worldHandler::unshareFromFriend);
+            config.routes.post("/api/friends/return-texture", worldHandler::returnSharedTexture);
 
             config.routes.post("/api/login", authHandler::handleLogin);
             config.routes.post("/api/register", authHandler::handleRegister);

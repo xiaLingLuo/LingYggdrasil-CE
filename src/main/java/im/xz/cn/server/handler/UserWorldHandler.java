@@ -27,6 +27,7 @@ import im.xz.cn.model.User;
 import im.xz.cn.model.enums.UserRole;
 import im.xz.cn.something.web.UserPage;
 import im.xz.cn.util.TextureService;
+import im.xz.cn.util.TimeUtil;
 
 import io.javalin.http.Context;
 
@@ -85,7 +86,8 @@ public class UserWorldHandler {
         try {
             String limitParam = ctx.queryParam("limit");
             if (limitParam != null) {
-                limit = Math.min(Integer.parseInt(limitParam), 50);
+                int parsed = Integer.parseInt(limitParam);
+                if (parsed > 0) limit = Math.min(parsed, 50);
             }
         } catch (NumberFormatException ignored) {}
 
@@ -200,6 +202,8 @@ public class UserWorldHandler {
             }
             boolean favorited = favoriteDao.exists(user.getId(), textureId);
             if (favorited) {
+                textureDao.deleteAnyRef(user.getId(), texture.getType(), texture.getHash());
+                profileDao.clearTextureRefByHash(user.getId(), texture.getType(), texture.getHash());
                 favoriteDao.unfavorite(user.getId(), textureId);
                 ctx.json(Map.of("success", true, "favorited", false));
             } else {
@@ -224,6 +228,16 @@ public class UserWorldHandler {
                     alias = texture.getAlias() != null ? texture.getAlias() : texture.getOriginalName();
                 }
                 favoriteDao.favorite(user.getId(), textureId, alias);
+                Texture existing = textureDao.findByUserAndHash(user.getId(), texture.getType(), texture.getHash());
+                if (existing == null) {
+                    Texture refTex = new Texture(UUID.randomUUID().toString(), user.getId(),
+                        texture.getType(), texture.getHash(), alias, null, 0,
+                        "image/png", TimeUtil.now());
+                    refTex.setReferenceType("public");
+                    refTex.setRefOwnerId(texture.getUserId());
+                    refTex.setRefCreatedAt(TimeUtil.now());
+                    textureDao.insert(refTex);
+                }
                 ctx.json(Map.of("success", true, "favorited", true));
             }
         } catch (Exception e) {
@@ -280,6 +294,15 @@ public class UserWorldHandler {
                 ctx.json(Map.of("success", false, "message", "材质不存在或无权操作"));
                 return;
             }
+            if (isPublic) {
+                if (textureDao.countPublicByHash(texture.getType(), texture.getHash(), user.getId()) > 0) {
+                    ctx.json(Map.of("success", false, "message", "已经有人公开了这个材质哦~"));
+                    return;
+                }
+            } else {
+                textureDao.deleteRefsByOwner(texture.getType(), texture.getHash(), user.getId());
+                profileDao.clearTextureRefByHashForAll(texture.getType(), texture.getHash(), user.getId());
+            }
             visibilityDao.setVisibility(user.getId(), textureId, isPublic);
             ctx.json(Map.of("success", true, "message", isPublic ? "已设为公开" : "已设为私有", "isPublic", isPublic));
         } catch (Exception e) {
@@ -332,6 +355,16 @@ public class UserWorldHandler {
                 return;
             }
             friendSharedDao.share(user.getId(), friendId, textureId);
+            Texture existing = textureDao.findByUserAndHash(friendId, texture.getType(), texture.getHash());
+            if (existing == null) {
+                Texture refTex = new Texture(UUID.randomUUID().toString(), friendId,
+                    texture.getType(), texture.getHash(), texture.getAlias(), null, 0,
+                    "image/png", TimeUtil.now());
+                refTex.setReferenceType("friend");
+                refTex.setRefOwnerId(user.getId());
+                refTex.setRefCreatedAt(TimeUtil.now());
+                textureDao.insert(refTex);
+            }
             ctx.json(Map.of("success", true, "message", "已共享给好友"));
         } catch (Exception e) {
             ctx.json(Map.of("success", false, "message", "请求格式错误"));
@@ -350,7 +383,35 @@ public class UserWorldHandler {
                 return;
             }
             friendSharedDao.unshare(user.getId(), friendId, textureId);
+            Texture t = textureDao.findById(textureId);
+            if (t != null) {
+                textureDao.deleteRefByOwner(friendId, t.getType(), t.getHash(), user.getId());
+                profileDao.clearTextureRefByHash(friendId, t.getType(), t.getHash());
+            }
             ctx.json(Map.of("success", true, "message", "已取消共享"));
+        } catch (Exception e) {
+            ctx.json(Map.of("success", false, "message", "请求格式错误"));
+        }
+    }
+
+    public void returnSharedTexture(Context ctx) {
+        User user = checkAuth(ctx);
+        if (user == null) return;
+        try {
+            Map<String, Object> body = new ObjectMapper().readValue(ctx.body(), new TypeReference<>() {});
+            String textureId = (String) body.get("textureId");
+            if (textureId == null || textureId.isBlank()) {
+                ctx.json(Map.of("success", false, "message", "缺少材质ID"));
+                return;
+            }
+            Texture t = textureDao.findById(textureId);
+            if (t == null) {
+                ctx.json(Map.of("success", false, "message", "材质不存在"));
+                return;
+            }
+            textureDao.deleteFriendRef(user.getId(), t.getType(), t.getHash(), t.getUserId());
+            profileDao.clearTextureRefByHash(user.getId(), t.getType(), t.getHash());
+            ctx.json(Map.of("success", true, "message", "已返还"));
         } catch (Exception e) {
             ctx.json(Map.of("success", false, "message", "请求格式错误"));
         }
@@ -476,14 +537,26 @@ public class UserWorldHandler {
             if (i > 0) placeholders.append(",");
             placeholders.append("?");
         }
-        var rows = textureDao.queryRaw("SELECT id, nickname, username FROM users WHERE id IN (" + placeholders + ")", ownerIds.toArray());
+        Set<String> found = new HashSet<>();
+        var rows = textureDao.queryRaw("SELECT id, nickname, username, role FROM users WHERE id IN (" + placeholders + ")", ownerIds.toArray());
         if (rows != null) {
             for (var row : rows) {
                 String id = String.valueOf(row.get("id"));
+                found.add(id);
+                String role = (String) row.get("role");
+                if ("banned".equalsIgnoreCase(role)) {
+                    names.put(id, "被封禁");
+                    continue;
+                }
                 String nickname = (String) row.get("nickname");
                 String username = (String) row.get("username");
                 String name = nickname != null && !nickname.isBlank() ? nickname : username;
                 if (name != null) names.put(id, name);
+            }
+        }
+        for (String id : ownerIds) {
+            if (!found.contains(id)) {
+                names.put(id, "账号已注销");
             }
         }
         return names;

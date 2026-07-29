@@ -377,10 +377,7 @@ public class UserPage {
 
     public static String renderSharedPage(String csrfToken) {
         String content = """
-            <h3 class="shared-section-title"><i class="fas fa-user-group"></i> 好友共享的材质</h3>
-            <div class="texture-grid" id="friendSharedGrid"><p class="text-muted" style="grid-column:1/-1">加载中...</p></div>
-            <h3 class="shared-section-title" style="margin-top:24px"><i class="fas fa-bookmark"></i> 我的收藏</h3>
-            <div class="texture-grid" id="myFavoritesGrid"><p class="text-muted" style="grid-column:1/-1">加载中...</p></div>
+            <div class="texture-grid" id="sharedGrid"><p class="text-muted" style="grid-column:1/-1">加载中...</p></div>
             <div id="toast" class="toast" style="display:none"></div>
             """;
         String navbar = PageRenderer.renderNavbar("用户中心", "user", false);
