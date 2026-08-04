@@ -89,6 +89,12 @@
 
 ---
 
+### 统计数据
+![lingygg](https://treasure.xzrui.cn/img/lingyggdrasil "lingygg")
+
+
+---
+
 ## 安装指南
 
 把大象装进冰箱需要几步？启动 LingYggdrasil 也差不多简单。
