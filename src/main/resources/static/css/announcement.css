@@ -1,0 +1,115 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+.announcement-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(2px);
+    z-index: 5000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.announcement-modal {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 520px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    position: relative;
+    animation: annSlideUp 0.3s ease;
+}
+.announcement-modal h3 { margin: 0 0 12px 0; font-size: 18px; color: #FF69B4; }
+.announcement-modal .ann-content { color: #333; font-size: 14px; line-height: 1.8; max-height: 400px; overflow-y: auto; }
+.announcement-modal .ann-content h1,.announcement-modal .ann-content h2,.announcement-modal .ann-content h3 { color: #FF69B4; margin: 8px 0 4px; }
+.announcement-modal .ann-content a { color: #FF69B4; }
+.announcement-modal .ann-content code { background: #FFF0F5; padding: 2px 6px; border-radius: 4px; font-family: monospace; }
+.announcement-modal .ann-content pre { background: #F5F0FF; padding: 12px; border-radius: 8px; overflow-x: auto; }
+
+.announcement-anchor {
+    position: fixed;
+    left: 0; right: 0;
+    z-index: 5001;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 24px;
+    font-size: 14px;
+    min-height: 40px;
+}
+.announcement-anchor.top {
+    top: 0;
+    background: linear-gradient(135deg, #FF69B4, #FF8DC7);
+    color: #fff;
+}
+.announcement-anchor .ann-close {
+    background: none;
+    border: none;
+    color: inherit;
+    font-size: 20px;
+    cursor: pointer;
+    opacity: 0.8;
+    padding: 0 4px;
+    flex-shrink: 0;
+    margin-left: 16px;
+}
+.announcement-anchor .ann-close:hover { opacity: 1; }
+.announcement-anchor .ann-content { flex: 1; min-width: 0; }
+.announcement-anchor .ann-content a { color: #FFE0F0; }
+
+.announcement-toast {
+    position: fixed;
+    bottom: 32px;
+    left: 32px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    z-index: 5002;
+    padding: 16px 20px 0;
+    max-width: 400px;
+    min-width: 300px;
+    animation: annSlideUp 0.3s ease;
+    overflow: hidden;
+}
+.announcement-toast .ann-content { padding: 0 0 12px 0; font-size: 14px; color: #333; line-height: 1.6; }
+.announcement-toast .ann-close {
+    position: absolute;
+    top: 8px; right: 12px;
+    background: none; border: none;
+    color: #FF69B4; font-size: 18px; cursor: pointer;
+}
+.announcement-toast .ann-progress {
+    height: 3px;
+    background: #4CAF50;
+    margin: 0 -20px;
+    width: 100%;
+    transition: width 0.1s linear;
+}
+
+@keyframes annSlideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.ann-content h1,.ann-content h2,.ann-content h3 { margin: 8px 0 4px; color: #FF69B4; font-size: 15px; }
+.ann-content p { margin: 4px 0; }
+.ann-content a { color: #FF69B4; text-decoration: underline; }
+.ann-content code { background: #FFF0F5; padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+.ann-content strong { color: #333; }

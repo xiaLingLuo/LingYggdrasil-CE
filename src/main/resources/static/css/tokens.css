@@ -1,0 +1,216 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ */
+
+:root {
+    --color-primary: #FF69B4;
+    --color-primary-strong: #E6499B;
+    --color-primary-deep: #B0246E;
+    --color-primary-light: #FFB6C1;
+    --color-primary-soft: #FFE3EF;
+
+    --color-accent-purple: #8B5CF6;
+    --color-accent-cyan: #06B6D4;
+    --color-accent-gold: #F59E0B;
+
+    --color-success: #10B981;
+    --color-warning: #F59E0B;
+    --color-danger: #EF4444;
+    --color-info: #3B82F6;
+
+    --color-text: #2B2333;
+    --color-text-muted: #7A6E82;
+    --color-text-faint: #A99FB0;
+    --color-border: #F0DCE8;
+    --color-border-strong: #E7C6DA;
+
+    --color-surface: #FFFFFF;
+    --color-surface-2: #FFFAFC;
+    --color-surface-3: #FFF5F9;
+    --color-background: #FFF0F5;
+
+    --radius-sm: 8px;
+    --radius-md: 12px;
+    --radius-lg: 18px;
+    --radius-xl: 26px;
+    --radius-pill: 999px;
+
+    --shadow-xs: 0 1px 2px rgba(43, 35, 51, 0.06);
+    --shadow-sm: 0 4px 14px rgba(255, 105, 180, 0.08);
+    --shadow-md: 0 10px 28px rgba(255, 105, 180, 0.12);
+    --shadow-lg: 0 22px 55px rgba(176, 36, 110, 0.16);
+    --shadow-glow: 0 10px 30px rgba(255, 105, 180, 0.35);
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+    --space-5: 20px;
+    --space-6: 24px;
+    --space-8: 32px;
+    --space-10: 40px;
+    --space-12: 56px;
+
+    --font-display: 'Quicksand', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --font-body: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Consolas', 'Courier New', monospace;
+    --text-xs: 12px;
+    --text-sm: 13px;
+    --text-base: 14px;
+    --text-md: 16px;
+    --text-lg: 20px;
+    --text-xl: 24px;
+    --text-2xl: 32px;
+    --text-3xl: 40px;
+
+    --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+    --ease-emphasized: cubic-bezier(0.16, 1, 0.3, 1);
+    --duration-fast: 0.16s;
+    --duration-normal: 0.28s;
+    --duration-slow: 0.45s;
+
+    --sidebar-width: 248px;
+    --topbar-height: 68px;
+    --content-max: 1240px;
+}
+
+[data-theme="dark"] {
+    --color-text: #F2ECF5;
+    --color-text-muted: #B7AEC0;
+    --color-text-faint: #8B8195;
+    --color-border: #332A3D;
+    --color-border-strong: #443750;
+
+    --color-surface: #211B29;
+    --color-surface-2: #1B1621;
+    --color-surface-3: #2A2133;
+    --color-background: #16121B;
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 4px 14px rgba(0, 0, 0, 0.35);
+    --shadow-md: 0 10px 28px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 22px 55px rgba(0, 0, 0, 0.55);
+}
+
+[data-theme="dark"] body {
+    background-color: var(--color-background);
+    background-image:
+        radial-gradient(900px 520px at 12% -8%, rgba(176, 36, 110, 0.35), transparent 62%),
+        radial-gradient(820px 520px at 100% 0%, rgba(88, 60, 160, 0.35), transparent 58%),
+        radial-gradient(720px 620px at 50% 120%, rgba(120, 40, 90, 0.3), transparent 60%);
+}
+
+[data-theme="dark"] .navbar {
+    background: rgba(33, 27, 41, 0.78);
+    border-bottom-color: var(--color-border);
+}
+[data-theme="dark"] .card,
+[data-theme="dark"] .user-card,
+[data-theme="dark"] .sidebar,
+[data-theme="dark"] .modal-box,
+[data-theme="dark"] .modal-card,
+[data-theme="dark"] .auth-card,
+[data-theme="dark"] .install-card,
+[data-theme="dark"] .admin-login-card,
+[data-theme="dark"] .panel,
+[data-theme="dark"] .feature-card,
+[data-theme="dark"] .hero,
+[data-theme="dark"] .highlight-panel,
+[data-theme="dark"] .step-item,
+[data-theme="dark"] .profile-item,
+[data-theme="dark"] .texture-item,
+[data-theme="dark"] .upload-tile,
+[data-theme="dark"] .friend-card,
+[data-theme="dark"] .friend-add-tile,
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .guide-step,
+[data-theme="dark"] .info-item,
+[data-theme="dark"] .settings-card,
+[data-theme="dark"] footer {
+    background: var(--color-surface);
+    border-color: var(--color-border);
+}
+[data-theme="dark"] .texture-thumb,
+[data-theme="dark"] .profile-3d-preview,
+[data-theme="dark"] .detail-preview,
+[data-theme="dark"] .friend-card-avatar,
+[data-theme="dark"] .friend-detail-preview,
+[data-theme="dark"] .friend-profile-preview {
+    background: var(--color-surface-3);
+}
+[data-theme="dark"] .form-input,
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+    background: var(--color-surface-2);
+    color: var(--color-text);
+    border-color: var(--color-border-strong);
+}
+[data-theme="dark"] .guide-code { background: #241A33; border-color: #3A2C4D; color: #D6BBFB; }
+[data-theme="dark"] .guide-tips { background: #14261C; border-color: #1F4030; }
+[data-theme="dark"] .guide-tips-title { color: #6EE7B7; }
+[data-theme="dark"] .friend-code-display {
+    background: var(--color-surface-2);
+    border-color: var(--color-border);
+}
+[data-theme="dark"] .summary-card,
+[data-theme="dark"] .toggle-group { background: var(--color-surface-2); border-color: var(--color-border); }
+[data-theme="dark"] .admin-table tbody tr:nth-child(even) { background: var(--color-surface-2); }
+[data-theme="dark"] .admin-table tbody tr:hover { background: var(--color-surface-3); }
+[data-theme="dark"] .table tbody tr:hover { background: var(--color-surface-2); }
+
+[data-theme="dark"] .alert-success { background: rgba(16, 185, 129, 0.14); color: #6EE7B7; }
+[data-theme="dark"] .alert-error { background: rgba(239, 68, 68, 0.14); color: #FCA5A5; }
+[data-theme="dark"] .alert-warning { background: rgba(245, 158, 11, 0.14); color: #FCD34D; }
+[data-theme="dark"] .alert-info { background: rgba(59, 130, 246, 0.14); color: #93C5FD; }
+[data-theme="dark"] .badge-success { background: rgba(16, 185, 129, 0.16); color: #6EE7B7; }
+[data-theme="dark"] .badge-warning { background: rgba(245, 158, 11, 0.16); color: #FCD34D; }
+[data-theme="dark"] .badge-danger { background: rgba(239, 68, 68, 0.16); color: #FCA5A5; }
+[data-theme="dark"] .badge-info { background: rgba(59, 130, 246, 0.16); color: #93C5FD; }
+[data-theme="dark"] .toast.toast-success,
+[data-theme="dark"] .toast-success { background: rgba(16, 185, 129, 0.18); color: #6EE7B7; }
+[data-theme="dark"] .toast.toast-error,
+[data-theme="dark"] .toast-error { background: rgba(239, 68, 68, 0.18); color: #FCA5A5; }
+[data-theme="dark"] .toast.toast-info { background: rgba(59, 130, 246, 0.18); color: #93C5FD; }
+[data-theme="dark"] .role-badge-banned { background: rgba(239, 68, 68, 0.16); color: #FCA5A5; }
+[data-theme="dark"] .role-badge-default { background: rgba(16, 185, 129, 0.16); color: #6EE7B7; }
+[data-theme="dark"] .role-badge-root { background: rgba(245, 158, 11, 0.16); color: #FCD34D; }
+[data-theme="dark"] .role-badge-op { background: rgba(59, 130, 246, 0.16); color: #93C5FD; }
+[data-theme="dark"] .verified-yes { background: rgba(16, 185, 129, 0.16); color: #6EE7B7; }
+[data-theme="dark"] .verified-no { background: rgba(255, 255, 255, 0.06); color: var(--color-text-faint); }
+[data-theme="dark"] .install-alert.alert-error { background: rgba(239, 68, 68, 0.14); color: #FCA5A5; }
+[data-theme="dark"] .install-alert.alert-success { background: rgba(16, 185, 129, 0.14); color: #6EE7B7; }
+
+.logo-icon {
+    width: 1em;
+    height: 1em;
+    object-fit: contain;
+    vertical-align: middle;
+    display: inline-block;
+}
+.brand-icon.logo-icon { width: 24px; height: 24px; }
+.auth-icon.logo-icon { width: 40px; height: 40px; }
+
+.btn-loading-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 6px;
+    vertical-align: middle;
+    font-size: 14px;
+    line-height: 1;
+    opacity: 1;
+    transition: opacity 0.6s ease;
+}
+.btn-loading-status .fa-spinner { color: var(--color-text-muted, #6b7280); }
+.btn-loading-status.is-done .fa-check { color: #22c55e; }
+.btn-loading-status.is-failed .fa-times { color: #DC2626; }
+.btn-loading-status.fade-out { opacity: 0; }
+.is-loading { pointer-events: none; }
+button.is-loading, a.is-loading { opacity: 0.7; }
