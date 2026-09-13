@@ -419,7 +419,8 @@
       "create": "建立",
       "confirmEdit": "確認修改",
       "transfer": "確認轉移",
-      "preview": "預覽"
+      "preview": "預覽",
+      "htmlWarning": "這會直接以可執行形式注入系統！三思而後行！"
     },
     "login": {
       "pageTitle": "管理員登入",

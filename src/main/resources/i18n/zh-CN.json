@@ -419,7 +419,8 @@
       "create": "创建",
       "confirmEdit": "确认修改",
       "transfer": "确认转移",
-      "preview": "预览"
+      "preview": "预览",
+      "htmlWarning": "这会直接以可执行形式注入系统！三思而后行！"
     },
     "login": {
       "pageTitle": "管理员登录",

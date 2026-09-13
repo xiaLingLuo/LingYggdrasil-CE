@@ -419,7 +419,8 @@
       "create": "생성",
       "confirmEdit": "수정 확인",
       "transfer": "이전 확인",
-      "preview": "미리보기"
+      "preview": "미리보기",
+      "htmlWarning": "이것은 실행 가능한 형태로 시스템에 직접 주입됩니다! 신중히 생각한 후 진행하세요!"
     },
     "login": {
       "pageTitle": "관리자 로그인",

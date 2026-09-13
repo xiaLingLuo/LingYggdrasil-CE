@@ -419,7 +419,8 @@
       "create": "立",
       "confirmEdit": "准其修",
       "transfer": "准其遷",
-      "preview": "覽"
+      "preview": "覽",
+      "htmlWarning": "此將直以可行之形注於系統！三思而後行！"
     },
     "login": {
       "pageTitle": "管理之人入",

@@ -419,7 +419,8 @@
       "create": "作成",
       "confirmEdit": "変更を確認",
       "transfer": "移譲を確認",
-      "preview": "プレビュー"
+      "preview": "プレビュー",
+      "htmlWarning": "これは実行可能な形式でシステムに直接注入されます！よく考えてから行動してください！"
     },
     "login": {
       "pageTitle": "管理者ログイン",

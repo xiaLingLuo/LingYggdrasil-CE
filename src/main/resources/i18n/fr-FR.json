@@ -419,7 +419,8 @@
       "create": "Créer",
       "confirmEdit": "Confirmer la modification",
       "transfer": "Confirmer le transfert",
-      "preview": "Aperçu"
+      "preview": "Aperçu",
+      "htmlWarning": "Ceci sera directement injecté dans le système sous forme exécutable ! Réfléchissez à deux fois avant d'agir !"
     },
     "login": {
       "pageTitle": "Connexion administrateur",

@@ -419,7 +419,8 @@
       "create": "Crea",
       "confirmEdit": "Conferma modifica",
       "transfer": "Conferma trasferimento",
-      "preview": "Anteprima"
+      "preview": "Anteprima",
+      "htmlWarning": "Questo verrà iniettato direttamente nel sistema in forma eseguibile! Pensaci due volte prima di procedere!"
     },
     "login": {
       "pageTitle": "Accesso amministratore",

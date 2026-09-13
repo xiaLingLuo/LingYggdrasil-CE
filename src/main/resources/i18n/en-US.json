@@ -419,7 +419,8 @@
       "create": "Create",
       "confirmEdit": "Confirm changes",
       "transfer": "Confirm transfer",
-      "preview": "Preview"
+      "preview": "Preview",
+      "htmlWarning": "This will be injected into the system as executable content! Think twice before proceeding!"
     },
     "login": {
       "pageTitle": "Admin Login",

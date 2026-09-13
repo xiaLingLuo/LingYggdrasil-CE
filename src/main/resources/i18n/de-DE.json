@@ -419,7 +419,8 @@
       "create": "Erstellen",
       "confirmEdit": "Änderung bestätigen",
       "transfer": "Übertragung bestätigen",
-      "preview": "Vorschau"
+      "preview": "Vorschau",
+      "htmlWarning": "Dies wird direkt als ausführbarer Inhalt in das System eingeschleust! Überlegen Sie es sich gut, bevor Sie handeln!"
     },
     "login": {
       "pageTitle": "Administrator-Anmeldung",
