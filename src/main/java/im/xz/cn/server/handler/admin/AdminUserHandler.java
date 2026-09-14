@@ -18,7 +18,6 @@
 package im.xz.cn.server.handler.admin;
 
 
-import im.xz.cn.i18n.I18n;
 import im.xz.cn.auth.Argon2Hasher;
 import im.xz.cn.auth.SessionManager;
 import im.xz.cn.config.SystemConfig;
@@ -231,7 +230,7 @@ public class AdminUserHandler {
             ctx.status(400).json(Map.of("success", false, "message", I18n.t("msg.emailDomainNotAllowed")));
             return;
         }
-        String passwordError = PasswordValidator.validateUser(password);
+        String passwordError = im.xz.cn.security.AdminPasswordValidator.validateUser(password);
         if (passwordError != null) {
             ctx.status(400).json(Map.of("success", false, "message", passwordError));
             return;

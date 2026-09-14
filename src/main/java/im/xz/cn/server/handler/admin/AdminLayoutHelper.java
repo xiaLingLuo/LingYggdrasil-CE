@@ -33,7 +33,7 @@ public class AdminLayoutHelper {
         if (im.xz.cn.auth.SessionManager.isAdminRoot(ctx)) return "Root";
         String group = im.xz.cn.auth.SessionManager.getAdminPermGroup(ctx);
         if (group == null || group.isBlank()) return "Root";
-        String alias = im.xz.cn.i18n.I18n.tOrNull("permGroup." + group);
+        String alias = im.xz.cn.i18n.AdminI18n.tOrNull("permGroup." + group);
         return alias != null ? alias : group;
     }
 }

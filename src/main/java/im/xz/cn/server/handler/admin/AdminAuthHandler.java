@@ -18,11 +18,10 @@
 package im.xz.cn.server.handler.admin;
 
 
-import im.xz.cn.i18n.I18n;
 import im.xz.cn.i18n.LocaleResolver;
 import im.xz.cn.auth.Argon2Hasher;
 import im.xz.cn.auth.AuthService;
-import im.xz.cn.auth.LoginRateLimiter;
+import im.xz.cn.auth.AdminLoginRateLimiter;
 import im.xz.cn.auth.SessionManager;
 import im.xz.cn.database.dao.CacheDao;
 import im.xz.cn.database.dao.RootInfoDao;
@@ -40,12 +39,12 @@ import java.util.Map;
 
 public class AdminAuthHandler {
     private final AuthService authService;
-    private final LoginRateLimiter rateLimiter;
+    private final AdminLoginRateLimiter rateLimiter;
     private final RootInfoDao rootInfoDao;
 
     public AdminAuthHandler(AuthService authService, CacheDao cacheDao, RootInfoDao rootInfoDao) {
         this.authService = authService;
-        this.rateLimiter = new LoginRateLimiter(cacheDao);
+        this.rateLimiter = new AdminLoginRateLimiter(cacheDao);
         this.rootInfoDao = rootInfoDao;
     }
 

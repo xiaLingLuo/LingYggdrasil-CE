@@ -18,7 +18,6 @@
 package im.xz.cn.server.handler.admin;
 
 
-import im.xz.cn.i18n.I18n;
 import im.xz.cn.auth.Argon2Hasher;
 import im.xz.cn.auth.SessionManager;
 import im.xz.cn.database.dao.AdminDao;
@@ -85,7 +84,7 @@ public class AdminAdminHandler {
             return;
         }
 
-        String passwordError = PasswordValidator.validate(password);
+        String passwordError = im.xz.cn.security.AdminPasswordValidator.validate(password);
         if (passwordError != null) {
             ctx.status(400).json(Map.of("success", false, "message", passwordError));
             return;
@@ -182,7 +181,7 @@ public class AdminAdminHandler {
             adminDao.updateEmail(targetId, email);
         }
         if (password != null && !password.isEmpty()) {
-            String passwordError = PasswordValidator.validate(password);
+            String passwordError = im.xz.cn.security.AdminPasswordValidator.validate(password);
             if (passwordError != null) {
                 ctx.status(400).json(Map.of("success", false, "message", passwordError));
                 return;

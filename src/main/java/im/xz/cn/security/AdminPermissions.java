@@ -17,7 +17,7 @@
  */
 package im.xz.cn.security;
 
-import im.xz.cn.i18n.I18n;
+import im.xz.cn.i18n.AdminI18n;
 import io.javalin.http.Context;
 
 import java.util.LinkedHashSet;
@@ -148,7 +148,7 @@ public final class AdminPermissions {
 
     public static boolean require(Context ctx, String key) {
         if (has(key)) return true;
-        ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.noPermission")));
+        ctx.status(403).json(Map.of("success", false, "message", AdminI18n.t("msg.noPermission")));
         return false;
     }
 }

@@ -22,6 +22,7 @@ import im.xz.cn.logging.logApi;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -57,47 +58,83 @@ public final class I18n {
     private static final Map<String, String> HOME_TEMPLATES = new ConcurrentHashMap<>();
 
     public static final String HOME_TEMPLATE_DIR = "index-page";
+    private static final String RESOURCE_PREFIX = "/i18n/user/";
 
     private I18n() {
     }
 
     public static File externalDir() {
-        return new File(System.getProperty("user.dir"), "i18n");
+        return new File(System.getProperty("user.dir"), "i18n/user");
     }
 
     public static void releaseBundles() {
         try {
-            File dir = externalDir();
-            if (!dir.exists() && !dir.mkdirs()) {
-                log.warn("[i18n] Failed to create external i18n directory: {}", dir.getAbsolutePath());
-                return;
-            }
-            File pageDir = new File(dir, HOME_TEMPLATE_DIR);
-            if (!pageDir.exists() && !pageDir.mkdirs()) {
-                log.warn("[i18n] Failed to create external home template directory: {}", pageDir.getAbsolutePath());
-            }
-            for (LocaleOption opt : SUPPORTED_LOCALES) {
-                File target = new File(dir, opt.code() + ".json");
-                if (!target.exists()) {
-                    try (InputStream is = I18n.class.getResourceAsStream("/i18n/" + opt.code() + ".json")) {
-                        if (is != null) {
-                            Files.copy(is, target.toPath());
-                            log.info("[i18n] Released bundle {}", target.getName());
-                        }
-                    }
-                }
-                File pageTarget = new File(pageDir, opt.code() + ".html");
-                if (!pageTarget.exists()) {
-                    try (InputStream is = I18n.class.getResourceAsStream("/i18n/" + HOME_TEMPLATE_DIR + "/" + opt.code() + ".html")) {
-                        if (is != null) {
-                            Files.copy(is, pageTarget.toPath());
-                            log.info("[i18n] Released home template {}", pageTarget.getName());
-                        }
-                    }
-                }
-            }
+            File root = new File(System.getProperty("user.dir"), "i18n");
+            File userDir = externalDir();
+            File adminDir = new File(root, "admin");
+            migrateLegacyBundles(root, userDir, adminDir);
+            releaseBundlesTo(userDir, true);
+            releaseBundlesTo(adminDir, false);
         } catch (Exception e) {
             log.warn("[i18n] Failed to release bundles: {}", e.getMessage());
+        }
+    }
+
+    private static void migrateLegacyBundles(File root, File userDir, File adminDir) throws IOException {
+        if (!userDir.exists() && !userDir.mkdirs()) {
+            throw new IOException("Failed to create " + userDir.getAbsolutePath());
+        }
+        if (!adminDir.exists() && !adminDir.mkdirs()) {
+            throw new IOException("Failed to create " + adminDir.getAbsolutePath());
+        }
+        File legacyPages = new File(root, HOME_TEMPLATE_DIR);
+        File userPages = new File(userDir, HOME_TEMPLATE_DIR);
+        if (legacyPages.isDirectory() && (!userPages.exists() && !userPages.mkdirs())) {
+            throw new IOException("Failed to create " + userPages.getAbsolutePath());
+        }
+        for (LocaleOption opt : SUPPORTED_LOCALES) {
+            File legacy = new File(root, opt.code() + ".json");
+            if (legacy.isFile()) {
+                copyIfMissing(legacy, new File(userDir, opt.code() + ".json"));
+                copyIfMissing(legacy, new File(adminDir, opt.code() + ".json"));
+            }
+            File legacyPage = new File(legacyPages, opt.code() + ".html");
+            if (legacyPage.isFile()) {
+                copyIfMissing(legacyPage, new File(userPages, opt.code() + ".html"));
+            }
+        }
+    }
+
+    private static void releaseBundlesTo(File dir, boolean includeHomeTemplates) throws IOException {
+        String resourcePrefix = includeHomeTemplates ? "/i18n/user/" : "/i18n/admin/";
+        if (!dir.exists() && !dir.mkdirs()) {
+            throw new IOException("Failed to create " + dir.getAbsolutePath());
+        }
+        File pageDir = new File(dir, HOME_TEMPLATE_DIR);
+        if (includeHomeTemplates && !pageDir.exists() && !pageDir.mkdirs()) {
+            throw new IOException("Failed to create " + pageDir.getAbsolutePath());
+        }
+        for (LocaleOption opt : SUPPORTED_LOCALES) {
+            File target = new File(dir, opt.code() + ".json");
+            if (!target.exists()) {
+                try (InputStream is = I18n.class.getResourceAsStream(resourcePrefix + opt.code() + ".json")) {
+                    if (is != null) Files.copy(is, target.toPath());
+                }
+            }
+            if (includeHomeTemplates) {
+                File pageTarget = new File(pageDir, opt.code() + ".html");
+                if (!pageTarget.exists()) {
+                    try (InputStream is = I18n.class.getResourceAsStream(RESOURCE_PREFIX + HOME_TEMPLATE_DIR + "/" + opt.code() + ".html")) {
+                        if (is != null) Files.copy(is, pageTarget.toPath());
+                    }
+                }
+            }
+        }
+    }
+
+    private static void copyIfMissing(File source, File target) throws IOException {
+        if (!target.exists()) {
+            Files.copy(source.toPath(), target.toPath());
         }
     }
 
@@ -107,8 +144,10 @@ public final class I18n {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> builtinBundle(String locale) {
+        locale = normalizeLocale(locale);
+        final String resolvedLocale = locale;
         return BUILTIN.computeIfAbsent(locale, loc -> {
-            try (InputStream is = I18n.class.getResourceAsStream("/i18n/" + loc + ".json")) {
+            try (InputStream is = I18n.class.getResourceAsStream(RESOURCE_PREFIX + resolvedLocale + ".json")) {
                 if (is == null) return Map.of();
                 return MAPPER.readValue(is, Map.class);
             } catch (Exception e) {
@@ -119,6 +158,7 @@ public final class I18n {
 
     @SuppressWarnings("unchecked")
     private static Map<String, Object> externalBundle(String locale) {
+        locale = normalizeLocale(locale);
         File ext = new File(externalDir(), locale + ".json");
         if (!ext.isFile()) return Map.of();
         return EXTERNAL.computeIfAbsent(locale, loc -> {
@@ -157,7 +197,7 @@ public final class I18n {
         try {
             Map<String, Object> merged = bundle(locale);
             if (merged.isEmpty()) merged = bundle(DEFAULT_LOCALE);
-            return MAPPER.writeValueAsString(merged);
+            return escapeForScript(MAPPER.writeValueAsString(merged));
         } catch (Exception e) {
             return "{}";
         }
@@ -171,6 +211,7 @@ public final class I18n {
 
     private static String loadHomeTemplate(String locale) {
         if (locale == null || locale.isBlank()) return null;
+        locale = normalizeLocale(locale);
         String cached = HOME_TEMPLATES.get(locale);
         if (cached != null) return cached.isEmpty() ? null : cached;
         String content = null;
@@ -183,7 +224,7 @@ public final class I18n {
             }
         }
         if (content == null) {
-            try (InputStream is = I18n.class.getResourceAsStream("/i18n/" + HOME_TEMPLATE_DIR + "/" + locale + ".html")) {
+            try (InputStream is = I18n.class.getResourceAsStream(RESOURCE_PREFIX + HOME_TEMPLATE_DIR + "/" + locale + ".html")) {
                 if (is != null) content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
             } catch (Exception e) {
                 log.warn("[i18n] Failed to read built-in home template {}: {}", locale, e.getMessage());
@@ -206,6 +247,21 @@ public final class I18n {
             node = ((Map<String, Object>) node).get(part);
         }
         return node instanceof String ? (String) node : null;
+    }
+
+    private static String normalizeLocale(String locale) {
+        if (locale == null || !SUPPORTED_LOCALES.stream().anyMatch(option -> option.code().equals(locale))) {
+            return DEFAULT_LOCALE;
+        }
+        return locale;
+    }
+
+    private static String escapeForScript(String json) {
+        return json.replace("<", "\\u003C")
+                .replace(">", "\\u003E")
+                .replace("&", "\\u0026")
+                .replace("\u2028", "\\u2028")
+                .replace("\u2029", "\\u2029");
     }
 
     @SuppressWarnings("unchecked")

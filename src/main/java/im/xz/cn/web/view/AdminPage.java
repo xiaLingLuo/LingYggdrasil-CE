@@ -20,11 +20,20 @@ package im.xz.cn.web.view;
 
 import static im.xz.cn.web.Shared.esc;
 import im.xz.cn.common.FooterInfo;
-import im.xz.cn.i18n.I18n;
 import im.xz.cn.web.PageRenderer;
 import im.xz.cn.web.Shared;
 
 public class AdminPage {
+
+    private static final class I18n {
+        static String t(String key, Object... args) {
+            return im.xz.cn.i18n.AdminI18n.t(key, args);
+        }
+
+        static String tOrNull(String key) {
+            return im.xz.cn.i18n.AdminI18n.tOrNull(key);
+        }
+    }
 
     private static final java.util.regex.Pattern I18N_TOKEN =
             java.util.regex.Pattern.compile("\\{\\{([a-zA-Z0-9_.]+)}}");
@@ -110,12 +119,12 @@ public class AdminPage {
                 adminUsername != null && !adminUsername.isEmpty() ? safeInitial : "A",
                 adminUsername != null ? safeUsername : "Admin",
                 roleDisplay,
-                PageRenderer.renderLanguageSwitcher(true),
+                PageRenderer.renderAdminLanguageSwitcher(true),
                 I18n.t("adminSidebar.switchTheme"),
                 I18n.t("adminSidebar.logout"),
                 I18n.t("nav.menu"),
                 I18n.t("nav.admin"),
-                PageRenderer.renderLanguageSwitcher(false),
+                PageRenderer.renderAdminLanguageSwitcher(false),
                 I18n.t("nav.theme"),
                 I18n.t("nav.theme"),
                 content,
@@ -167,7 +176,7 @@ public class AdminPage {
             """);
 
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.login.pageTitle"), body, "admin-login", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.login.pageTitle"), body, "admin-login", css);
     }
 
     public static String dashboardContent() {
@@ -213,7 +222,7 @@ public class AdminPage {
     public static String renderDashboardPage(String adminUsername, String adminRole, String csrfToken) {
         String body = renderAdminLayout("dashboard", adminUsername, adminRole, dashboardContent(), csrfToken);
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.dashboard.title"), body, "admin", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.dashboard.title"), body, "admin", css);
     }
 
     public static String renderSkinsPage(String adminUsername, String adminRole, String csrfToken) {
@@ -280,7 +289,7 @@ public class AdminPage {
                 I18n.t("admin.common.save"));
         String body = renderAdminLayout("skins", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.skins.title"), body, "admin", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.skins.title"), body, "admin", css);
     }
 
     public static String renderCapesPage(String adminUsername, String adminRole, String csrfToken) {
@@ -347,7 +356,7 @@ public class AdminPage {
                 I18n.t("admin.common.save"));
         String body = renderAdminLayout("capes", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.capes.title"), body, "admin", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.capes.title"), body, "admin", css);
     }
 
     public static String renderAppInfoPage(String adminUsername, String adminRole, String csrfToken) {
@@ -392,7 +401,7 @@ public class AdminPage {
             """);
         String body = renderAdminLayout("appinfo", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.appinfo.title"), body, "admin", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.appinfo.title"), body, "admin", css);
     }
 
     public static String renderSecurityPage(String adminUsername, String adminRole, String csrfToken) {
@@ -419,7 +428,7 @@ public class AdminPage {
             """);
         String body = renderAdminLayout("security", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.security.title"), body, "admin", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.security.title"), body, "admin", css);
     }
 
     public static String renderUsersPage(String adminUsername, String adminRole, String csrfToken) {
@@ -623,7 +632,7 @@ public class AdminPage {
                 I18n.t("admin.common.confirmEdit")));
         String body = renderAdminLayout("users", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.users.title"), body, "admin", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.users.title"), body, "admin", css);
     }
 
     public static String renderAdminsPage(String adminUsername, String adminRole, boolean isRoot, String csrfToken) {
@@ -760,7 +769,7 @@ public class AdminPage {
             """.formatted(createBtn, Boolean.toString(isRoot)));
         String body = renderAdminLayout("admins", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.admins.title"), body, "admin", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.admins.title"), body, "admin", css);
     }
 
     public static String renderAdminProfilesPage(String adminUsername, String adminRole, String csrfToken) {
@@ -903,7 +912,7 @@ public class AdminPage {
                 I18n.t("admin.common.transfer"));
         String body = renderAdminLayout("profiles", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.profiles.title"), body, "admin", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.profiles.title"), body, "admin", css);
     }
 
     public static String renderYggdrasilPage(String adminUsername, String adminRole, String csrfToken) {
@@ -1015,7 +1024,7 @@ public class AdminPage {
             """);
         String body = renderAdminLayout("yggdrasil", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.yggdrasil.title"), body, "admin", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.yggdrasil.title"), body, "admin", css);
     }
 
     private static String userPermGroupsCard() {
@@ -1655,6 +1664,6 @@ public class AdminPage {
             """);
         String body = renderAdminLayout("system", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
-        return PageRenderer.renderPage(I18n.t("admin.system.title"), body, "admin", css);
+        return PageRenderer.renderAdminPage(I18n.t("admin.system.title"), body, "admin", css);
     }
 }

@@ -18,7 +18,6 @@
 package im.xz.cn.server.handler.admin;
 
 
-import im.xz.cn.i18n.I18n;
 import im.xz.cn.auth.SessionManager;
 import im.xz.cn.config.SystemConfig;
 import im.xz.cn.database.dao.AdminDao;

@@ -134,6 +134,57 @@ public class PageRenderer {
         return result;
     }
 
+    public static String renderAdminPage(String title, String bodyContent, String pageType, String... extraCss) {
+        StringBuilder linkTags = new StringBuilder();
+        StringBuilder inlineCss = new StringBuilder();
+        for (String c : extraCss) {
+            String trimmed = c.trim();
+            if (trimmed.startsWith("<link")) linkTags.append(trimmed).append("\n");
+            else if (trimmed.startsWith("@import")) inlineCss.append(trimmed).append("\n");
+            else inlineCss.append(c).append("\n");
+        }
+        String inlineStyleBlock = !inlineCss.isEmpty()
+                ? "<style>\n" + inlineCss + "</style>\n" : "";
+        String locale = LocaleContext.get();
+        String i18nScript = "<script>window.__LOCALE__='" + locale + "';window.__LANG_COOKIE__='LING_ADMIN_LANG';"
+                + "window.__SETTINGS_BASE__='/admin';window.__ADMIN_PERMS__="
+                + im.xz.cn.security.AdminPermissions.currentJson() + ";window.__I18N__="
+                + im.xz.cn.i18n.AdminI18n.rawJson(locale) + ";</script>";
+        String html = """
+            <!DOCTYPE html>
+            <html lang="%s">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <link rel="icon" type="image/x-icon" href="/icons/app.ico">
+                <title>%s - %s</title>
+                <script>(function(){try{var t=localStorage.getItem('ling-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){}})();</script>
+                %s
+                <link rel="stylesheet" href="/css/tokens.css">
+                <link rel="stylesheet" href="/css/all.min.css">
+                <link rel="stylesheet" href="/css/announcement.css">
+                %s
+                <style>%s</style>
+                %s
+            </head>
+            <body>
+                <script src="/js/common.js"></script>
+                %s
+                <script src="/js/announcement.js"></script>
+                %s
+            </body>
+            </html>
+            """.formatted(locale, escapeHtml(title), "LingYggdrasil", i18nScript,
+                linkTags, getBaseCss(), inlineStyleBlock, bodyContent, renderFooter());
+        String result = FooterInfo.injectFooterRecords(html);
+        String nonce = Csp.current();
+        if (nonce != null && !nonce.isEmpty()) {
+            result = INLINE_SCRIPT.matcher(result)
+                    .replaceAll(java.util.regex.Matcher.quoteReplacement("<script nonce=\"" + nonce + "\""));
+        }
+        return result;
+    }
+
     public static String renderFooter() {
         String siteName = SystemConfig.getInstance().getSiteName();
         return """
@@ -219,7 +270,33 @@ public class PageRenderer {
                 %s
                 <div class="lang-menu">%s</div>
             </div>
-            """.formatted(button, items.toString());
+                """.formatted(button, items.toString());
+    }
+
+    public static String renderAdminLanguageSwitcher(boolean sidebar) {
+        String current = LocaleContext.get();
+        StringBuilder items = new StringBuilder();
+        for (im.xz.cn.i18n.AdminI18n.LocaleOption opt : im.xz.cn.i18n.AdminI18n.supportedLocales()) {
+            boolean active = opt.code().equalsIgnoreCase(current);
+            items.append("<button type=\"button\" class=\"lang-item")
+                    .append(active ? " active" : "")
+                    .append("\" data-action=\"setLanguage\" data-args='[\"")
+                    .append(opt.code()).append("\"]'>")
+                    .append("<span class=\"lang-item-main\"><img class=\"lang-icon\" src=\"/icons/lang-")
+                    .append(opt.code()).append(".svg\" alt=\"\" width=\"18\" height=\"18\" loading=\"lazy\">")
+                    .append(escapeHtml(opt.label())).append("</span>");
+            if (active) items.append(" <i class=\"fas fa-check\"></i>");
+            items.append("</button>");
+        }
+        String button = sidebar
+                ? "<button type=\"button\" class=\"sidebar-link lang-toggle\" data-action=\"toggleLangMenu\" data-event>"
+                    + "<span class=\"sidebar-link-icon\"><i class=\"fas fa-language\"></i></span><span>"
+                    + im.xz.cn.i18n.AdminI18n.t("nav.language") + "</span></button>"
+                : "<button type=\"button\" class=\"nav-link lang-toggle\" data-action=\"toggleLangMenu\" data-event aria-label=\""
+                    + im.xz.cn.i18n.AdminI18n.t("nav.language") + "\" title=\""
+                    + im.xz.cn.i18n.AdminI18n.t("nav.language") + "\"><i class=\"fas fa-language\"></i></button>";
+        return "<div class=\"lang-dropdown\">" + button + "<div class=\"lang-menu\">"
+                + items + "</div></div>";
     }
 
     public static String renderSidebar(String currentPage, boolean isAdmin, boolean isRoot) {

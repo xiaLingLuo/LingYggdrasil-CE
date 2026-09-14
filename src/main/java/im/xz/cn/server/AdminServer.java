@@ -18,7 +18,7 @@
 package im.xz.cn.server;
 
 
-import im.xz.cn.i18n.I18n;
+import im.xz.cn.i18n.AdminI18n;
 import im.xz.cn.bootstrap.ServerFactory;
 import im.xz.cn.auth.AuthService;
 import im.xz.cn.auth.SessionManager;
@@ -163,7 +163,7 @@ public class AdminServer {
                 if (adminId == null) {
                     if (path.startsWith("/admin/api/")) {
                         ctx.status(401);
-                        ctx.json(Map.of("success", false, "message", I18n.t("msg.notLoggedIn")));
+                        ctx.json(Map.of("success", false, "message", AdminI18n.t("msg.notLoggedIn")));
                     } else {
                         ctx.redirect("/admin/login");
                     }
@@ -175,7 +175,7 @@ public class AdminServer {
                     if (rootInfoDao.findById(adminId) == null) {
                         SessionManager.invalidateAdmin(ctx);
                         ctx.status(401);
-                        ctx.json(Map.of("success", false, "message", I18n.t("msg.accountInvalid")));
+                        ctx.json(Map.of("success", false, "message", AdminI18n.t("msg.accountInvalid")));
                         ctx.skipRemainingHandlers();
                         return;
                     }
@@ -185,7 +185,7 @@ public class AdminServer {
                     if (admin == null) {
                         SessionManager.invalidateAdmin(ctx);
                         ctx.status(401);
-                        ctx.json(Map.of("success", false, "message", I18n.t("msg.accountInvalid")));
+                        ctx.json(Map.of("success", false, "message", AdminI18n.t("msg.accountInvalid")));
                         ctx.skipRemainingHandlers();
                         return;
                     }
@@ -206,7 +206,7 @@ public class AdminServer {
                 if (!SessionManager.validateClientFingerprint(ctx)) {
                     SessionManager.invalidateAdmin(ctx);
                     ctx.status(401);
-                    ctx.json(Map.of("success", false, "message", I18n.t("msg.sessionError")));
+                    ctx.json(Map.of("success", false, "message", AdminI18n.t("msg.sessionError")));
                     ctx.skipRemainingHandlers();
                     return;
                 }
@@ -215,7 +215,7 @@ public class AdminServer {
                 if (method.equals("POST") || method.equals("PUT") || method.equals("DELETE")) {
                     if (!SessionManager.validateCsrfToken(ctx)) {
                         ctx.status(403);
-                        ctx.json(Map.of("success", false, "message", I18n.t("msg.csrfFailed")));
+                        ctx.json(Map.of("success", false, "message", AdminI18n.t("msg.csrfFailed")));
                         ctx.skipRemainingHandlers();
                     }
                 }

@@ -20,7 +20,6 @@ package im.xz.cn.server.handler.admin;
 import im.xz.cn.common.IpUtil;
 import im.xz.cn.common.TimeUtil;
 import im.xz.cn.database.dao.UserPermGroupDao;
-import im.xz.cn.i18n.I18n;
 import im.xz.cn.logging.AuditLogger;
 import im.xz.cn.model.PermGroup;
 import im.xz.cn.security.AdminPermissions;
