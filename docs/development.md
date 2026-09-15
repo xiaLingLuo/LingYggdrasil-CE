@@ -26,13 +26,13 @@ mvn -DskipTests package
 构建产物：
 
 ```text
-target/LingYggdrasil-2.0.0.jar
+target/LingYggdrasil-2.0.1.jar
 ```
 
 该 JAR 通过 `maven-assembly-plugin` 打包为**含依赖的可执行 JAR**，可直接运行：
 
 ```bash
-java -jar target/LingYggdrasil-2.0.0.jar
+java -jar target/LingYggdrasil-2.0.1.jar
 ```
 
 ## 主要依赖

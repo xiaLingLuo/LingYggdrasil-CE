@@ -21,6 +21,8 @@
     "sent": "Gesendet",
     "loadFailedShort": "Laden fehlgeschlagen",
     "dragHint": "Karten ziehen, um die Reihenfolge anzupassen",
+    "customizeLayout": "Kart layout anpassen",
+    "finishLayout": "Meine Änderungen speichern",
     "resetLayout": "Standardlayout wiederherstellen"
   },
   "nav": {

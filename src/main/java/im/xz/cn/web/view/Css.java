@@ -354,8 +354,9 @@ public class Css {
                 border-radius: var(--radius-md);
             }
 
-            .sortable-item { cursor: grab; }
-            .sortable-item:active { cursor: grabbing; }
+            .sortable-item { cursor: default; }
+            .sortable-enabled .sortable-item { cursor: grab; }
+            .sortable-enabled .sortable-item:active { cursor: grabbing; }
             .sortable-item.dragging { opacity: 0.55; transform: scale(0.99); }
             .sortable-item.dragging * { pointer-events: none; }
             .layout-reset-bar {
@@ -487,7 +488,6 @@ public class Css {
                 .menu-toggle { display: inline-flex; }
                 .admin-layout, .user-layout { flex-direction: column; padding: 0 var(--space-4); }
                 .admin-content, .user-content { overflow-x: auto; }
-                .layout-reset-bar { display: none; }
                 .sidebar {
                     display: block;
                     position: fixed;

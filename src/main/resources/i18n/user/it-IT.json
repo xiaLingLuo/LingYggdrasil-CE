@@ -21,6 +21,8 @@
     "sent": "Inviato",
     "loadFailedShort": "Caricamento non riuscito",
     "dragHint": "Trascina le schede per riordinare",
+    "customizeLayout": "Personalizza disposizione",
+    "finishLayout": "Salva le mie modifiche",
     "resetLayout": "Ripristina layout predefinito"
   },
   "nav": {

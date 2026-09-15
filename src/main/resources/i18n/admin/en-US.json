@@ -21,6 +21,8 @@
     "sent": "Sent",
     "loadFailedShort": "Failed to load",
     "dragHint": "Drag cards to reorder",
+    "customizeLayout": "Customize card layout",
+    "finishLayout": "Save my changes",
     "resetLayout": "Reset to default layout"
   },
   "nav": {

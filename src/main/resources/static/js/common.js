@@ -370,16 +370,32 @@
 
         items.forEach(function (el) {
             el.classList.add('sortable-item');
-            el.setAttribute('draggable', 'true');
+            el.setAttribute('draggable', 'false');
             el.addEventListener('dragstart', function (event) {
+                if (!container._sortableEnabled) {
+                    event.preventDefault();
+                    return;
+                }
                 el.classList.add('dragging');
                 try { event.dataTransfer.setData('text/plain', widgetKey(el) || ''); } catch (e) {  }
             });
             el.addEventListener('dragend', function () {
                 el.classList.remove('dragging');
-                persistOrder(container, storageKey);
             });
         });
+
+        container._setSortableEnabled = function (enabled) {
+            container._sortableEnabled = enabled;
+            if (enabled) {
+                container.classList.add('sortable-enabled');
+            } else {
+                container.classList.remove('sortable-enabled');
+            }
+            items.forEach(function (el) {
+                el.setAttribute('draggable', enabled ? 'true' : 'false');
+            });
+        };
+        container._setSortableEnabled(false);
 
         container.addEventListener('dragover', function (event) {
             var dragging = container.querySelector('.dragging');
@@ -409,10 +425,20 @@
             var bar = document.createElement('div');
             bar.className = 'layout-reset-bar';
 
-            var hint = document.createElement('span');
-            hint.className = 'layout-hint';
-            hint.innerHTML = '<i class="fas fa-arrows-up-down-left-right"></i> ' + t('common.dragHint');
-            bar.appendChild(hint);
+            var toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.className = 'layout-reset-btn layout-toggle-btn';
+            toggleBtn.innerHTML = '<i class="fas fa-arrows-up-down-left-right"></i> ' + t('common.customizeLayout');
+            toggleBtn.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
+                var enabled = !el._sortableEnabled;
+                el._setSortableEnabled(enabled);
+                toggleBtn.innerHTML = '<i class="fas ' + (enabled ? 'fa-floppy-disk' : 'fa-arrows-up-down-left-right') + '"></i> ' +
+                    t(enabled ? 'common.finishLayout' : 'common.customizeLayout');
+                if (!enabled) persistOrder(el, storageKey);
+            });
+            bar.appendChild(toggleBtn);
 
             if (hasSaved) {
                 var btn = document.createElement('button');

@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.0-blueviolet?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/version-2.0.1-blueviolet?style=flat-square" alt="Version" />
   <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square" alt="Java" />
   <a href="https://www.gnu.org/licenses/agpl-3.0">
     <img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg?style=flat-square" alt="License: AGPL-3.0" />
@@ -50,10 +50,10 @@
 # 1. Check the Java version
 java --version
 
-# 2. Download LingYggdrasil-2.0.0.jar and put it in an empty, dedicated directory
+# 2. Download LingYggdrasil-2.0.1.jar and put it in an empty, dedicated directory
 
 # 3. Start it (this directory becomes the data directory)
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.0.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.1.jar
 ```
 
 On first launch the program enters the **installation wizard** (`http://<server>:35598`). Follow the prompts to configure the admin account, database, and email. Once installed, three services are available:

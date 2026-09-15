@@ -26,7 +26,7 @@ java --version
 从仓库的 Releases 页面下载构建好的可执行 JAR：
 
 ```text
-LingYggdrasil-2.0.0.jar
+LingYggdrasil-2.0.1.jar
 ```
 
 将其放入一个**独立的空目录**（该目录将作为运行目录，用于存放数据库、配置与纹理）。
@@ -38,13 +38,13 @@ LingYggdrasil-2.0.0.jar
 在 JAR 所在目录执行：
 
 ```bash
-java -jar LingYggdrasil-2.0.0.jar
+java -jar LingYggdrasil-2.0.1.jar
 ```
 
 也可以附加 JVM 参数，例如：
 
 ```bash
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.0.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.1.jar
 ```
 
 > **提示**：启动时的当前工作目录就是数据目录。请始终在同一个目录下启动，避免数据分散。
@@ -93,7 +93,7 @@ http://<服务器地址>:35598
 
 ```text
 运行目录/
-├── LingYggdrasil-2.0.0.jar   # 程序本体
+├── LingYggdrasil-2.0.1.jar   # 程序本体
 ├── sql.yml                   # 数据库与邮件配置
 ├── .INSTALLED                # 安装标记
 ├── data.db                   # SQLite 数据库（若使用 SQLite）

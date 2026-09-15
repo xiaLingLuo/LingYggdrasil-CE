@@ -21,6 +21,8 @@
     "sent": "Envoyé",
     "loadFailedShort": "Échec du chargement",
     "dragHint": "Faites glisser les cartes pour réorganiser",
+    "customizeLayout": "Personnaliser la disposition",
+    "finishLayout": "Enregistrer mes modifications",
     "resetLayout": "Restaurer la disposition par défaut"
   },
   "nav": {

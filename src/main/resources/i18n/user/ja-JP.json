@@ -21,6 +21,8 @@
     "sent": "送信済み",
     "loadFailedShort": "読み込み失敗",
     "dragHint": "カードをドラッグして順番を変更できます",
+    "customizeLayout": "カードレイアウトをカスタマイズ",
+    "finishLayout": "変更を保存",
     "resetLayout": "既定のレイアウトに戻す"
   },
   "nav": {

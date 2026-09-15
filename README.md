@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.0-blueviolet?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/version-2.0.1-blueviolet?style=flat-square" alt="Version" />
   <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square" alt="Java" />
   <a href="https://www.gnu.org/licenses/agpl-3.0">
     <img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg?style=flat-square" alt="License: AGPL-3.0" />
@@ -52,10 +52,10 @@
 # 1. 确认 Java 版本
 java --version
 
-# 2. 下载 LingYggdrasil-2.0.0.jar，放入一个独立的空目录
+# 2. 下载 LingYggdrasil-2.0.1.jar，放入一个独立的空目录
 
 # 3. 启动（该目录将成为数据目录）
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.0.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.1.jar
 ```
 
 首次启动会自动进入**安装向导**（`http://<服务器地址>:35598`），按提示完成管理员账户、数据库与邮箱配置即可。安装完成后，程序会同时提供三个服务：

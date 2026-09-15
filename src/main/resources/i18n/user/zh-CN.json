@@ -21,6 +21,8 @@
     "sent": "已发送",
     "loadFailedShort": "加载失败",
     "dragHint": "拖动卡片可调整顺序",
+    "customizeLayout": "点击自订卡片布局",
+    "finishLayout": "保存我的变更",
     "resetLayout": "恢复默认布局"
   },
   "nav": {
