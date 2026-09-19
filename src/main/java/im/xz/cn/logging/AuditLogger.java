@@ -18,32 +18,35 @@
 package im.xz.cn.logging;
 
 public class AuditLogger {
-    private static final logApi logger = logApi.getLogger(AuditLogger.class);
 
     private AuditLogger() {
     }
 
     public static void logLogin(String user, String ip, boolean success) {
         if (success) {
-            logger.info("[AUDIT] LOGIN_SUCCESS user={} ip={}", user, ip);
+            write("INFO", "LOGIN_SUCCESS user=" + user + " ip=" + ip);
         } else {
-            logger.warn("[AUDIT] LOGIN_FAILURE user={} ip={}", user, ip);
+            write("WARN", "LOGIN_FAILURE user=" + user + " ip=" + ip);
         }
     }
 
     public static void logLogout(String user, String ip) {
-        logger.info("[AUDIT] LOGOUT user={} ip={}", user, ip);
+        write("INFO", "LOGOUT user=" + user + " ip=" + ip);
     }
 
     public static void logPasswordChange(String user, String ip) {
-        logger.info("[AUDIT] PASSWORD_CHANGE user={} ip={}", user, ip);
+        write("INFO", "PASSWORD_CHANGE user=" + user + " ip=" + ip);
     }
 
     public static void logPermissionChange(String admin, String target, String action, String ip) {
-        logger.info("[AUDIT] PERMISSION_CHANGE admin={} target={} action={} ip={}", admin, target, action, ip);
+        write("INFO", "PERMISSION_CHANGE admin=" + admin + " target=" + target + " action=" + action + " ip=" + ip);
     }
 
     public static void logSensitiveOperation(String user, String action, String ip) {
-        logger.info("[AUDIT] SENSITIVE_OPERATION user={} action={} ip={}", user, action, ip);
+        write("INFO", "SENSITIVE_OPERATION user=" + user + " action=" + action + " ip=" + ip);
+    }
+
+    private static void write(String level, String message) {
+        ServiceLog.write(ServiceLog.AUDIT, level, "AuditLogger", message);
     }
 }

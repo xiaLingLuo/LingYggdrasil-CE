@@ -872,6 +872,8 @@
     "sqliteDesc": "軽量で、単体デプロイに適しています",
     "mysqlDesc": "人気のリレーショナルデータベース",
     "pgsqlDesc": "高機能なオープンソースデータベース",
+    "pgsqlUnavailableBadge": "開発中",
+    "pgsqlUnavailable": "この機能は開発中です",
     "sqlitePath": "データベースファイルパス",
     "host": "ホストアドレス",
     "dbName": "データベース名",
@@ -1139,6 +1141,8 @@
     "userGroupInUse": "この権限グループはまだユーザーに使用されているため、削除できません",
     "logCleared": "ログを消去しました",
     "logDownloadLimited": "ダウンロード頻度が高すぎます。{0} 後に再試行してください",
+    "logClearLimited": "消去が頻繁すぎます。{0} 後に再試行してください",
+    "pgsqlUnavailable": "この機能は開発中です",
     "logMaxKibMin": "ユーザーごとのログ上限は 8 KiB 未満にはできません",
     "logRetentionMin": "ログ保存日数は 1 未満にはできません",
     "logIntervalMin": "ログダウンロード間隔は 1 分未満にはできません"

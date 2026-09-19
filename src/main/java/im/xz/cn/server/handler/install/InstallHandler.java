@@ -147,7 +147,11 @@ public class InstallHandler {
             ctx.status(400).json(Map.of("success", false, "message", I18n.t("msg.adminEmailInvalid")));
             return;
         }
-        if (dbType == null || (!dbType.equals("sqlite") && !dbType.equals("mysql") && !dbType.equals("pgsql"))) {
+        if ("pgsql".equals(dbType)) {
+            ctx.status(400).json(Map.of("success", false, "message", I18n.t("msg.pgsqlUnavailable")));
+            return;
+        }
+        if (dbType == null || (!dbType.equals("sqlite") && !dbType.equals("mysql"))) {
             ctx.status(400).json(Map.of("success", false, "message", I18n.t("msg.invalidDbType")));
             return;
         }

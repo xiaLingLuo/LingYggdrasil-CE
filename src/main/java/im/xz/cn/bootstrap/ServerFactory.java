@@ -21,8 +21,13 @@ import io.javalin.Javalin;
 import io.javalin.config.JavalinConfig;
 import io.javalin.config.RoutesConfig;
 import io.javalin.http.Context;
+import io.javalin.http.Handler;
+import io.javalin.http.HandlerType;
+import io.javalin.http.NotFoundResponse;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.http.staticfiles.ResourceHandler;
 import io.javalin.json.JavalinJackson;
+import io.javalin.router.Endpoint;
 import im.xz.cn.common.AppIcons;
 
 import java.io.File;
@@ -77,6 +82,7 @@ public class ServerFactory {
                     im.xz.cn.security.AdminPermissions.clear();
                     im.xz.cn.security.UserPermissions.clear();
                     im.xz.cn.web.Csp.clear();
+                    im.xz.cn.logging.ServiceLog.clear();
                 }
             }, "/*", java.util.EnumSet.of(jakarta.servlet.DispatcherType.REQUEST))
         );
@@ -109,6 +115,41 @@ public class ServerFactory {
     public static void registerIconRoutes(RoutesConfig routes) {
         routes.get("/icons/{name}", ctx -> serveIcon(ctx, false));
         routes.get("/builtin-icons/{name}", ctx -> serveIcon(ctx, true));
+    }
+
+    private static final HandlerType[] PLUGIN_CATCH_ALL_METHODS = {
+        HandlerType.GET, HandlerType.POST, HandlerType.PUT, HandlerType.DELETE, HandlerType.PATCH
+    };
+
+    /**
+     * Registers the single dynamic entry point used to dispatch plugin routes.
+     * <p>
+     * Built-in routes are registered before this catch-all and therefore always win, and
+     * {@link im.xz.cn.plugin.PluginManager#captureBuiltinRoutes} additionally forbids plugins
+     * from claiming any built-in path. The catch-all only runs when no built-in route matched,
+     * so it first gives static resources a chance to be served (they are otherwise shadowed by
+     * the catch-all), then falls back to the plugin route tables.
+     */
+    public static void registerPluginCatchAll(Javalin app, boolean userServer) {
+        im.xz.cn.plugin.PluginManager manager = im.xz.cn.plugin.PluginManager.getInstance();
+        manager.captureBuiltinRoutes(app.unsafe.internalRouter, userServer);
+
+        Handler handler = ctx -> {
+            HandlerType method = ctx.method();
+            if (method == HandlerType.GET || method == HandlerType.HEAD) {
+                ResourceHandler resources = app.unsafe.resourceHandler;
+                if (resources != null && resources.canHandle(ctx) && resources.handle(ctx)) {
+                    return;
+                }
+            }
+            boolean handled = userServer
+                    ? manager.handleUserRequest(ctx)
+                    : manager.handleYggdrasilRequest(ctx);
+            if (!handled) throw new NotFoundResponse();
+        };
+        for (HandlerType method : PLUGIN_CATCH_ALL_METHODS) {
+            app.unsafe.internalRouter.addHttpEndpoint(new Endpoint(method, "/*", handler));
+        }
     }
 
     private static void serveIcon(Context ctx, boolean builtinOnly) {

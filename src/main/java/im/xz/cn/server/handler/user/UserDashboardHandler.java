@@ -175,6 +175,25 @@ public class UserDashboardHandler {
     public void handleClearLog(Context ctx) {
         User user = checkAuth(ctx);
         if (user == null) return;
+        int intervalMin = sysConfig.getUserActionLogClearIntervalMinutes();
+        String key = "userlog_clr:" + user.getId();
+        if (intervalMin > 0) {
+            String last = cacheDao.get(key);
+            if (last != null) {
+                try {
+                    long waitMs = intervalMin * 60_000L - (System.currentTimeMillis() - Long.parseLong(last));
+                    if (waitMs > 0) {
+                        long hours = waitMs / 3600_000L;
+                        long minutes = (waitMs % 3600_000L) / 60_000L;
+                        ctx.status(429).json(Map.of("success", false,
+                                "message", I18n.t("msg.logClearLimited", hours + "h " + minutes + "m")));
+                        return;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+            cacheDao.put(key, String.valueOf(System.currentTimeMillis()), "userlog", intervalMin * 60);
+        }
         im.xz.cn.logging.UserActionLogger.clear(user.getId());
         jsonResponse(ctx, Map.of("success", true, "message", I18n.t("msg.logCleared")));
     }

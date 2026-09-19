@@ -4,7 +4,7 @@
 
 下文中的 `<API>` 指 API 根地址，例如 `https://example.com`（经反向代理同源）或 `http://127.0.0.1:35577`。
 
-> 需要先创建角色并获取 Token 才能完成认证，见[用户功能指南](user-guide.md#角色管理)。
+> 需要先创建角色并获取 Token 才能完成认证，见[用户功能指南](../02-user/guide.md#角色管理)。
 
 ## 端点总览
 
@@ -37,7 +37,7 @@
   "meta": {
     "serverName": "LingYggdrasil",
     "implementationName": "LingYggdrasil",
-    "implementationVersion": "2.0.1"
+    "implementationVersion": "2.1.0"
   },
   "skinDomains": ["example.com", "api.example.com"],
   "signaturePublickey": "-----BEGIN PUBLIC KEY-----\n..."
@@ -212,7 +212,7 @@
 2. 认证服务器地址填写 API 根地址，例如 `https://example.com`（若直连则 `http://<IP>:35577`）。
 3. 用户名填写**角色名**，密码填写该角色的 **Yggdrasil Token**。
 
-> 关于如何创建角色、获取 Token，见[用户功能指南](user-guide.md#角色管理)。
+> 关于如何创建角色、获取 Token，见[用户功能指南](../02-user/guide.md#角色管理)。
 
 ## 常见错误
 

@@ -23,6 +23,18 @@ function permGroupsCan(key) {
     return perms.indexOf('*') !== -1 || perms.indexOf(key) !== -1;
 }
 
+function permItemHtml(p, isAll, perms, editable) {
+    var checked = isAll || (perms && perms.indexOf(p.key) !== -1);
+    var riskIcon = p.highRisk
+        ? ' <i class="fas fa-triangle-exclamation perm-risk-icon" title="' + esc(t('admin.permRisk.title')) +
+          '" data-action="showPermRisk" data-args="' + esc(JSON.stringify([p.key])) + '" data-prevent data-stop></i>'
+        : '';
+    var desc = p.description ? ' title="' + esc(p.description) + '"' : '';
+    return '<label class="perm-item"' + desc + '><input type="checkbox" data-perm="' + esc(p.key) + '"' +
+        (checked ? ' checked' : '') + (editable ? '' : ' disabled') + '> <span>' + esc(p.key) + '</span>' +
+        riskIcon + '</label>';
+}
+
 async function loadPermGroups() {
     var list = document.getElementById('permGroupList');
     if (!list) return;
@@ -50,30 +62,46 @@ function renderPermGroups(groups) {
         var isAll = (g.permissions || '').trim() === '*';
         var perms = isAll ? null : (g.permissions || '').split(',').map(function (s) { return s.trim(); });
 
-        var categories = {};
-        var order = [];
+        var sources = {};
+        var sourceOrder = [];
         permCatalogue.forEach(function (p) {
-            if (!categories[p.category]) { categories[p.category] = []; order.push(p.category); }
-            categories[p.category].push(p);
+            var src = p.source || 'LingYggdrasil';
+            if (!sources[src]) { sources[src] = []; sourceOrder.push(src); }
+            sources[src].push(p);
         });
 
         var body = '';
-        order.forEach(function (cat) {
-            var catToggle = editable
+        sourceOrder.forEach(function (src) {
+            var srcPerms = sources[src];
+            var srcToggle = editable
                 ? '<button type="button" class="perm-toggle-btn" data-action="togglePermCat" data-this></button>'
                 : '';
-            body += '<div class="perm-cat"><div class="perm-cat-head"><div class="perm-cat-title">' +
-                t('admin.permCat.' + cat) + '</div>' + catToggle + '</div><div class="perm-grid">';
-            categories[cat].forEach(function (p) {
-                var checked = isAll || perms.indexOf(p.key) !== -1;
-                var riskIcon = p.highRisk
-                    ? ' <i class="fas fa-triangle-exclamation perm-risk-icon" title="' + esc(t('admin.permRisk.title')) +
-                      '" data-action="showPermRisk" data-args="' + esc(JSON.stringify([p.key])) + '" data-prevent data-stop></i>'
-                    : '';
-                body += '<label class="perm-item"><input type="checkbox" data-perm="' + esc(p.key) + '"' +
-                    (checked ? ' checked' : '') + (editable ? '' : ' disabled') + '> <span>' + esc(p.key) + '</span>' +
-                    riskIcon + '</label>';
-            });
+            body += '<div class="perm-source"><div class="perm-source-head"><div class="perm-source-title">' +
+                esc(src) + '</div>' + srcToggle + '</div><div class="perm-source-body">';
+            if (src === 'LingYggdrasil') {
+                var categories = {};
+                var order = [];
+                srcPerms.forEach(function (p) {
+                    var cat = p.category || 'other';
+                    if (!categories[cat]) { categories[cat] = []; order.push(cat); }
+                    categories[cat].push(p);
+                });
+                order.forEach(function (cat) {
+                    var catToggle = editable
+                        ? '<button type="button" class="perm-toggle-btn" data-action="togglePermCat" data-this></button>'
+                        : '';
+                    var catLabel = t('admin.permCat.' + cat);
+                    if (catLabel === 'admin.permCat.' + cat) catLabel = cat;
+                    body += '<div class="perm-cat"><div class="perm-cat-head"><div class="perm-cat-title">' +
+                        esc(catLabel) + '</div>' + catToggle + '</div><div class="perm-grid">';
+                    categories[cat].forEach(function (p) { body += permItemHtml(p, isAll, perms, editable); });
+                    body += '</div></div>';
+                });
+            } else {
+                body += '<div class="perm-cat"><div class="perm-grid">';
+                srcPerms.forEach(function (p) { body += permItemHtml(p, isAll, perms, editable); });
+                body += '</div></div>';
+            }
             body += '</div></div>';
         });
 
@@ -124,7 +152,7 @@ function togglePermAll(btn) {
 
 function togglePermCat(btn) {
     var card = btn.closest('.perm-group-card');
-    var cat = btn.closest('.perm-cat');
+    var cat = btn.closest('.perm-cat') || btn.closest('.perm-source');
     if (!cat) return;
     var boxes = cat.querySelectorAll('input[data-perm]');
     var allChecked = Array.prototype.every.call(boxes, function (cb) { return cb.checked; });

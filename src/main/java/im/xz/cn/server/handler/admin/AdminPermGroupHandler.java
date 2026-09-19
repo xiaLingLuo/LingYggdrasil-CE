@@ -49,11 +49,14 @@ public class AdminPermGroupHandler {
     public void getCatalogue(Context ctx) {
         if (!AdminPermissions.require(ctx, "admin.groups.view")) return;
         List<Map<String, Object>> perms = new ArrayList<>();
-        for (AdminPermissions.Perm p : AdminPermissions.ALL) {
+        for (im.xz.cn.permission.PermissionNode p
+                : im.xz.cn.permission.PermissionRegistry.getInstance().all(im.xz.cn.permission.PermissionType.ADMIN)) {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("key", p.key());
             m.put("category", p.category());
-            m.put("highRisk", AdminPermissions.isHighRisk(p.key()));
+            m.put("source", p.source());
+            m.put("description", p.description());
+            m.put("highRisk", p.highRisk());
             perms.add(m);
         }
         ctx.json(Map.of("success", true, "permissions", perms));

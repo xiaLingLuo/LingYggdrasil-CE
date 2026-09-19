@@ -872,6 +872,8 @@
     "sqliteDesc": "Leggero, adatto a distribuzioni su singola macchina",
     "mysqlDesc": "Database relazionale diffuso",
     "pgsqlDesc": "Database open source avanzato",
+    "pgsqlUnavailableBadge": "In sviluppo",
+    "pgsqlUnavailable": "Questa funzione è in sviluppo",
     "sqlitePath": "Percorso file database",
     "host": "Indirizzo host",
     "dbName": "Nome database",
@@ -1139,6 +1141,8 @@
     "userGroupInUse": "Questo gruppo di permessi è ancora usato da utenti, impossibile eliminarlo",
     "logCleared": "Registro svuotato",
     "logDownloadLimited": "Download troppo frequente, riprova tra {0}",
+    "logClearLimited": "Cancellazione troppo frequente, riprova tra {0}",
+    "pgsqlUnavailable": "Questa funzione è in sviluppo",
     "logMaxKibMin": "Il limite del registro per utente non può essere inferiore a 8 KiB",
     "logRetentionMin": "I giorni di conservazione del registro non possono essere inferiori a 1",
     "logIntervalMin": "L'intervallo di download del registro non può essere inferiore a 1 minuto"

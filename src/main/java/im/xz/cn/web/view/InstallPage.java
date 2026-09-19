@@ -125,10 +125,10 @@ public class InstallPage {
                                 <div class="db-name">MySQL</div>
                                 <div class="db-desc">{{install.mysqlDesc}}</div>
                             </div>
-                            <div class="db-type-card" data-type="pgsql" data-action="InstallWizard.selectDbType" data-args='["pgsql"]'>
+                            <div class="db-type-card db-type-disabled" data-type="pgsql" data-disabled="true" data-action="InstallWizard.selectDbType" data-args='["pgsql"]'>
                                 <div class="db-icon"><i class="fas fa-database"></i></div>
-                                <div class="db-name">PostgreSQL</div>
-                                <div class="db-desc">{{install.pgsqlDesc}}</div>
+                                <div class="db-name">PostgreSQL <span class="db-badge">{{install.pgsqlUnavailableBadge}}</span></div>
+                                <div class="db-desc">{{install.pgsqlUnavailable}}</div>
                             </div>
                         </div>
                         <input type="hidden" id="dbType" value="sqlite">

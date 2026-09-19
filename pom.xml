@@ -6,7 +6,7 @@
 
     <groupId>im.xz.cn</groupId>
     <artifactId>LingYggdrasil</artifactId>
-    <version>2.0.1</version>
+    <version>2.1.0</version>
 
     <properties>
         <maven.compiler.source>25</maven.compiler.source>
@@ -145,6 +145,34 @@
                         <goals>
                             <goal>single</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>plugin-api-jar</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <jar destfile="${project.build.directory}/LingYggdrasil-plugin-api-${project.version}.jar"
+                                     basedir="${project.build.outputDirectory}">
+                                    <include name="im/xz/cn/plugin/api/**"/>
+                                    <include name="im/xz/cn/database/**"/>
+                                    <include name="im/xz/cn/config/**"/>
+                                    <include name="im/xz/cn/model/**"/>
+                                    <include name="im/xz/cn/common/**"/>
+                                    <include name="im/xz/cn/logging/**"/>
+                                    <include name="im/xz/cn/permission/**"/>
+                                </jar>
+                            </target>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>

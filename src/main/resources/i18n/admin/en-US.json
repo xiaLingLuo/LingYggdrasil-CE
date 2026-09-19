@@ -48,6 +48,7 @@
     "logout": "Log out"
   },
   "adminSidebar": {
+    "plugins": "Plugin Management",
     "menu": "Admin menu",
     "dashboard": "Dashboard",
     "system": "System Management",
@@ -413,6 +414,34 @@
     "removed": "Removed"
   },
   "admin": {
+    "plugins": {
+      "title": "Plugin Management",
+      "desc": "View and manage installed plugins.",
+      "overview": "Overview",
+      "riskNotice": "Plugins are fully trusted code. Do not load plugins from untrusted sources; you are responsible for any consequences.",
+      "empty": "No plugins installed.",
+      "authors": "Authors",
+      "apiVer": "API",
+      "logs": "Plugin System Logs",
+      "logsEmpty": "No logs yet.",
+      "listTitle": "Plugins",
+      "unknownAuthor": "Unknown",
+      "none": "None",
+      "dependencies": "Required dependencies",
+      "hotReloadWarning": "The author declares that this plugin cannot be hot-reloaded.",
+      "action": {
+        "start": "Start",
+        "stop": "Stop",
+        "reload": "Reload"
+      },
+      "status": {
+        "enabled": "Running",
+        "disabled": "Stopped",
+        "missingDependency": "Missing dependencies",
+        "loadFailed": "Load failed",
+        "incompatible": "Incompatible API"
+      }
+    },
     "common": {
       "loading": "Loading...",
       "operation": "Actions",
@@ -448,6 +477,7 @@
       "body": "This permission allows the creation or modification of administrator accounts and their permission groups. Holders can elevate themselves or others to an all-powerful account essentially equivalent to root, thereby gaining full control over the entire admin panel. Grant it only to fully trusted administrators, and never enable it carelessly."
     },
     "permCat": {
+      "plugins": "Plugin Management",
       "access": "Access Permissions",
       "features": "Feature Permissions",
       "dashboard": "Dashboard",
@@ -515,6 +545,8 @@
       "logActionsDesc": "Select the operation types to record in the logs",
       "logDownloadInterval": "Log download interval (minutes)",
       "logDownloadIntervalDesc": "After each log download, users must wait this long before downloading again",
+      "logClearInterval": "Log clear interval (minutes)",
+      "logClearIntervalDesc": "How long a user must wait before clearing logs again",
       "blacklistTitle": "Username Blacklist Control",
       "blacklistLabel": "Username Blacklist",
       "blacklistDesc": "One username per line. Wildcard * is supported (e.g., *admin* means any username containing admin is blocked)",
@@ -643,7 +675,22 @@
       "installedAt": "Installed At",
       "starTitle": "Support the Project",
       "starDesc": "If this project has been helpful to you, please give it a Star ⭐ on GitHub. Your support is what keeps us maintaining it!",
-      "starBtn": "Star on GitHub"
+      "starBtn": "Star on GitHub",
+      "startupParams": "Startup Parameters",
+      "startupParamsDesc": "Runtime configuration",
+      "systems": "Core Systems",
+      "systemUser": "User System",
+      "systemYggdrasil": "Yggdrasil System",
+      "systemAdmin": "Admin System",
+      "ip": "IP",
+      "port": "Port",
+      "retention": "Retention",
+      "logLevel": "Log Level",
+      "auditLog": "Audit Log",
+      "pluginSystemLog": "Plugin System Log",
+      "logging": "Logging",
+      "enabled": "Enabled",
+      "disabled": "Disabled"
     },
     "security": {
       "title": "Security Settings",
@@ -914,6 +961,13 @@
     "backToForm": "Back to Edit"
   },
   "msg": {
+    "pluginOperationSuccess": "Operation successful",
+    "pluginNotFound": "Plugin not found",
+    "pluginNotHotReloadable": "The author declares that this plugin cannot be hot-reloaded.",
+    "pluginMissingDependency": "Missing required dependencies",
+    "pluginIncompatible": "Plugin API version is incompatible",
+    "pluginNotEnabled": "Plugin is not running",
+    "pluginLoadFailed": "Failed to load plugin",
     "requestError": "Invalid request format",
     "nicknameEmpty": "Nickname cannot be empty",
     "nicknameTooLong": "Nickname must be at most 32 characters",

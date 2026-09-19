@@ -48,6 +48,7 @@
     "logout": "Disconnetti"
   },
   "adminSidebar": {
+    "plugins": "Gestione plugin",
     "menu": "Menu di amministrazione",
     "dashboard": "Dashboard",
     "system": "Gestione sistema",
@@ -413,6 +414,34 @@
     "removed": "Rimosso"
   },
   "admin": {
+    "plugins": {
+      "title": "Gestione plugin",
+      "desc": "Visualizza e gestisci i plugin installati.",
+      "overview": "Panoramica",
+      "riskNotice": "I plugin sono codice completamente attendibile. Non caricare plugin da fonti non attendibili; sei responsabile delle conseguenze.",
+      "empty": "Nessun plugin installato.",
+      "authors": "Autori",
+      "apiVer": "API",
+      "logs": "Registro del sistema di plugin",
+      "logsEmpty": "Nessun registro.",
+      "listTitle": "Plugin",
+      "unknownAuthor": "Sconosciuto",
+      "none": "Nessuno",
+      "dependencies": "Dipendenze richieste",
+      "hotReloadWarning": "L'autore dichiara che questo plugin non può essere ricaricato a caldo.",
+      "action": {
+        "start": "Avvia",
+        "stop": "Arresta",
+        "reload": "Ricarica"
+      },
+      "status": {
+        "enabled": "In esecuzione",
+        "disabled": "Arrestato",
+        "missingDependency": "Dipendenze mancanti",
+        "loadFailed": "Caricamento non riuscito",
+        "incompatible": "API incompatibile"
+      }
+    },
     "common": {
       "loading": "Caricamento...",
       "operation": "Operazione",
@@ -448,6 +477,7 @@
       "body": "Questo permesso consente di creare o modificare account amministratore e i relativi gruppi di permessi. Chi lo possiede può elevare se stesso o altri ad account con pieni poteri praticamente identici a root, ottenendo così il controllo completo dell'intero pannello di amministrazione. Concedilo solo ad amministratori di cui ti fidi completamente e non attivarlo con leggerezza."
     },
     "permCat": {
+      "plugins": "Gestione plugin",
       "access": "Permessi di accesso",
       "features": "Permessi funzionali",
       "dashboard": "Dashboard",
@@ -515,6 +545,8 @@
       "logActionsDesc": "Seleziona i tipi di operazione da registrare",
       "logDownloadInterval": "Intervallo download registro (minuti)",
       "logDownloadIntervalDesc": "Dopo ogni download del registro, l'utente deve attendere questo tempo prima di poter scaricare di nuovo",
+      "logClearInterval": "Intervallo di cancellazione dei log (minuti)",
+      "logClearIntervalDesc": "Quanto deve attendere un utente prima di cancellare di nuovo i log",
       "blacklistTitle": "Controllo lista nera nomi utente",
       "blacklistLabel": "Lista nera nomi utente",
       "blacklistDesc": "Un nome utente per riga, supporta il carattere jolly * (es. *admin* significa che è vietato se contiene admin)",
@@ -643,7 +675,22 @@
       "installedAt": "Data di installazione",
       "starTitle": "Supporta il progetto",
       "starDesc": "Se questo progetto ti è stato utile, metti una Star ⭐ su GitHub! Il tuo supporto è la motivazione per la nostra manutenzione continua!",
-      "starBtn": "Vai su GitHub e metti una Star"
+      "starBtn": "Vai su GitHub e metti una Star",
+      "startupParams": "Parametri di avvio",
+      "startupParamsDesc": "Configurazione di runtime",
+      "systems": "Sistemi principali",
+      "systemUser": "Sistema utente",
+      "systemYggdrasil": "Sistema Yggdrasil",
+      "systemAdmin": "Sistema di amministrazione",
+      "ip": "IP",
+      "port": "Porta",
+      "retention": "Conservazione",
+      "logLevel": "Livello di log",
+      "auditLog": "Log di controllo",
+      "pluginSystemLog": "Log del sistema plugin",
+      "logging": "Registrazione",
+      "enabled": "Attivo",
+      "disabled": "Disattivato"
     },
     "security": {
       "title": "Impostazioni di sicurezza",
@@ -914,6 +961,13 @@
     "backToForm": "Torna alla modifica"
   },
   "msg": {
+    "pluginOperationSuccess": "Operazione riuscita",
+    "pluginNotFound": "Plugin non trovato",
+    "pluginNotHotReloadable": "L'autore dichiara che questo plugin non può essere ricaricato a caldo.",
+    "pluginMissingDependency": "Dipendenze obbligatorie mancanti",
+    "pluginIncompatible": "La versione API del plugin è incompatibile",
+    "pluginNotEnabled": "Il plugin non è in esecuzione",
+    "pluginLoadFailed": "Impossibile caricare il plugin",
     "requestError": "Formato della richiesta errato",
     "nicknameEmpty": "Il nickname non può essere vuoto",
     "nicknameTooLong": "Il nickname può avere al massimo 32 caratteri",

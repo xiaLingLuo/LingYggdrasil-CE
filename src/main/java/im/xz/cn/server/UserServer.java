@@ -96,6 +96,7 @@ public class UserServer {
             config.http.defaultContentType = "text/html; charset=utf-8";
 
             ServerFactory.configureSessionCookie(config, "LING_USER_SESSION");
+            ServerFactory.configureThreadLocalCleanup(config);
             ServerFactory.configureSecurityHeaders(config);
 
             config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> {
@@ -114,6 +115,8 @@ public class UserServer {
             config.jsonMapper(new JavalinJackson());
 
 
+            config.routes.before(ctx -> im.xz.cn.logging.ServiceLog.setService(im.xz.cn.logging.ServiceLog.USER));
+
             config.routes.before(ctx -> {
                 var session = ctx.req().getSession(false);
                 if (session != null) {
@@ -131,6 +134,7 @@ public class UserServer {
             config.routes.after(ctx -> {
                 LocaleContext.clear();
                 im.xz.cn.security.UserPermissions.clear();
+                im.xz.cn.logging.ServiceLog.clear();
             });
 
             config.routes.before(ctx -> {
@@ -350,11 +354,13 @@ public class UserServer {
             });
             config.routes.get("/api/footer-info", ctx -> ctx.json(FooterInfo.getFooterData()));
         });
+
+        ServerFactory.registerPluginCatchAll(app, true);
     }
 
-    public void start() {
-        app.start(port);
-        logger.info("User server started on port {}", port);
+    public void start(String host, int port) {
+        app.start(host, port);
+        logger.info("User server started on {}:{}", host, port);
     }
 
     public void stop() {

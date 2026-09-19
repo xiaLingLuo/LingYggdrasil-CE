@@ -289,9 +289,9 @@ public class PageRenderer {
             items.append("</button>");
         }
         String button = sidebar
-                ? "<button type=\"button\" class=\"sidebar-link lang-toggle\" data-action=\"toggleLangMenu\" data-event>"
-                    + "<span class=\"sidebar-link-icon\"><i class=\"fas fa-language\"></i></span><span>"
-                    + im.xz.cn.i18n.AdminI18n.t("nav.language") + "</span></button>"
+                ? "<button type=\"button\" class=\"sidebar-action lang-toggle\" data-action=\"toggleLangMenu\" data-event aria-label=\""
+                    + im.xz.cn.i18n.AdminI18n.t("nav.language") + "\" title=\""
+                    + im.xz.cn.i18n.AdminI18n.t("nav.language") + "\"><i class=\"fas fa-language\"></i></button>"
                 : "<button type=\"button\" class=\"nav-link lang-toggle\" data-action=\"toggleLangMenu\" data-event aria-label=\""
                     + im.xz.cn.i18n.AdminI18n.t("nav.language") + "\" title=\""
                     + im.xz.cn.i18n.AdminI18n.t("nav.language") + "\"><i class=\"fas fa-language\"></i></button>";

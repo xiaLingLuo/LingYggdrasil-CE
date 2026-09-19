@@ -584,6 +584,24 @@
         overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
     }
 
+    function showInfoDialog(title, message) {
+        var existing = document.getElementById('infoDialogModal');
+        if (existing) existing.remove();
+        var overlay = document.createElement('div');
+        overlay.className = 'modal-overlay';
+        overlay.id = 'infoDialogModal';
+        overlay.innerHTML =
+            '<div class="modal-box" style="max-width:460px">' +
+            '<h3>' + escapeHtml(title || '') + '</h3>' +
+            '<p style="margin:12px 0;line-height:1.7;color:var(--color-text-muted);white-space:pre-wrap">' +
+            escapeHtml(message || '') + '</p>' +
+            '<div class="modal-actions"><button class="btn btn-secondary" id="infoDialogCloseBtn">' +
+            escapeHtml(t('common.close')) + '</button></div></div>';
+        document.body.appendChild(overlay);
+        document.getElementById('infoDialogCloseBtn').addEventListener('click', function () { overlay.remove(); });
+        overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+    }
+
     function resolveAction(name) {
         if (!name) return null;
         if (typeof global[name] === 'function') return { fn: global[name], receiver: global };
@@ -697,6 +715,7 @@
     global.setLanguage = setLanguage;
     global.toggleLangMenu = toggleLangMenu;
     global.toggleSidebar = toggleSidebar;
+    global.showInfoDialog = showInfoDialog;
     global.closeSidebar = closeSidebar;
     global.showPermRisk = showPermRisk;
     global.startBtnLoading = startBtnLoading;

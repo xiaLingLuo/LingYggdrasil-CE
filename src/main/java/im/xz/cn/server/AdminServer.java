@@ -47,17 +47,18 @@ import im.xz.cn.logging.logApi;
 public class AdminServer {
     private static final logApi logger = logApi.getLogger(AdminServer.class);
 
-    private static final Map<String, String> PAGE_VIEW_PERMS = Map.of(
-            "/admin/dashboard", "admin.dashboard.view",
-            "/admin/users", "admin.users.view",
-            "/admin/profiles", "admin.profiles.view",
-            "/admin/skins", "admin.skins.view",
-            "/admin/capes", "admin.capes.view",
-            "/admin/security", "admin.security.view",
-            "/admin/admins", "admin.admins.view",
-            "/admin/appinfo", "admin.appinfo.view",
-            "/admin/yggdrasil", "admin.yggdrasil.view",
-            "/admin/system", "admin.system.view"
+    private static final Map<String, String> PAGE_VIEW_PERMS = Map.ofEntries(
+            Map.entry("/admin/dashboard", "admin.dashboard.view"),
+            Map.entry("/admin/users", "admin.users.view"),
+            Map.entry("/admin/profiles", "admin.profiles.view"),
+            Map.entry("/admin/skins", "admin.skins.view"),
+            Map.entry("/admin/capes", "admin.capes.view"),
+            Map.entry("/admin/security", "admin.security.view"),
+            Map.entry("/admin/admins", "admin.admins.view"),
+            Map.entry("/admin/appinfo", "admin.appinfo.view"),
+            Map.entry("/admin/yggdrasil", "admin.yggdrasil.view"),
+            Map.entry("/admin/system", "admin.system.view"),
+            Map.entry("/admin/plugins", "admin.plugin.overall.view")
     );
 
     private final Javalin app;
@@ -84,7 +85,8 @@ public class AdminServer {
         AdminDashboardHandler dashboardHandler = new AdminDashboardHandler(userDao, profileDao, tokenDao, adminDao);
         AdminSystemHandler systemHandler = new AdminSystemHandler(systemConfig, cacheDao, tokenDao, db);
         AdminSecurityHandler securityHandler = new AdminSecurityHandler(systemConfig, db);
-        AdminUserHandler userHandler = new AdminUserHandler(userDao, adminDao, systemConfig, userPermGroupDao);
+        im.xz.cn.database.dao.UserLogDao userLogDao = new im.xz.cn.database.dao.UserLogDao(db);
+        AdminUserHandler userHandler = new AdminUserHandler(userDao, adminDao, systemConfig, userPermGroupDao, userLogDao);
         im.xz.cn.server.handler.admin.AdminUserPermGroupHandler userPermGroupHandler =
                 new im.xz.cn.server.handler.admin.AdminUserPermGroupHandler(userPermGroupDao);
         AdminAdminHandler adminAdminHandler = new AdminAdminHandler(adminDao, rootInfoDao);
@@ -95,11 +97,13 @@ public class AdminServer {
         AdminSkinHandler skinHandler = new AdminSkinHandler(textureDao, textureService, userDao, db, systemConfig);
         AdminCapeHandler capeHandler = new AdminCapeHandler(textureDao, textureService, userDao, db, systemConfig);
         AdminYggdrasilHandler yggdrasilHandler = new AdminYggdrasilHandler(systemConfig, db);
+        AdminPluginHandler pluginHandler = new AdminPluginHandler();
 
         this.app = Javalin.create(config -> {
             config.http.defaultContentType = "text/html; charset=utf-8";
 
             ServerFactory.configureSessionCookie(config, "LING_ADMIN_SESSION");
+            ServerFactory.configureThreadLocalCleanup(config);
             ServerFactory.configureSecurityHeaders(config);
 
             config.bundledPlugins.enableCors(cors ->
@@ -119,6 +123,7 @@ public class AdminServer {
             config.jsonMapper(new JavalinJackson());
 
             config.routes.before(ctx -> {
+                im.xz.cn.logging.ServiceLog.setService(im.xz.cn.logging.ServiceLog.ADMIN);
                 AdminPermissions.clear();
                 String lang = SessionManager.getLanguage(ctx);
                 if (lang == null) lang = ctx.cookie("LING_ADMIN_LANG");
@@ -128,6 +133,7 @@ public class AdminServer {
             config.routes.after(ctx -> {
                 LocaleContext.clear();
                 AdminPermissions.clear();
+                im.xz.cn.logging.ServiceLog.clear();
             });
 
             config.routes.before(ctx -> {
@@ -212,7 +218,7 @@ public class AdminServer {
                 }
 
                 String method = ctx.method().name();
-                if (method.equals("POST") || method.equals("PUT") || method.equals("DELETE")) {
+                if (method.equals("POST") || method.equals("PUT") || method.equals("DELETE") || method.equals("PATCH")) {
                     if (!SessionManager.validateCsrfToken(ctx)) {
                         ctx.status(403);
                         ctx.json(Map.of("success", false, "message", AdminI18n.t("msg.csrfFailed")));
@@ -296,6 +302,21 @@ public class AdminServer {
 
             config.routes.get("/admin/api/appinfo", appInfoHandler::getAppInfo);
 
+            config.routes.get("/admin/plugins", pluginHandler::pluginsPage);
+            config.routes.get("/admin/plugins/{plugin}/{menu}", pluginHandler::pluginMenuPage);
+            config.routes.get("/admin/api/plugins", pluginHandler::list);
+            config.routes.post("/admin/api/plugins/{name}/enable", pluginHandler::enable);
+            config.routes.post("/admin/api/plugins/{name}/disable", pluginHandler::disable);
+            config.routes.post("/admin/api/plugins/{name}/reload", pluginHandler::reload);
+            config.routes.get("/admin/api/plugins/{name}/icon", pluginHandler::icon);
+            for (String pattern : new String[]{"/admin/api/plugins/{name}/api", "/admin/api/plugins/{name}/api/*"}) {
+                config.routes.get(pattern, pluginHandler::api);
+                config.routes.post(pattern, pluginHandler::api);
+                config.routes.put(pattern, pluginHandler::api);
+                config.routes.delete(pattern, pluginHandler::api);
+                config.routes.patch(pattern, pluginHandler::api);
+            }
+
             config.routes.get("/api/announcement", ctx -> {
                 SystemConfig sc = SystemConfig.getInstance();
                 String adminId = SessionManager.getAdminId(ctx);
@@ -324,9 +345,9 @@ public class AdminServer {
         });
     }
 
-    public void start() {
-        app.start(port);
-        logger.info("[AdminServer] 管理后台已启动，端口: {}", port);
+    public void start(String host, int port) {
+        app.start(host, port);
+        logger.info("[AdminServer] 管理后台已启动，{}:{}", host, port);
     }
 
     public void stop() {

@@ -168,6 +168,7 @@ public class AdminSystemHandler {
         settings.put("userActionLogRetentionDays", systemConfig.getUserActionLogRetentionDays());
         settings.put("userActionLogActions", systemConfig.getUserActionLogActions());
         settings.put("userActionLogDownloadIntervalMinutes", systemConfig.getUserActionLogDownloadIntervalMinutes());
+        settings.put("userActionLogClearIntervalMinutes", systemConfig.getUserActionLogClearIntervalMinutes());
         settings.put("uuidVersion", systemConfig.getUuidVersion());
 
         settings.put("userDomain", systemConfig.getUserDomain());
@@ -289,6 +290,14 @@ public class AdminSystemHandler {
                     return;
                 }
                 systemConfig.setUserActionLogDownloadIntervalMinutes(logInterval);
+                break;
+            case "user_action_log_clear_interval_minutes":
+                int clearInterval = Integer.parseInt(value);
+                if (clearInterval < 1) {
+                    ctx.status(400).json(Map.of("success", false, "message", I18n.t("msg.logIntervalMin")));
+                    return;
+                }
+                systemConfig.setUserActionLogClearIntervalMinutes(clearInterval);
                 break;
             case "user_domain":
                 systemConfig.setUserDomain(value);

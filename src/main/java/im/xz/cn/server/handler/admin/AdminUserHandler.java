@@ -41,13 +41,16 @@ public class AdminUserHandler {
     private final AdminDao adminDao;
     private final SystemConfig systemConfig;
     private final im.xz.cn.database.dao.UserPermGroupDao userPermGroupDao;
+    private final im.xz.cn.database.dao.UserLogDao userLogDao;
 
     public AdminUserHandler(UserDao userDao, AdminDao adminDao, SystemConfig systemConfig,
-                            im.xz.cn.database.dao.UserPermGroupDao userPermGroupDao) {
+                            im.xz.cn.database.dao.UserPermGroupDao userPermGroupDao,
+                            im.xz.cn.database.dao.UserLogDao userLogDao) {
         this.userDao = userDao;
         this.adminDao = adminDao;
         this.systemConfig = systemConfig;
         this.userPermGroupDao = userPermGroupDao;
+        this.userLogDao = userLogDao;
     }
 
     public void usersPage(Context ctx) {
@@ -117,6 +120,7 @@ public class AdminUserHandler {
             ctx.status(404).json(Map.of("success", false, "message", I18n.t("msg.userNotFound")));
             return;
         }
+        userLogDao.clear(id);
         userDao.delete(id);
         AuditLogger.logSensitiveOperation(getAdminName(ctx), "DELETE_USER:" + id, IpUtil.getClientIp(ctx));
         ctx.json(Map.of("success", true, "message", I18n.t("msg.userDeleted")));

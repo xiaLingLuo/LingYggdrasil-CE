@@ -872,6 +872,8 @@
     "sqliteDesc": "Leichtgewichtig, geeignet für Einzelmaschinen-Bereitstellung",
     "mysqlDesc": "Beliebte relationale Datenbank",
     "pgsqlDesc": "Fortschrittliche Open-Source-Datenbank",
+    "pgsqlUnavailableBadge": "In Entwicklung",
+    "pgsqlUnavailable": "Diese Funktion befindet sich in Entwicklung",
     "sqlitePath": "Pfad zur Datenbankdatei",
     "host": "Host-Adresse",
     "dbName": "Datenbankname",
@@ -1139,6 +1141,8 @@
     "userGroupInUse": "Diese Berechtigungsgruppe wird noch von Benutzern verwendet und kann nicht gelöscht werden",
     "logCleared": "Protokoll geleert",
     "logDownloadLimited": "Download zu häufig, bitte in {0} erneut versuchen",
+    "logClearLimited": "Zu häufiges Löschen, bitte in {0} erneut versuchen",
+    "pgsqlUnavailable": "Diese Funktion befindet sich in Entwicklung",
     "logMaxKibMin": "Die Protokollobergrenze pro Benutzer darf nicht kleiner als 8 KiB sein",
     "logRetentionMin": "Die Aufbewahrungstage für Protokolle dürfen nicht kleiner als 1 sein",
     "logIntervalMin": "Das Protokoll-Downloadintervall darf nicht kleiner als 1 Minute sein"

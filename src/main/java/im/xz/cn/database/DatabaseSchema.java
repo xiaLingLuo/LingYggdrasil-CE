@@ -55,7 +55,44 @@ public class DatabaseSchema {
         migratePermGroups(db);
         migrateUserPermGroups(db);
         seedReservedUser(db);
+        migrateUserLogs(db);
         dropLegacyRoleColumns(db);
+    }
+
+    private static void migrateUserLogs(DatabaseManager db) {
+        String type = db.getDbType();
+        String sql = switch (type) {
+            case "mysql" -> "CREATE TABLE IF NOT EXISTS user_logs ("
+                    + "id VARCHAR(36) PRIMARY KEY,"
+                    + "user_id VARCHAR(36) NOT NULL,"
+                    + "action VARCHAR(64) NOT NULL,"
+                    + "message TEXT NOT NULL,"
+                    + "created_at DATETIME NOT NULL,"
+                    + "INDEX idx_user_logs_user (user_id, created_at),"
+                    + "FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE"
+                    + ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+            case "pgsql" -> "CREATE TABLE IF NOT EXISTS user_logs ("
+                    + "id TEXT PRIMARY KEY,"
+                    + "user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,"
+                    + "action TEXT NOT NULL,"
+                    + "message TEXT NOT NULL,"
+                    + "created_at TIMESTAMP NOT NULL)";
+            default -> "CREATE TABLE IF NOT EXISTS user_logs ("
+                    + "id TEXT PRIMARY KEY,"
+                    + "user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,"
+                    + "action TEXT NOT NULL,"
+                    + "message TEXT NOT NULL,"
+                    + "created_at TEXT NOT NULL)";
+        };
+        db.executeUpdate(sql);
+        if (!"mysql".equals(type)) {
+            db.executeUpdate("CREATE INDEX IF NOT EXISTS idx_user_logs_user ON user_logs (user_id, created_at)");
+        } else {
+            try {
+                db.executeUpdate("CREATE INDEX idx_user_logs_user ON user_logs (user_id, created_at)");
+            } catch (Exception ignored) {
+            }
+        }
     }
 
     private static void dropLegacyRoleColumns(DatabaseManager db) {

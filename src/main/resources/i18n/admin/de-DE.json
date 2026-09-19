@@ -48,6 +48,7 @@
     "logout": "Abmelden"
   },
   "adminSidebar": {
+    "plugins": "Plugin-Verwaltung",
     "menu": "Verwaltungsmenü",
     "dashboard": "Übersicht",
     "system": "Systemverwaltung",
@@ -413,6 +414,34 @@
     "removed": "Entfernt"
   },
   "admin": {
+    "plugins": {
+      "title": "Plugin-Verwaltung",
+      "desc": "Installierte Plugins anzeigen und verwalten.",
+      "overview": "Übersicht",
+      "riskNotice": "Plugins sind vollständig vertrauenswürdiger Code. Laden Sie keine Plugins aus nicht vertrauenswürdigen Quellen; Sie tragen die Konsequenzen.",
+      "empty": "Keine Plugins installiert.",
+      "authors": "Autoren",
+      "apiVer": "API",
+      "logs": "Plugin-Systemprotokoll",
+      "logsEmpty": "Keine Protokolle.",
+      "listTitle": "Plugins",
+      "unknownAuthor": "Unbekannt",
+      "none": "Keine",
+      "dependencies": "Erforderliche Abhängigkeiten",
+      "hotReloadWarning": "Der Autor erklärt, dass dieses Plugin nicht im laufenden Betrieb neu geladen werden kann.",
+      "action": {
+        "start": "Starten",
+        "stop": "Stoppen",
+        "reload": "Neu laden"
+      },
+      "status": {
+        "enabled": "Läuft",
+        "disabled": "Gestoppt",
+        "missingDependency": "Fehlende Abhängigkeiten",
+        "loadFailed": "Laden fehlgeschlagen",
+        "incompatible": "Inkompatible API"
+      }
+    },
     "common": {
       "loading": "Wird geladen...",
       "operation": "Aktion",
@@ -448,6 +477,7 @@
       "body": "Diese Berechtigung erlaubt das Erstellen oder Ändern von Administratorkonten und deren Berechtigungsgruppen. Inhaber können sich selbst oder andere zu nahezu vollumfänglichen Konten mit root-ähnlichen Rechten erheben und so die vollständige Kontrolle über den gesamten Verwaltungsbereich erlangen. Bitte nur vollständig vertrauenswürdigen Administratoren vergeben und niemals leichtfertig aktivieren."
     },
     "permCat": {
+      "plugins": "Plugin-Verwaltung",
       "access": "Zugriffsrechte",
       "features": "Funktionsrechte",
       "dashboard": "Übersicht",
@@ -515,6 +545,8 @@
       "logActionsDesc": "Wählen Sie die Aktionstypen aus, die protokolliert werden sollen",
       "logDownloadInterval": "Protokoll-Downloadintervall (Minuten)",
       "logDownloadIntervalDesc": "Nach jedem Protokoll-Download muss der Benutzer diese Zeitspanne warten, bevor er erneut herunterladen kann",
+      "logClearInterval": "Intervall zum Löschen des Protokolls (Minuten)",
+      "logClearIntervalDesc": "Wie lange ein Benutzer warten muss, bevor er das Protokoll erneut löschen kann",
       "blacklistTitle": "Benutzernamen-Blacklist-Steuerung",
       "blacklistLabel": "Benutzernamen-Blacklist",
       "blacklistDesc": "Ein Benutzername pro Zeile, Platzhalter * wird unterstützt (z. B. *admin* bedeutet, dass Namen, die admin enthalten, gesperrt sind)",
@@ -643,7 +675,22 @@
       "installedAt": "Installationszeitpunkt",
       "starTitle": "Projekt unterstützen",
       "starDesc": "Wenn dieses Projekt Ihnen geholfen hat, geben Sie ihm gerne auf GitHub einen Stern ⭐. Ihre Unterstützung ist unsere Motivation für die weitere Pflege!",
-      "starBtn": "Auf GitHub einen Stern geben"
+      "starBtn": "Auf GitHub einen Stern geben",
+      "startupParams": "Startparameter",
+      "startupParamsDesc": "Laufzeitkonfiguration",
+      "systems": "Kernsysteme",
+      "systemUser": "Benutzersystem",
+      "systemYggdrasil": "Yggdrasil-System",
+      "systemAdmin": "Admin-System",
+      "ip": "IP",
+      "port": "Port",
+      "retention": "Aufbewahrung",
+      "logLevel": "Log-Stufe",
+      "auditLog": "Audit-Log",
+      "pluginSystemLog": "Plugin-System-Log",
+      "logging": "Protokollierung",
+      "enabled": "Aktiviert",
+      "disabled": "Deaktiviert"
     },
     "security": {
       "title": "Sicherheitseinstellungen",
@@ -914,6 +961,13 @@
     "backToForm": "Zurück zur Bearbeitung"
   },
   "msg": {
+    "pluginOperationSuccess": "Vorgang erfolgreich",
+    "pluginNotFound": "Plugin nicht gefunden",
+    "pluginNotHotReloadable": "Der Autor erklärt, dass dieses Plugin nicht im laufenden Betrieb neu geladen werden kann.",
+    "pluginMissingDependency": "Fehlende erforderliche Abhängigkeiten",
+    "pluginIncompatible": "Plugin-API-Version ist inkompatibel",
+    "pluginNotEnabled": "Plugin läuft nicht",
+    "pluginLoadFailed": "Plugin konnte nicht geladen werden",
     "requestError": "Ungültiges Anfrageformat",
     "nicknameEmpty": "Spitzname darf nicht leer sein",
     "nicknameTooLong": "Der Spitzname darf höchstens 32 Zeichen lang sein",

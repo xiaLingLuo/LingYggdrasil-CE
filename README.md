@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.0.1-blueviolet?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/version-2.1.0-blueviolet?style=flat-square" alt="Version" />
   <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square" alt="Java" />
   <a href="https://www.gnu.org/licenses/agpl-3.0">
     <img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg?style=flat-square" alt="License: AGPL-3.0" />
@@ -52,10 +52,10 @@
 # 1. 确认 Java 版本
 java --version
 
-# 2. 下载 LingYggdrasil-2.0.1.jar，放入一个独立的空目录
+# 2. 下载 LingYggdrasil-2.1.0.jar，放入一个独立的空目录
 
 # 3. 启动（该目录将成为数据目录）
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.1.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.1.0.jar
 ```
 
 首次启动会自动进入**安装向导**（`http://<服务器地址>:35598`），按提示完成管理员账户、数据库与邮箱配置即可。安装完成后，程序会同时提供三个服务：
@@ -67,7 +67,7 @@ java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.1.jar
 | `35599` | 管理后台                                   | **应保持私密**   |
 | `35598` | 安装向导                                   | 仅首次安装时开放 |
 
-完整步骤见 **[快速开始文档](docs/getting-started.md)**，生产部署见 **[部署与运维](docs/deployment.md)**。
+完整步骤见 **[快速开始文档](docs/01-overview/getting-started.md)**，生产部署见 **[部署与运维](docs/01-overview/deployment.md)**。
 
 > **安全提醒**：管理后台（35599）与安装端口（35598）不应直接暴露到公网，建议通过反向代理限制来源，或仅经内网 / SSH 隧道访问。
 
@@ -80,6 +80,17 @@ java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.1.jar
 - **Web 安装向导** —— 首次启动自动引导设置管理员账户、数据库与邮件服务，全程可视化操作。
 - **多数据库支持** —— 支持 **SQLite**、**MySQL**、**PostgreSQL**，按需选择，无需额外配置。
 - **单 JAR 部署** —— 打包为单个可执行 JAR，放入服务器即可运行。
+
+### 插件系统
+
+- **外部插件加载** —— 启动时自动扫描 `plugins/` 目录并加载插件 jar，安装模式不加载。
+- **`plugin.yml` 描述** —— 仿 Paper 风格，声明名称、版本、作者、依赖、图标与权限节点。
+- **后台插件管理** —— 一级菜单「插件管理」，总览展示图标、名称、版本、作者、介绍与运行状态，支持手动启停。
+- **插件二级菜单** —— 插件可注册至多一个后台二级菜单，承载自身控制功能。
+- **动态权限节点** —— 内置节点与插件节点统一由来源（`LingYggdrasil` / 各插件）动态注册，权限组页面按来源分组展示。
+- **插件开发 API** —— 构建同步产出 `LingYggdrasil-plugin-api-2.1.0.jar`，自包含，供插件开发者编译。
+
+> 插件为**完全可信代码**，请勿加载来路不明的插件，加载第三方插件后果自负。详见[插件系统](docs/05-plugins/management.md)。
 
 ### 安全体系
 
@@ -140,21 +151,17 @@ java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.1.jar
 
 ## 文档
 
-| 文档                                   | 说明                                        |
-|----------------------------------------|---------------------------------------------|
-| [快速开始](docs/getting-started.md)    | 环境要求、下载、首次启动与安装向导          |
-| [部署与运维](docs/deployment.md)       | 端口规划、反向代理、数据目录、备份、systemd |
-| [配置参考](docs/configuration.md)      | `sql.yml` 与所有系统设置项的完整说明        |
-| [Yggdrasil API](docs/yggdrasil-api.md) | 认证服务器、会话服务器、纹理端点的协议参考  |
-| [管理后台指南](docs/admin-guide.md)    | 各管理模块的功能与操作说明                  |
-| [用户功能指南](docs/user-guide.md)     | 注册、登录、角色、皮肤、好友等使用说明      |
-| [权限系统](docs/permissions.md)        | 管理员权限组与用户权限组                    |
-| [自定义](docs/customization.md)        | 图标覆盖、首页内容、多语言、邮件模板        |
-| [安全说明](docs/security.md)           | 加密体系、会话隔离、已知限制与注意事项      |
-| [开发与构建](docs/development.md)      | 源码结构、构建方式、二次开发                |
-| [常见问题](docs/faq.md)                | FAQ 与排错                                  |
+完整文档分为**七大板块**，入口见 **[docs/README.md](docs/README.md)**。
 
-完整文档入口见 **[docs/README.md](docs/README.md)**。
+| 板块 | 说明 |
+|------|------|
+| [① 概述](docs/01-overview/README.md) | 项目简介、快速开始、部署运维、配置参考、开发构建、常见问题 |
+| [② 用户系统](docs/02-user/README.md) | 用户功能、用户权限系统、用户端界面自定义 |
+| [③ 管理系统](docs/03-admin/README.md) | 管理后台、管理员权限系统、管理端界面自定义 |
+| [④ 世界树系统](docs/04-yggdrasil/README.md) | Yggdrasil 认证、会话与纹理协议 |
+| [⑤ 插件系统](docs/05-plugins/README.md) | 插件的安装、查看与启停 |
+| [⑥ 安全](docs/06-security/README.md) | 加密体系、会话隔离、请求防护与安全清单 |
+| [⑦ 插件开发手册](docs/07-plugin-dev/README.md) | `plugin.yml`、插件 API、路由与示例 |
 
 ---
 
@@ -166,7 +173,7 @@ java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.1.jar
 2. 认证服务器地址填写 **API 根地址**（例如 `https://example.com`，直连则填 `http://<IP>:35577`）。
 3. 用户名填写**角色名**，密码填写该角色的 **Yggdrasil Token**。
 
-> 关于如何创建角色与获取 Token，见[用户功能指南](docs/user-guide.md#角色管理)；协议细节见 [Yggdrasil API](docs/yggdrasil-api.md)。
+> 关于如何创建角色与获取 Token，见[用户功能指南](docs/02-user/guide.md#角色管理)；协议细节见 [Yggdrasil API](docs/04-yggdrasil/api.md)。
 
 ---
 
@@ -188,7 +195,26 @@ java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.1.jar
 
 ## 参与贡献
 
-欢迎提交 Issue 与 Pull Request。开始之前建议先阅读[开发与构建](docs/development.md)，了解源码结构与开发约定。
+欢迎提交 Issue 与 Pull Request。开始之前建议先阅读[开发与构建](docs/01-overview/development.md)，了解源码结构与开发约定。
+
+### 国际化贡献
+
+我们内置 10 种语言，目前除简体中文外的语言均为 AI 翻译，尚未经过人工校对。下表为各语言的翻译进展，**欢迎提交国际化 PR** 完善人工翻译：
+
+| 语言 | AI 翻译进展 | 人工翻译进展 |
+|------|-------------|--------------|
+| 简体中文（zh-CN）      | 原生语言 | 原生语言 |
+| 繁体中文（zh-TW）      | 100%     | 0%       |
+| 中文（華夏）（zh-XIA） | 100%     | 0%       |
+| English（en-US）       | 100%     | 0%       |
+| Русский（ru-RU）       | 100%     | 0%       |
+| Deutsch（de-DE）       | 100%     | 0%       |
+| Français（fr-FR）      | 100%     | 0%       |
+| Italiano（it-IT）      | 100%     | 0%       |
+| 日本語（ja-JP）        | 100%     | 0%       |
+| 한국어（ko-KR）        | 100%     | 0%       |
+
+语言包位于 `src/main/resources/i18n/`，分为 `user/`（用户端）与 `admin/`（管理端）两套 JSON；首页模板位于 `i18n/user/index-page/`。提交 PR 时请同步更新对应语言的全部键。详见[界面自定义](docs/02-user/customization.md)。
 
 ## 许可协议
 

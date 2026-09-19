@@ -872,6 +872,8 @@
     "sqliteDesc": "輕量，宜單機之設",
     "mysqlDesc": "流行之關聯資料庫",
     "pgsqlDesc": "進階開源之資料庫",
+    "pgsqlUnavailableBadge": "方作中",
+    "pgsqlUnavailable": "此功能方作中",
     "sqlitePath": "資料庫檔之路",
     "host": "主機之址",
     "dbName": "資料庫之名",
@@ -1139,6 +1141,8 @@
     "userGroupInUse": "該權組仍為人所用，不能刪",
     "logCleared": "誌已空",
     "logDownloadLimited": "取之過頻，請於 {0} 後再試",
+    "logClearLimited": "清之太頻，請待 {0} 後再試",
+    "pgsqlUnavailable": "此功能方作中",
     "logMaxKibMin": "單人之誌上限不可小於 8 KiB",
     "logRetentionMin": "誌存之天不可小於 1",
     "logIntervalMin": "誌取之間不可小於 1 分"

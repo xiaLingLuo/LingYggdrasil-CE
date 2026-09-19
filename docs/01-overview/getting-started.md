@@ -2,7 +2,7 @@
 
 本页帮助你从零开始运行泠 Yggdrasil。
 
-> 已经部署完成？可直接跳转到[部署与运维](deployment.md)或[管理后台指南](admin-guide.md)。
+> 已经部署完成？可直接跳转到[部署与运维](deployment.md)或[管理后台指南](../03-admin/guide.md)。
 
 ## 1. 环境要求
 
@@ -26,7 +26,7 @@ java --version
 从仓库的 Releases 页面下载构建好的可执行 JAR：
 
 ```text
-LingYggdrasil-2.0.1.jar
+LingYggdrasil-2.1.0.jar
 ```
 
 将其放入一个**独立的空目录**（该目录将作为运行目录，用于存放数据库、配置与纹理）。
@@ -38,13 +38,13 @@ LingYggdrasil-2.0.1.jar
 在 JAR 所在目录执行：
 
 ```bash
-java -jar LingYggdrasil-2.0.1.jar
+java -jar LingYggdrasil-2.1.0.jar
 ```
 
 也可以附加 JVM 参数，例如：
 
 ```bash
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.0.1.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.1.0.jar
 ```
 
 > **提示**：启动时的当前工作目录就是数据目录。请始终在同一个目录下启动，避免数据分散。
@@ -61,9 +61,10 @@ http://<服务器地址>:35598
 
 1. **管理员账户**：创建 Root 管理员（用户名、密码、邮箱）。密码要求至少 12 位，且包含大写字母、小写字母、数字与至少一个特殊字符。
 2. **邮箱配置**（可选）：配置 SMTP 邮件服务，用于发送验证码与通知。可稍后在管理后台修改。
-3. **数据库配置**：选择 SQLite / MySQL / PostgreSQL 并填写连接信息。
+3. **数据库配置**：选择 SQLite / MySQL 并填写连接信息。
    - SQLite：填写数据库文件路径（例如 `./data.db`）。
-   - MySQL / PostgreSQL：填写主机、端口、数据库名、用户名、密码。
+   - MySQL：填写主机、端口、数据库名、用户名、密码。
+   - PostgreSQL：开发中。
 4. **确认安装**：核对信息后点击「开始安装」。程序会创建数据库表、写入配置并生成 `.INSTALLED` 标记。
 
 安装完成后，程序会自动进入正式运行模式。
@@ -93,23 +94,27 @@ http://<服务器地址>:35598
 
 ```text
 运行目录/
-├── LingYggdrasil-2.0.1.jar   # 程序本体
+├── LingYggdrasil-2.1.0.jar   # 程序本体
 ├── sql.yml                   # 数据库与邮件配置
 ├── .INSTALLED                # 安装标记
 ├── data.db                   # SQLite 数据库（若使用 SQLite）
 ├── skins/                    # 皮肤纹理存储
 ├── capes/                    # 披风纹理存储
-├── logs/                     # 运行日志
-│   └── user-actions/         # 用户操作日志
+├── logs/                     # 运行日志（user/admin/api/audit/plugin/app 分目录）
+│   ├── user/
+│   ├── admin/
+│   ├── api/
+│   ├── audit/
+│   └── plugin/
 ├── i18n/                     # 外部语言包（启动时释放，可自定义）
 └── icons/                    # 自定义图标（默认不存在，需手动创建）
 ```
 
-各文件的说明见[配置参考](configuration.md)与[自定义](customization.md)。
+各文件的说明见[配置参考](configuration.md)与[界面自定义](../02-user/customization.md)。
 
 ## 7. 下一步
 
-- 配置 Minecraft 客户端接入：见[Yggdrasil API](yggdrasil-api.md)。
-- 了解管理后台：见[管理后台指南](admin-guide.md)。
+- 配置 Minecraft 客户端接入：见[Yggdrasil API](../04-yggdrasil/api.md)。
+- 了解管理后台：见[管理后台指南](../03-admin/guide.md)。
 - 规划端口与反向代理：见[部署与运维](deployment.md)。
-- 加固生产环境：见[安全说明](security.md#安全部署清单)。
+- 加固生产环境：见[安全说明](../06-security/security.md#安全部署清单)。

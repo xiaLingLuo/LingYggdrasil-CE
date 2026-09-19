@@ -48,6 +48,7 @@
     "logout": "登出"
   },
   "adminSidebar": {
+    "plugins": "插件管理",
     "menu": "管理菜单",
     "dashboard": "仪表盘",
     "system": "系统管理",
@@ -413,6 +414,34 @@
     "removed": "已移出"
   },
   "admin": {
+    "plugins": {
+      "title": "插件管理",
+      "desc": "查看与管理已安装的插件。",
+      "overview": "总览",
+      "riskNotice": "插件为完全可信代码，请勿加载来路不明的插件，加载第三方插件后果自负。",
+      "empty": "暂无插件。",
+      "authors": "作者",
+      "apiVer": "API",
+      "logs": "插件系统日志",
+      "logsEmpty": "暂无日志",
+      "listTitle": "插件列表",
+      "unknownAuthor": "未知",
+      "none": "无",
+      "dependencies": "所需依赖",
+      "hotReloadWarning": "作者声明本插件无法热重载。",
+      "action": {
+        "start": "启动",
+        "stop": "停止",
+        "reload": "重载"
+      },
+      "status": {
+        "enabled": "运行中",
+        "disabled": "已停止",
+        "missingDependency": "依赖缺失",
+        "loadFailed": "加载失败",
+        "incompatible": "版本不兼容"
+      }
+    },
     "common": {
       "loading": "加载中...",
       "operation": "操作",
@@ -448,6 +477,7 @@
       "body": "该权限允许创建或修改管理员账号及其权限组。持有者可将自己或他人提升为与 root 基本无异的全权账户，从而获得整个管理后台的完全控制权。请仅授予完全信任的管理员，切勿随意开启。"
     },
     "permCat": {
+      "plugins": "插件管理",
       "access": "访问权限",
       "features": "功能权限",
       "dashboard": "仪表盘",
@@ -515,6 +545,8 @@
       "logActionsDesc": "选择需要记录日志的操作类型",
       "logDownloadInterval": "日志下载间隔（分钟）",
       "logDownloadIntervalDesc": "用户每次下载日志后，需等待此时长才能再次下载",
+      "logClearInterval": "日志清空间隔（分钟）",
+      "logClearIntervalDesc": "用户每次清空日志后，需等待此时长才能再次清空",
       "blacklistTitle": "用户名黑名单控制",
       "blacklistLabel": "用户名黑名单",
       "blacklistDesc": "每行一个用户名，支持通配符 *（如 *admin* 表示包含 admin 即禁）",
@@ -643,7 +675,22 @@
       "installedAt": "安装时间",
       "starTitle": "支持项目",
       "starDesc": "如果这个项目对你有帮助，欢迎在 GitHub 上给项目点个 Star ⭐，你的支持是我们持续维护的动力！",
-      "starBtn": "去 GitHub 点 Star"
+      "starBtn": "去 GitHub 点 Star",
+      "startupParams": "启动参数",
+      "startupParamsDesc": "运行时配置",
+      "systems": "三大系统",
+      "systemUser": "用户系统",
+      "systemYggdrasil": "世界树系统",
+      "systemAdmin": "管理系统",
+      "ip": "IP",
+      "port": "端口",
+      "retention": "保留时长",
+      "logLevel": "日志等级",
+      "auditLog": "审计日志",
+      "pluginSystemLog": "插件系统日志",
+      "logging": "日志设置",
+      "enabled": "已启用",
+      "disabled": "已禁用"
     },
     "security": {
       "title": "安全设置",
@@ -914,6 +961,13 @@
     "backToForm": "返回修改"
   },
   "msg": {
+    "pluginOperationSuccess": "操作成功",
+    "pluginNotFound": "未找到该插件",
+    "pluginNotHotReloadable": "作者声明本插件无法热重载。",
+    "pluginMissingDependency": "缺少必需的依赖",
+    "pluginIncompatible": "插件 API 版本不兼容",
+    "pluginNotEnabled": "插件未运行",
+    "pluginLoadFailed": "插件加载失败",
     "requestError": "请求格式错误",
     "nicknameEmpty": "昵称不能为空",
     "nicknameTooLong": "昵称最长32个字符",

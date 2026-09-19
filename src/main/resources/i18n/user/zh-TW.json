@@ -872,6 +872,8 @@
     "sqliteDesc": "輕量級，適合單機部署",
     "mysqlDesc": "熱門關聯式資料庫",
     "pgsqlDesc": "進階開源資料庫",
+    "pgsqlUnavailableBadge": "開發中",
+    "pgsqlUnavailable": "此功能正在開發中",
     "sqlitePath": "資料庫檔案路徑",
     "host": "主機位址",
     "dbName": "資料庫名稱",
@@ -1139,6 +1141,8 @@
     "userGroupInUse": "該權限群組仍被使用者使用，無法刪除",
     "logCleared": "日誌已清空",
     "logDownloadLimited": "下載過於頻繁，請在 {0} 後重試",
+    "logClearLimited": "清空過於頻繁，請在 {0} 後重試",
+    "pgsqlUnavailable": "此功能正在開發中",
     "logMaxKibMin": "單一使用者日誌上限不可小於 8 KiB",
     "logRetentionMin": "日誌儲存天數不可小於 1",
     "logIntervalMin": "日誌下載間隔不可小於 1 分鐘"

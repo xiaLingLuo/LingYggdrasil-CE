@@ -872,6 +872,8 @@
     "sqliteDesc": "轻量级，适合单机部署",
     "mysqlDesc": "流行关系型数据库",
     "pgsqlDesc": "高级开源数据库",
+    "pgsqlUnavailableBadge": "开发中",
+    "pgsqlUnavailable": "此功能正在开发中",
     "sqlitePath": "数据库文件路径",
     "host": "主机地址",
     "dbName": "数据库名",
@@ -1139,6 +1141,8 @@
     "userGroupInUse": "该权限组仍被用户使用，无法删除",
     "logCleared": "日志已清空",
     "logDownloadLimited": "下载过于频繁，请在 {0} 后重试",
+    "logClearLimited": "清空过于频繁，请在 {0} 后重试",
+    "pgsqlUnavailable": "此功能正在开发中",
     "logMaxKibMin": "单用户日志上限不可小于 8 KiB",
     "logRetentionMin": "日志保存天数不可小于 1",
     "logIntervalMin": "日志下载间隔不可小于 1 分钟"

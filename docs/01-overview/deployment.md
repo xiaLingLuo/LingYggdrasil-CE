@@ -125,7 +125,7 @@ After=network.target
 Type=simple
 User=lingyggdrasil
 WorkingDirectory=/opt/lingyggdrasil
-ExecStart=/usr/bin/java -Xms512M -Xmx2G -jar /opt/lingyggdrasil/LingYggdrasil-2.0.1.jar
+ExecStart=/usr/bin/java -Xms512M -Xmx2G -jar /opt/lingyggdrasil/LingYggdrasil-2.1.0.jar
 Restart=on-failure
 RestartSec=5
 
@@ -151,7 +151,7 @@ sudo systemctl status lingyggdrasil
 | `skins/`、`capes/`                | 纹理文件                           | 是         |
 | `i18n/`                           | 外部语言包（可重建）               | 否         |
 | `icons/`                          | 自定义图标（可选）                 | 视情况     |
-| `logs/`                           | 运行日志与用户操作日志             | 否         |
+| `logs/`                           | 运行日志（按服务分目录）           | 否         |
 
 备份示例：
 
@@ -171,7 +171,7 @@ tar czf lingyggdrasil-backup-$(date +%F).tar.gz \
 
 ```bash
 sudo systemctl stop lingyggdrasil
-cp LingYggdrasil-2.0.1.jar /opt/lingyggdrasil/
+cp LingYggdrasil-2.1.0.jar /opt/lingyggdrasil/
 sudo systemctl start lingyggdrasil
 ```
 
@@ -180,5 +180,5 @@ sudo systemctl start lingyggdrasil
 ## 日志
 
 - 运行日志由 Logback 输出，配置见 `logback.xml`。
-- 用户操作日志写入 `logs/user-actions/<用户>.log`，可在管理后台或用户端「日志」页查看与下载。
+- 用户操作日志写入数据库表 `user_logs`，可在用户端「日志」页查看与下载。
 - 用户操作日志的开关、大小上限、保留天数、记录范围与下载间隔可在管理后台配置，详见[配置参考](configuration.md#用户操作日志)。

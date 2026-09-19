@@ -872,6 +872,8 @@
     "sqliteDesc": "경량, 단일 서버 배포에 적합",
     "mysqlDesc": "인기 있는 관계형 데이터베이스",
     "pgsqlDesc": "고급 오픈소스 데이터베이스",
+    "pgsqlUnavailableBadge": "개발 중",
+    "pgsqlUnavailable": "이 기능은 개발 중입니다",
     "sqlitePath": "데이터베이스 파일 경로",
     "host": "호스트 주소",
     "dbName": "데이터베이스 이름",
@@ -1139,6 +1141,8 @@
     "userGroupInUse": "해당 권한 그룹은 아직 사용자가 사용 중이라 삭제할 수 없습니다",
     "logCleared": "로그가 비워졌습니다",
     "logDownloadLimited": "다운로드가 너무 잦습니다. {0} 후 다시 시도해 주세요",
+    "logClearLimited": "너무 자주 비우고 있습니다. {0} 후에 다시 시도하세요",
+    "pgsqlUnavailable": "이 기능은 개발 중입니다",
     "logMaxKibMin": "사용자당 로그 상한은 8 KiB보다 작을 수 없습니다",
     "logRetentionMin": "로그 보관 일수는 1보다 작을 수 없습니다",
     "logIntervalMin": "로그 다운로드 간격은 1분보다 작을 수 없습니다"

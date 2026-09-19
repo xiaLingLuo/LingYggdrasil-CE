@@ -40,6 +40,7 @@ function setElValue(el, value) {
         setElValue(document.getElementById('userActionLogMaxKib'), s.userActionLogMaxKib);
         setElValue(document.getElementById('userActionLogRetentionDays'), s.userActionLogRetentionDays);
         setElValue(document.getElementById('userActionLogDownloadIntervalMinutes'), s.userActionLogDownloadIntervalMinutes);
+        setElValue(document.getElementById('userActionLogClearIntervalMinutes'), s.userActionLogClearIntervalMinutes);
         setElValue(document.getElementById('userDomain'), s.userDomain);
         setElValue(document.getElementById('adminDomain'), s.adminDomain);
         setElValue(document.getElementById('apiDomain'), s.apiDomain);

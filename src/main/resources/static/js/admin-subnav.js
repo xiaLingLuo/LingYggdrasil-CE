@@ -20,6 +20,7 @@
     function initSubnav() {
         var content = document.querySelector('.admin-content');
         if (!content) return;
+        if (content.querySelector(':scope > .subnav')) return;
 
         var cards = Array.prototype.slice.call(content.querySelectorAll(':scope > .settings-card'));
         if (cards.length < 2) return;

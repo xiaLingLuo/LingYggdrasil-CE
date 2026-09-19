@@ -26,14 +26,17 @@ mvn -DskipTests package
 构建产物：
 
 ```text
-target/LingYggdrasil-2.0.1.jar
+target/LingYggdrasil-2.1.0.jar              # 主程序（含依赖，可执行）
+target/LingYggdrasil-plugin-api-2.1.0.jar   # 插件开发 API（自包含）
 ```
 
-该 JAR 通过 `maven-assembly-plugin` 打包为**含依赖的可执行 JAR**，可直接运行：
+`LingYggdrasil-2.1.0.jar` 通过 `maven-assembly-plugin` 打包为**含依赖的可执行 JAR**，可直接运行：
 
 ```bash
-java -jar target/LingYggdrasil-2.0.1.jar
+java -jar target/LingYggdrasil-2.1.0.jar
 ```
+
+`LingYggdrasil-plugin-api-2.1.0.jar` 由 `maven-antrun-plugin` 在 `package` 阶段生成，仅包含插件开发所需的 API 类型及其公开签名引用的服务端类型，供插件开发者编译使用。版本号统一取自 `pom.xml` 的 `${project.version}`，无需单独维护。
 
 ## 主要依赖
 
@@ -62,6 +65,9 @@ src/main/java/im/xz/cn/
 ├── logging/                       # 日志：logApi 门面、AuditLogger、UserActionLogger
 ├── mail/                          # 邮件：MailService
 ├── model/                         # 实体模型与枚举
+├── permission/                    # 动态权限节点注册中心与内置节点
+├── plugin/                        # 插件系统（PluginManager、plugin.yml 解析、类加载器）
+│   └── api/                       #   插件开发 SDK（打入 plugin-api jar）
 ├── rate/                          # 频率限制
 ├── security/                      # 安全：权限、Root 完整性、配置加密、密钥管理
 ├── server/                        # 四个服务与各 handler
@@ -94,6 +100,8 @@ static/
 - **前端事件**：页面按钮通过 `data-action` 属性 + `common.js` 的事件委托绑定，不要使用内联 `onclick`（CSP 已移除 `'unsafe-inline'`）。支持 `data-args`（JSON 数组）、`data-this`、`data-event`、`data-prevent`、`data-stop`。
 - **保存类按钮**：`data-action` 以 `save`/`submit` 开头的按钮会自动获得加载状态（转圈 + 完成打勾），无需额外代码。
 - **安全**：所有数据库访问使用参数化查询；输出到 HTML 时进行转义。
+- **权限节点**：不再硬编码，统一由 `permission/PermissionRegistry` 动态管理。内置节点以内置插件形式在启动时以来源 `LingYggdrasil` 注册；插件节点从 `plugin.yml` 的 `perms` 注册。新增内置节点请修改 `permission/BuiltinPermissions`。
+- **插件**：仅在正常模式加载，安装模式不触碰 `plugins/`。插件启停状态保存在 `plugins/plugins-state.json`（文件持久化，无数据库迁移）。
 
 ## 数据库结构
 
@@ -109,5 +117,5 @@ static/
 
 ## 相关文档
 
-- 自定义图标、语言包与首页模板：见[自定义](customization.md)。
-- 安全机制与限制：见[安全说明](security.md)。
+- 自定义图标、语言包与首页模板：见[用户端界面自定义](../02-user/customization.md)与[管理端界面自定义](../03-admin/customization.md)。
+- 安全机制与限制：见[安全说明](../06-security/security.md)。

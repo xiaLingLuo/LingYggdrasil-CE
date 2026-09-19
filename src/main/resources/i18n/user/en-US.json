@@ -872,6 +872,8 @@
     "sqliteDesc": "Lightweight, suitable for single-machine deployment",
     "mysqlDesc": "Popular relational database",
     "pgsqlDesc": "Advanced open-source database",
+    "pgsqlUnavailableBadge": "In development",
+    "pgsqlUnavailable": "This feature is under development",
     "sqlitePath": "Database file path",
     "host": "Host Address",
     "dbName": "Database Name",
@@ -1139,6 +1141,8 @@
     "userGroupInUse": "This permission group is still in use by users and cannot be deleted",
     "logCleared": "Logs cleared",
     "logDownloadLimited": "Downloads are too frequent, please try again after {0}",
+    "logClearLimited": "Clearing too frequently, please retry in {0}",
+    "pgsqlUnavailable": "This feature is under development",
     "logMaxKibMin": "The per-user log limit cannot be less than 8 KiB",
     "logRetentionMin": "Log retention days cannot be less than 1",
     "logIntervalMin": "The log download interval cannot be less than 1 minute"

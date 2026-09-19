@@ -1,13 +1,57 @@
 # 配置参考
 
-泠 Yggdrasil 的配置分为两部分：
+泠 Yggdrasil 的配置分为三部分：
 
-1. **`sql.yml`**：数据库连接与邮件服务器（由安装向导生成，也可手动编辑）。
-2. **系统设置**：保存在数据库 `system_settings` 表中，通过管理后台「系统管理」页面修改。
+1. **`config.yml`**：运行期配置，首次启动自动生成。
+2. **`sql.yml`**：数据库连接与邮件服务器。
+3. **系统设置**：保存在数据库 `system_settings` 表中，通过管理后台「系统管理」页面修改。
 
-> 修改 `sql.yml` 后需重启程序；修改系统设置后即时生效（部分设置会同步到运行中的服务）。
+> 修改 `config.yml` 或 `sql.yml` 后需重启程序。
 
-## 一、`sql.yml`
+## 一、`config.yml`
+
+首次启动时会在运行目录自动生成，可手动编辑；修改后重启生效。
+
+```yaml
+services:
+  user:                 # 用户端服务
+    enabled: true
+    ip: 0.0.0.0
+    port: 35565
+    logRetentionDays: 30
+  yggdrasil:            # 世界树 API 服务
+    enabled: true
+    ip: 0.0.0.0
+    port: 35577
+    logRetentionDays: 30
+  admin:                # 管理后台服务
+    enabled: true
+    ip: 0.0.0.0
+    port: 35599
+    logRetentionDays: 30
+logging:
+  level: INFO           # TRACE | DEBUG | INFO | WARN | ERROR
+  audit:                # 审计日志
+    enabled: true
+    retentionDays: 90
+  pluginSystem:         # 插件系统日志
+    enabled: true
+    retentionDays: 30
+```
+
+| 字段                                 | 说明                                |
+|--------------------------------------|-------------------------------------|
+| `services.<name>.enabled`            | 是否启动该服务                      |
+| `services.<name>.ip`                 | 监听地址                            |
+| `services.<name>.port`               | 监听端口                            |
+| `services.<name>.logRetentionDays`   | 该服务日志文件最多保留的天数（≥ 1） |
+| `logging.level`                      | 全局日志等级                        |
+| `logging.audit.enabled`              | 是否记录审计日志                    |
+| `logging.audit.retentionDays`        | 审计日志保留天数（≥ 1）             |
+| `logging.pluginSystem.enabled`       | 是否记录插件系统日志                |
+| `logging.pluginSystem.retentionDays` | 插件系统日志保留天数（≥ 1）         |
+
+## 二、`sql.yml`
 
 ### 数据库
 
@@ -22,13 +66,15 @@ database:
   password: the-password    # 保存时自动加密
 ```
 
-| 字段                    | 说明                             |
-|-------------------------|----------------------------------|
-| `type`                  | `sqlite`、`mysql`、`pgsql` 之一  |
-| `sqlitePath`            | SQLite 数据库文件路径            |
-| `host` / `port`         | 数据库主机与端口                 |
-| `database`              | 数据库名                         |
-| `username` / `password` | 数据库账号（密码保存时自动加密） |
+| 字段                    | 说明                            |
+|-------------------------|---------------------------------|
+| `type`                  | `sqlite`、`mysql`、`pgsql` 之一 |
+| `sqlitePath`            | SQLite 数据库文件路径           |
+| `host` / `port`         | 数据库主机与端口                |
+| `database`              | 数据库名                        |
+| `username` / `password` | 数据库账号                      |
+
+> ⚠️ **PostgreSQL 暂不可用**：由于开发维护人手不足，因此自2.1.0版本起，PgSQL不再提供支持。未来可能考虑重启支持。
 
 ### 邮件
 
@@ -38,7 +84,7 @@ mail:
   host: smtp.example.com
   port: 465
   username: noreply@example.com
-  password: the-password    # 保存时自动加密
+  password: the-password
   from: noreply@example.com
   tls: true
 ```
@@ -51,9 +97,9 @@ mail:
 | `from`                  | 发件人地址                                |
 | `tls`                   | 是否使用 TLS/SSL                          |
 
-> 邮件服务器配置也可在管理后台「系统管理 → 邮箱服务器配置」中修改，保存后写回 `sql.yml`。
+> 邮件服务器配置建议在管理后台「系统管理 → 邮箱服务器配置」中修改，保存后写回 `sql.yml`。
 
-## 二、系统设置
+## 三、系统设置
 
 以下设置位于管理后台「系统管理」页面，按卡片分组。每张卡片有独立的保存按钮，修改后即时生效。
 
@@ -91,12 +137,12 @@ mail:
 
 包含 SMTP 连接信息（见上文 `sql.yml` 的 mail 段）以及：
 
-| 设置             | 键                              | 说明                                          |
-|------------------|---------------------------------|-----------------------------------------------|
-| 注册验证邮件内容 | `mail_template_verify`          | 支持 HTML，使用 `{code}` 占位符表示验证码     |
-| 邮箱变更邮件内容 | `mail_template_email_change`    | 同上                                          |
-| 密码变更邮件内容 | `mail_template_password_change` | 同上                                          |
-| 测试邮件内容     | `mail_test_content`             | 「发送测试邮件」使用的正文，默认 `Test Email` |
+| 设置             | 键                              | 说明                                      |
+|------------------|---------------------------------|-------------------------------------------|
+| 注册验证邮件内容 | `mail_template_verify`          | 支持 HTML，使用 `{code}` 占位符表示验证码 |
+| 邮箱变更邮件内容 | `mail_template_email_change`    | 同上                                      |
+| 密码变更邮件内容 | `mail_template_password_change` | 同上                                      |
+| 测试邮件内容     | `mail_test_content`             | 「发送测试邮件」使用的正文                |
 
 邮箱服务器配置分为 **5 个独立保存区域**，各自有独立的保存按钮：
 
@@ -186,10 +232,10 @@ mail:
 | 记录的操作类型     | `user_action_log_actions`                   | 全部 | CSV，如 `login,profile,texture,...` |
 | 下载间隔           | `user_action_log_download_interval_minutes` | 480  | 单位分钟，最小 1                    |
 
-日志写入 `logs/user-actions/<用户>.log`，格式为：
+用户操作日志写入数据库表 `user_logs`，格式为：
 
 ```text
-[yyyy-MM-dd/HH:mm:ss]<操作> 于 <IP>
+[yyyy-MM-dd HH:mm:ss]<操作> 于 <IP>
 ```
 
 ### 其他
@@ -200,4 +246,20 @@ mail:
 | 遥测上报 | `treasure_enabled` | 是否启用匿名遥测（默认关闭）               |
 | 安装时间 | `installed_at`     | 安装时间戳                                 |
 
-> 多语言与外部语言包的详细说明见[自定义](customization.md#多语言)。
+### 名称黑名单通配符
+
+用户名、角色名、皮肤/披风名的黑名单均支持通配符 `*`：
+
+```text
+admin*
+*test*
+badword
+```
+
+- 用户名、角色名：命中即拒绝。
+- 皮肤/披风**别名**：命中即拒绝。
+- 皮肤/披风**原名**：命中时静默替换为 `x`（保留扩展名），不中断上传。
+
+可启用「大小写严格」模式以区分大小写。
+
+> 多语言与外部语言包的详细说明见[用户端界面自定义 → 多语言](../02-user/customization.md#多语言)与[管理端界面自定义 → 多语言](../03-admin/customization.md#多语言)。

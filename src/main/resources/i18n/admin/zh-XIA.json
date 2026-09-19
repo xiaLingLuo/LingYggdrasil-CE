@@ -48,6 +48,7 @@
     "logout": "出"
   },
   "adminSidebar": {
+    "plugins": "插件管理",
     "menu": "治事之目",
     "dashboard": "儀表之盤",
     "system": "治其系統",
@@ -413,6 +414,34 @@
     "removed": "已移出"
   },
   "admin": {
+    "plugins": {
+      "title": "插件管理",
+      "desc": "覽察并理已裝之插件。",
+      "overview": "總覽",
+      "riskNotice": "插件乃盡信之碼，勿載來歷不明者，載第三方插件，後果自負。",
+      "empty": "暫無插件。",
+      "authors": "作者",
+      "apiVer": "API",
+      "logs": "插件系統誌",
+      "logsEmpty": "暫無誌",
+      "listTitle": "插件列",
+      "unknownAuthor": "未知",
+      "none": "無",
+      "dependencies": "所需依賴",
+      "hotReloadWarning": "作者聲明此插件不可熱載。",
+      "action": {
+        "start": "啟",
+        "stop": "止",
+        "reload": "重載"
+      },
+      "status": {
+        "enabled": "運行中",
+        "disabled": "已止",
+        "missingDependency": "缺依賴",
+        "loadFailed": "載入敗",
+        "incompatible": "版本不合"
+      }
+    },
     "common": {
       "loading": "載之……",
       "operation": "事",
@@ -448,6 +477,7 @@
       "body": "此權許立或修管理之人之戶及其權組。持之者可升己或他人為與 root 幾無異之全權戶，遂得整個治事後庭之全控。請唯授全然可信之管理之人，切勿妄開。"
     },
     "permCat": {
+      "plugins": "插件管理",
       "access": "存取之權",
       "features": "功能之權",
       "dashboard": "儀表之盤",
@@ -515,6 +545,8 @@
       "logActionsDesc": "擇須記誌之事類",
       "logDownloadInterval": "誌取之間（分）",
       "logDownloadIntervalDesc": "人每取誌後，須待此時方可復取",
+      "logClearInterval": "誌清之間（分）",
+      "logClearIntervalDesc": "用者每清誌後，需待此長乃可再清",
       "blacklistTitle": "人名黑名之控",
       "blacklistLabel": "人名之黑名",
       "blacklistDesc": "每行一人名，容萬用符 *（如 *admin* 謂含 admin 即禁）",
@@ -643,7 +675,22 @@
       "installedAt": "裝之時",
       "starTitle": "助此專案",
       "starDesc": "若此專案有助於爾，請於 GitHub 上為專案點 Star ⭐，爾之助乃吾等續護之動力！",
-      "starBtn": "往 GitHub 點 Star"
+      "starBtn": "往 GitHub 點 Star",
+      "startupParams": "啟動之參",
+      "startupParamsDesc": "運行時之配置",
+      "systems": "三大之統",
+      "systemUser": "用戶之統",
+      "systemYggdrasil": "世界樹之統",
+      "systemAdmin": "管理之統",
+      "ip": "IP",
+      "port": "端口",
+      "retention": "存留之時",
+      "logLevel": "日誌之階",
+      "auditLog": "審計之誌",
+      "pluginSystemLog": "插件系統之誌",
+      "logging": "日誌之設",
+      "enabled": "已啟",
+      "disabled": "已禁"
     },
     "security": {
       "title": "置其安",
@@ -914,6 +961,13 @@
     "backToForm": "返而修"
   },
   "msg": {
+    "pluginOperationSuccess": "操作成矣",
+    "pluginNotFound": "未得此插件",
+    "pluginNotHotReloadable": "作者聲明此插件不可熱載。",
+    "pluginMissingDependency": "缺必需之依賴",
+    "pluginIncompatible": "插件 API 版本不合",
+    "pluginNotEnabled": "插件未運行",
+    "pluginLoadFailed": "插件載入敗",
     "requestError": "求之式誤",
     "nicknameEmpty": "名不可空也",
     "nicknameTooLong": "名至長三十二字",

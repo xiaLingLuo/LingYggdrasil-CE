@@ -56,6 +56,9 @@ public class YggdrasilServer {
         YggdrasilSessionHandler.init(authService);
 
         this.app = ServerFactory.create(35577, null, routes -> {
+            routes.before(ctx -> im.xz.cn.logging.ServiceLog.setService(im.xz.cn.logging.ServiceLog.API));
+            routes.after(ctx -> im.xz.cn.logging.ServiceLog.clear());
+
             routes.before(ctx -> {
                 String path = ctx.path();
                 String newPath = path;
@@ -209,10 +212,12 @@ public class YggdrasilServer {
                     "NotFoundException", "Route not found", ""));
             });
         });
+
+        ServerFactory.registerPluginCatchAll(app, false);
     }
 
-    public void start() {
-        app.start(35577);
+    public void start(String host, int port) {
+        app.start(host, port);
     }
 
     public void stop() {
@@ -221,6 +226,10 @@ public class YggdrasilServer {
 
     public AuthService getAuthService() {
         return authService;
+    }
+
+    public Javalin getApp() {
+        return app;
     }
 
     private void handleMetadata(Context ctx) {

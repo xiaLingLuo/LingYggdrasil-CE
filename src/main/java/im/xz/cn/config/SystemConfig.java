@@ -37,6 +37,7 @@ public class SystemConfig {
     private int userActionLogRetentionDays = 30;
     private String userActionLogActions = "login,profile,texture,friend,password,blacklist,email";
     private int userActionLogDownloadIntervalMinutes = 480;
+    private int userActionLogClearIntervalMinutes = 360;
     private String uuidVersion = "v4";
     private String defaultLanguage = "zh-CN";
     private String mailTemplateVerify = defaultMailTemplate("邮箱验证");
@@ -128,6 +129,7 @@ public class SystemConfig {
             upsertSetting(db, "user_action_log_retention_days", String.valueOf(userActionLogRetentionDays));
             upsertSetting(db, "user_action_log_actions", userActionLogActions);
             upsertSetting(db, "user_action_log_download_interval_minutes", String.valueOf(userActionLogDownloadIntervalMinutes));
+            upsertSetting(db, "user_action_log_clear_interval_minutes", String.valueOf(userActionLogClearIntervalMinutes));
             upsertSetting(db, "uuid_version", uuidVersion);
             upsertSetting(db, "default_language", defaultLanguage);
             upsertSetting(db, "mail_template_verify", mailTemplateVerify);
@@ -202,6 +204,7 @@ public class SystemConfig {
             case "user_action_log_retention_days" -> userActionLogRetentionDays = parseInt(value, 30);
             case "user_action_log_actions" -> userActionLogActions = value;
             case "user_action_log_download_interval_minutes" -> userActionLogDownloadIntervalMinutes = parseInt(value, 480);
+            case "user_action_log_clear_interval_minutes" -> userActionLogClearIntervalMinutes = parseInt(value, 360);
             case "uuid_version" -> uuidVersion = value;
             case "default_language" -> defaultLanguage = value;
             case "mail_template_verify" -> mailTemplateVerify = value;
@@ -315,6 +318,9 @@ public class SystemConfig {
 
     public int getUserActionLogDownloadIntervalMinutes() { return userActionLogDownloadIntervalMinutes; }
     public void setUserActionLogDownloadIntervalMinutes(int userActionLogDownloadIntervalMinutes) { this.userActionLogDownloadIntervalMinutes = userActionLogDownloadIntervalMinutes; }
+
+    public int getUserActionLogClearIntervalMinutes() { return userActionLogClearIntervalMinutes; }
+    public void setUserActionLogClearIntervalMinutes(int userActionLogClearIntervalMinutes) { this.userActionLogClearIntervalMinutes = userActionLogClearIntervalMinutes; }
 
     public boolean isUserActionLoggable(String action) {
         if (action == null || userActionLogActions == null) return false;

@@ -35,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import im.xz.cn.common.Treasure;
 import im.xz.cn.security.YggdrasilKeyManager;
 import im.xz.cn.database.dao.TokenDao;
+import im.xz.cn.plugin.PluginManager;
 
 import im.xz.cn.logging.logApi;
 
@@ -67,6 +68,7 @@ public class Yggdrasil {
         log.info("╚═══════════════════════════════════════╝");
 
         AppConfig config = AppConfig.getInstance();
+        im.xz.cn.config.ServerConfig.getInstance().load();
 
         im.xz.cn.i18n.I18n.releaseBundles();
         im.xz.cn.common.AppIcons.init();
@@ -121,6 +123,14 @@ public class Yggdrasil {
         databaseManager.initializeSchema();
         log.info("[DB] Database initialized.");
 
+        im.xz.cn.logging.UserActionLogger.init(new im.xz.cn.database.dao.UserLogDao(databaseManager));
+        im.xz.cn.logging.ServiceLog.init();
+
+        im.xz.cn.config.ServerConfig serverConfig = im.xz.cn.config.ServerConfig.getInstance();
+        im.xz.cn.logging.ServiceLog.configure(serverConfig.getLogLevel(),
+                serverConfig.isAuditLogEnabled(), serverConfig.isPluginSystemLogEnabled(),
+                serverConfig.logRetention());
+
         SystemConfig sysConfig = SystemConfig.getInstance();
         sysConfig.loadFromDatabase(databaseManager);
         log.info("[Config] System config loaded from database.");
@@ -162,17 +172,36 @@ public class Yggdrasil {
 
         MailService mailService = new MailService(config.getMailConfig());
 
-        userServer = new UserServer(35565, databaseManager, mailService);
-        userServer.start();
-        log.info("  User Dashboard started with port 35565");
+        if (serverConfig.isUserEnabled()) {
+            userServer = new UserServer(serverConfig.getUserPort(), databaseManager, mailService);
+            userServer.start(serverConfig.getUserIp(), serverConfig.getUserPort());
+            log.info("  User Dashboard started with port {}", serverConfig.getUserPort());
+        } else {
+            log.info("  User Dashboard disabled by config.yml");
+        }
 
-        yggdrasilServer = new YggdrasilServer(databaseManager);
-        yggdrasilServer.start();
-        log.info("  Yggdrasil API started with port 35577");
+        if (serverConfig.isYggdrasilEnabled()) {
+            yggdrasilServer = new YggdrasilServer(databaseManager);
+            yggdrasilServer.start(serverConfig.getYggdrasilIp(), serverConfig.getYggdrasilPort());
+            log.info("  Yggdrasil API started with port {}", serverConfig.getYggdrasilPort());
+        } else {
+            log.info("  Yggdrasil API disabled by config.yml");
+        }
 
-        adminServer = new AdminServer(35599, databaseManager);
-        adminServer.start();
-        log.info("  Admin Panel started with port 35599");
+        if (serverConfig.isAdminEnabled()) {
+            adminServer = new AdminServer(serverConfig.getAdminPort(), databaseManager);
+            adminServer.start(serverConfig.getAdminIp(), serverConfig.getAdminPort());
+            log.info("  Admin Panel started with port {}", serverConfig.getAdminPort());
+        } else {
+            log.info("  Admin Panel disabled by config.yml");
+        }
+
+        try {
+            PluginManager.getInstance().bootstrap(databaseManager);
+            log.info("  Plugin system initialized");
+        } catch (Throwable t) {
+            log.error("[Plugin] Failed to initialize plugin system: {}", t.getMessage(), t);
+        }
 
         log.info("[OK] All services started!");
 
@@ -219,8 +248,10 @@ public class Yggdrasil {
             if (userServer != null) userServer.stop();
             if (yggdrasilServer != null) yggdrasilServer.stop();
             if (adminServer != null) adminServer.stop();
+            PluginManager.getInstance().shutdownAll();
             if (databaseManager != null) databaseManager.close();
             Treasure.shutdown();
+            im.xz.cn.logging.ServiceLog.shutdown();
         } catch (Exception e) {
             log.error("Error during shutdown: {}", e.getMessage(), e);
         }

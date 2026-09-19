@@ -68,6 +68,10 @@ public class AdminPage {
         appendIfPermitted(nav, "admin.capes.view", "/admin/capes", "capes", "adminSidebar.capes", "fa-mask", currentPage);
         appendIfPermitted(nav, "admin.security.view", "/admin/security", "security", "adminSidebar.security", "fa-lock", currentPage);
         appendIfPermitted(nav, "admin.admins.view", "/admin/admins", "admins", "adminSidebar.admins", "fa-user-shield", currentPage);
+        if (im.xz.cn.security.AdminPermissions.has("admin.plugin.overall.view")) {
+            String pluginPage = (currentPage != null && currentPage.startsWith("plugin:")) ? "plugins" : currentPage;
+            nav.append(adminSidebarItem("/admin/plugins", "plugins", "adminSidebar.plugins", "fa-puzzle-piece", pluginPage));
+        }
         appendIfPermitted(nav, "admin.appinfo.view", "/admin/appinfo", "appinfo", "adminSidebar.appinfo", "fa-circle-info", currentPage);
 
         String layout = csrfInject + """
@@ -88,15 +92,11 @@ public class AdminPage {
                                 <div class="sidebar-role">%s</div>
                             </div>
                         </div>
-                        %s
-                        <button type="button" class="sidebar-link" id="adminThemeToggle" data-action="toggleTheme">
-                            <span class="sidebar-link-icon"><i class="fas fa-moon"></i></span>
-                            <span>%s</span>
-                        </button>
-                        <a href="/admin/logout" class="sidebar-link sidebar-logout">
-                            <span class="sidebar-link-icon"><i class="fas fa-right-from-bracket"></i></span>
-                            <span>%s</span>
-                        </a>
+                        <div class="sidebar-actions">
+                            <a href="/admin/logout" class="sidebar-action sidebar-action-logout" aria-label="%s" title="%s"><i class="fas fa-right-from-bracket"></i></a>
+                            <button type="button" class="sidebar-action" id="adminThemeToggle" data-action="toggleTheme" aria-label="%s" title="%s"><i class="fas fa-moon"></i></button>
+                            %s
+                        </div>
                     </div>
                 </aside>
                 <main class="admin-main">
@@ -110,7 +110,6 @@ public class AdminPage {
                         %s
                     </div>
                     <script src="/js/admin-subnav.js"></script>
-                    %s
                 </main>
             </div>
             """.formatted(
@@ -119,16 +118,17 @@ public class AdminPage {
                 adminUsername != null && !adminUsername.isEmpty() ? safeInitial : "A",
                 adminUsername != null ? safeUsername : "Admin",
                 roleDisplay,
-                PageRenderer.renderAdminLanguageSwitcher(true),
-                I18n.t("adminSidebar.switchTheme"),
                 I18n.t("adminSidebar.logout"),
+                I18n.t("adminSidebar.logout"),
+                I18n.t("adminSidebar.switchTheme"),
+                I18n.t("adminSidebar.switchTheme"),
+                PageRenderer.renderAdminLanguageSwitcher(true),
                 I18n.t("nav.menu"),
                 I18n.t("nav.admin"),
                 PageRenderer.renderAdminLanguageSwitcher(false),
                 I18n.t("nav.theme"),
                 I18n.t("nav.theme"),
-                content,
-                PageRenderer.renderFooter());
+                content);
 
         return FooterInfo.injectFooterRecords(layout);
     }
@@ -388,6 +388,9 @@ public class AdminPage {
                     </div>
                 </div>
             </div>
+            """)
+            + startupParamsCard()
+            + tr("""
             <div class="appinfo-card card" style="margin-top:20px;">
                 <div class="card-header"><h3 class="card-title">{{admin.appinfo.starTitle}}</h3></div>
                 <div class="card-body">
@@ -402,6 +405,85 @@ public class AdminPage {
         String body = renderAdminLayout("appinfo", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
         return PageRenderer.renderAdminPage(I18n.t("admin.appinfo.title"), body, "admin", css);
+    }
+
+    private static String startupParamsCard() {
+        im.xz.cn.config.ServerConfig cfg = im.xz.cn.config.ServerConfig.getInstance();
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div class=\"appinfo-card card\" style=\"margin-top:20px;\">");
+        sb.append("<div class=\"card-header\"><h3 class=\"card-title\">")
+                .append(esc(I18n.t("admin.appinfo.startupParams"))).append("</h3></div>");
+        sb.append("<div class=\"card-body\">");
+        sb.append("<p class=\"startup-desc\">")
+                .append(esc(I18n.t("admin.appinfo.startupParamsDesc"))).append("</p>");
+
+        sb.append("<div class=\"startup-section\">");
+        sb.append("<div class=\"startup-section-title\"><i class=\"fas fa-server\"></i>")
+                .append(esc(I18n.t("admin.appinfo.systems"))).append("</div>");
+        sb.append("<div class=\"startup-grid\">");
+        sb.append(startupServiceCard("admin.appinfo.systemUser", cfg.isUserEnabled(), cfg.getUserIp(),
+                cfg.getUserPort(), cfg.getUserLogRetentionDays()));
+        sb.append(startupServiceCard("admin.appinfo.systemYggdrasil", cfg.isYggdrasilEnabled(), cfg.getYggdrasilIp(),
+                cfg.getYggdrasilPort(), cfg.getYggdrasilLogRetentionDays()));
+        sb.append(startupServiceCard("admin.appinfo.systemAdmin", cfg.isAdminEnabled(), cfg.getAdminIp(),
+                cfg.getAdminPort(), cfg.getAdminLogRetentionDays()));
+        sb.append("</div></div>");
+
+        sb.append("<div class=\"startup-section\">");
+        sb.append("<div class=\"startup-section-title\"><i class=\"fas fa-scroll\"></i>")
+                .append(esc(I18n.t("admin.appinfo.logging"))).append("</div>");
+        sb.append("<div class=\"startup-grid\">");
+        sb.append("<div class=\"startup-service\">");
+        sb.append("<div class=\"startup-service-head\"><span class=\"startup-service-name\">")
+                .append(esc(I18n.t("admin.appinfo.logLevel"))).append("</span></div>");
+        sb.append("<div class=\"startup-rows\"><span class=\"startup-value-lg\">")
+                .append(esc(cfg.getLogLevel())).append("</span></div>");
+        sb.append("</div>");
+        sb.append(startupToggleCard("admin.appinfo.auditLog", cfg.isAuditLogEnabled(),
+                cfg.getAuditLogRetentionDays()));
+        sb.append(startupToggleCard("admin.appinfo.pluginSystemLog", cfg.isPluginSystemLogEnabled(),
+                cfg.getPluginSystemLogRetentionDays()));
+        sb.append("</div></div>");
+
+        sb.append("</div></div>");
+        return sb.toString();
+    }
+
+    private static String startupServiceCard(String nameKey, boolean enabled, String ip, int port, int retentionDays) {
+        return "<div class=\"startup-service\">"
+                + "<div class=\"startup-service-head\">"
+                + "<span class=\"startup-service-name\">" + esc(I18n.t(nameKey)) + "</span>"
+                + startupStatusBadge(enabled)
+                + "</div>"
+                + "<div class=\"startup-rows\">"
+                + startupRow("admin.appinfo.ip", ip)
+                + startupRow("admin.appinfo.port", String.valueOf(port))
+                + startupRow("admin.appinfo.retention", String.valueOf(retentionDays))
+                + "</div></div>";
+    }
+
+    private static String startupToggleCard(String nameKey, boolean enabled, int retentionDays) {
+        return "<div class=\"startup-service\">"
+                + "<div class=\"startup-service-head\">"
+                + "<span class=\"startup-service-name\">" + esc(I18n.t(nameKey)) + "</span>"
+                + startupStatusBadge(enabled)
+                + "</div>"
+                + "<div class=\"startup-rows\">"
+                + startupRow("admin.appinfo.retention", String.valueOf(retentionDays))
+                + "</div></div>";
+    }
+
+    private static String startupStatusBadge(boolean enabled) {
+        return enabled
+                ? "<span class=\"badge badge-success\"><i class=\"fas fa-circle-check\"></i>"
+                        + esc(I18n.t("admin.appinfo.enabled")) + "</span>"
+                : "<span class=\"badge badge-danger\"><i class=\"fas fa-circle-xmark\"></i>"
+                        + esc(I18n.t("admin.appinfo.disabled")) + "</span>";
+    }
+
+    private static String startupRow(String keyKey, String value) {
+        return "<div class=\"startup-row\"><span class=\"startup-key\">" + esc(I18n.t(keyKey))
+                + "</span><span class=\"startup-val\">" + esc(value) + "</span></div>";
     }
 
     public static String renderSecurityPage(String adminUsername, String adminRole, String csrfToken) {
@@ -1077,6 +1159,13 @@ public class AdminPage {
                         </div>
                         <input type="number" id="userActionLogDownloadIntervalMinutes" class="form-input setting-input" data-setting-key="user_action_log_download_interval_minutes" min="1" placeholder="480">
                     </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.users.logClearInterval}}</div>
+                            <div class="setting-desc">{{admin.users.logClearIntervalDesc}}</div>
+                        </div>
+                        <input type="number" id="userActionLogClearIntervalMinutes" class="form-input setting-input" data-setting-key="user_action_log_clear_interval_minutes" min="1" placeholder="360">
+                    </div>
                     <div class="setting-item" style="display:block">
                         <div class="setting-info">
                             <div class="setting-label">{{admin.users.logActions}}</div>
@@ -1665,5 +1754,62 @@ public class AdminPage {
         String body = renderAdminLayout("system", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
         return PageRenderer.renderAdminPage(I18n.t("admin.system.title"), body, "admin", css);
+    }
+
+    private static String pluginSubnav(String currentPage) {
+        java.util.List<im.xz.cn.plugin.PluginMenuEntry> entries =
+                im.xz.cn.plugin.PluginManager.getInstance().menuEntries();
+        StringBuilder sb = new StringBuilder();
+        sb.append("<div class=\"subnav\">");
+        boolean overviewActive = "plugins".equals(currentPage);
+        sb.append("<a href=\"/admin/plugins\" class=\"subnav-item")
+                .append(overviewActive ? " active" : "")
+                .append("\">").append(esc(I18n.t("admin.plugins.overview"))).append("</a>");
+        for (im.xz.cn.plugin.PluginMenuEntry entry : entries) {
+            String pageId = "plugin:" + entry.pluginName() + ":" + entry.menuId();
+            String href = "/admin/plugins/" + urlEncode(entry.pluginName()) + "/" + urlEncode(entry.menuId());
+            sb.append("<a href=\"").append(href).append("\" class=\"subnav-item")
+                    .append(pageId.equals(currentPage) ? " active" : "")
+                    .append("\">").append(esc(entry.title())).append("</a>");
+        }
+        sb.append("</div>");
+        return sb.toString();
+    }
+
+    private static String urlEncode(String value) {
+        try {
+            return java.net.URLEncoder.encode(value, java.nio.charset.StandardCharsets.UTF_8).replace("+", "%20");
+        } catch (Exception e) {
+            return value;
+        }
+    }
+
+    public static String renderPluginsPage(String adminUsername, String adminRole, String csrfToken) {
+        String content = tr("""
+            <div class="page-header">
+                <h2>{{admin.plugins.title}}</h2>
+                <p class="page-desc">{{admin.plugins.desc}}</p>
+            </div>
+            """)
+            + pluginSubnav("plugins")
+            + tr("""
+            <div id="pluginList" class="plugin-list"></div>
+            <div id="toast" class="toast" style="display:none;"></div>
+            <script src="/js/admin-plugins.js"></script>
+            """);
+        String body = renderAdminLayout("plugins", adminUsername, adminRole, content, csrfToken);
+        String css = Css.getAdminCssLink();
+        return PageRenderer.renderAdminPage(I18n.t("admin.plugins.title"), body, "admin", css);
+    }
+
+    public static String renderPluginMenuPage(String pluginName, String menuId, String title,
+                                              String fragment, String adminUsername, String adminRole,
+                                              String csrfToken) {
+        String currentPage = "plugin:" + pluginName + ":" + menuId;
+        String content = pluginSubnav(currentPage) + (fragment == null ? "" : fragment);
+        String body = renderAdminLayout(currentPage, adminUsername, adminRole, content, csrfToken);
+        String css = Css.getAdminCssLink();
+        String pageTitle = (title == null || title.isBlank()) ? pluginName : title;
+        return PageRenderer.renderAdminPage(pageTitle, body, "admin", css);
     }
 }

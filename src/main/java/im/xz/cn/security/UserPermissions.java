@@ -19,38 +19,22 @@ package im.xz.cn.security;
 
 import im.xz.cn.database.dao.UserPermGroupDao;
 import im.xz.cn.model.User;
+import im.xz.cn.permission.PermissionRegistry;
+import im.xz.cn.permission.PermissionType;
 
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 
 public final class UserPermissions {
     public static final String WILDCARD = "*";
     public static final String ACCESSIBLE = "user.accessible";
 
-    public record Perm(String key, String category) {}
-
-    public static final List<Perm> ALL = List.of(
-            new Perm("user.accessible", "access"),
-            new Perm("user.profiles", "features"),
-            new Perm("user.skins", "features"),
-            new Perm("user.capes", "features"),
-            new Perm("user.friends", "features"),
-            new Perm("user.world", "features"),
-            new Perm("user.settings", "features")
-    );
-
-    private static final Set<String> VALID = new LinkedHashSet<>();
-    static {
-        for (Perm p : ALL) VALID.add(p.key());
-    }
-
     private static final ThreadLocal<Set<String>> CURRENT = new ThreadLocal<>();
 
     private UserPermissions() {}
 
     public static Set<String> validKeys() {
-        return VALID;
+        return PermissionRegistry.getInstance().validKeys(PermissionType.USER);
     }
 
     public static void set(Set<String> permissions) {
@@ -80,11 +64,12 @@ public final class UserPermissions {
     public static Set<String> parse(String stored) {
         Set<String> set = new LinkedHashSet<>();
         if (stored == null || stored.isBlank()) return set;
+        Set<String> valid = validKeys();
         for (String part : stored.split(",")) {
             String key = part.trim();
             if (key.isEmpty()) continue;
             if (WILDCARD.equals(key)) { set.add(WILDCARD); continue; }
-            if (VALID.contains(key)) set.add(key);
+            if (valid.contains(key)) set.add(key);
         }
         return set;
     }

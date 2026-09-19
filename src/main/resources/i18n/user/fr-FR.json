@@ -872,6 +872,8 @@
     "sqliteDesc": "Léger, adapté aux déploiements sur une seule machine",
     "mysqlDesc": "Base de données relationnelle populaire",
     "pgsqlDesc": "Base de données open source avancée",
+    "pgsqlUnavailableBadge": "En développement",
+    "pgsqlUnavailable": "Cette fonctionnalité est en cours de développement",
     "sqlitePath": "Chemin du fichier de base de données",
     "host": "Adresse de l'hôte",
     "dbName": "Nom de la base de données",
@@ -1139,6 +1141,8 @@
     "userGroupInUse": "Ce groupe de permissions est encore utilisé par des utilisateurs, impossible de le supprimer",
     "logCleared": "Journal vidé",
     "logDownloadLimited": "Téléchargement trop fréquent, veuillez réessayer dans {0}",
+    "logClearLimited": "Effacement trop fréquent, réessayez dans {0}",
+    "pgsqlUnavailable": "Cette fonctionnalité est en cours de développement",
     "logMaxKibMin": "La limite de journal par utilisateur ne peut pas être inférieure à 8 KiB",
     "logRetentionMin": "La durée de conservation des journaux ne peut pas être inférieure à 1 jour",
     "logIntervalMin": "L'intervalle de téléchargement des journaux ne peut pas être inférieur à 1 minute"

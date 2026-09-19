@@ -48,6 +48,7 @@
     "logout": "ログアウト"
   },
   "adminSidebar": {
+    "plugins": "プラグイン管理",
     "menu": "管理メニュー",
     "dashboard": "ダッシュボード",
     "system": "システム管理",
@@ -413,6 +414,34 @@
     "removed": "除外しました"
   },
   "admin": {
+    "plugins": {
+      "title": "プラグイン管理",
+      "desc": "インストール済みプラグインの表示と管理。",
+      "overview": "概要",
+      "riskNotice": "プラグインは完全に信頼されたコードです。信頼できない提供元のプラグインを読み込まないでください。結果は自己責任です。",
+      "empty": "プラグインがありません。",
+      "authors": "作者",
+      "apiVer": "API",
+      "logs": "プラグインシステムログ",
+      "logsEmpty": "ログはありません。",
+      "listTitle": "プラグイン一覧",
+      "unknownAuthor": "不明",
+      "none": "なし",
+      "dependencies": "必要な依存関係",
+      "hotReloadWarning": "作者はこのプラグインがホットリロード不可であると宣言しています。",
+      "action": {
+        "start": "開始",
+        "stop": "停止",
+        "reload": "再読み込み"
+      },
+      "status": {
+        "enabled": "実行中",
+        "disabled": "停止中",
+        "missingDependency": "依存関係不足",
+        "loadFailed": "読み込み失敗",
+        "incompatible": "API 非互換"
+      }
+    },
     "common": {
       "loading": "読み込み中...",
       "operation": "操作",
@@ -448,6 +477,7 @@
       "body": "この権限は管理者アカウントおよびその権限グループの作成・変更を許可します。保持者は自分または他者を root とほぼ変わらない全権アカウントに昇格でき、管理画面全体の完全な制御権を得られます。完全に信頼できる管理者にのみ付与し、むやみに有効化しないでください。"
     },
     "permCat": {
+      "plugins": "プラグイン管理",
       "access": "アクセス権限",
       "features": "機能権限",
       "dashboard": "ダッシュボード",
@@ -515,6 +545,8 @@
       "logActionsDesc": "ログに記録する操作の種類を選択",
       "logDownloadInterval": "ログダウンロード間隔（分）",
       "logDownloadIntervalDesc": "ユーザーがログをダウンロードした後、再度ダウンロードするまでにこの時間待つ必要があります",
+      "logClearInterval": "ログ消去間隔（分）",
+      "logClearIntervalDesc": "ユーザーが再度ログを消去するまでに待つ時間",
       "blacklistTitle": "ユーザー名ブラックリスト制御",
       "blacklistLabel": "ユーザー名ブラックリスト",
       "blacklistDesc": "1行に1つのユーザー名、ワイルドカード * に対応（例：*admin* は admin を含む場合に禁止）",
@@ -643,7 +675,22 @@
       "installedAt": "インストール日時",
       "starTitle": "プロジェクトを支援",
       "starDesc": "このプロジェクトがお役に立ったら、GitHub で Star ⭐ を付けていただけると嬉しいです。あなたの支援が継続的なメンテナンスの原動力です！",
-      "starBtn": "GitHub で Star を付ける"
+      "starBtn": "GitHub で Star を付ける",
+      "startupParams": "起動パラメータ",
+      "startupParamsDesc": "実行時設定",
+      "systems": "三大システム",
+      "systemUser": "ユーザーシステム",
+      "systemYggdrasil": "ユグドラシルシステム",
+      "systemAdmin": "管理システム",
+      "ip": "IP",
+      "port": "ポート",
+      "retention": "保存期間",
+      "logLevel": "ログレベル",
+      "auditLog": "監査ログ",
+      "pluginSystemLog": "プラグインシステムログ",
+      "logging": "ログ設定",
+      "enabled": "有効",
+      "disabled": "無効"
     },
     "security": {
       "title": "セキュリティ設定",
@@ -914,6 +961,13 @@
     "backToForm": "修正に戻る"
   },
   "msg": {
+    "pluginOperationSuccess": "操作に成功しました",
+    "pluginNotFound": "プラグインが見つかりません",
+    "pluginNotHotReloadable": "作者はこのプラグインがホットリロード不可であると宣言しています。",
+    "pluginMissingDependency": "必須の依存関係がありません",
+    "pluginIncompatible": "プラグイン API バージョンが非互換です",
+    "pluginNotEnabled": "プラグインは実行されていません",
+    "pluginLoadFailed": "プラグインの読み込みに失敗しました",
     "requestError": "リクエスト形式エラー",
     "nicknameEmpty": "ニックネームは必須です",
     "nicknameTooLong": "ニックネームは最大32文字です",

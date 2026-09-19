@@ -279,6 +279,19 @@
 .db-icon { font-size: 26px; margin-bottom: 6px; color: var(--color-primary); }
 .db-name { font-size: var(--text-base); font-weight: 700; color: var(--color-text); margin-bottom: 3px; }
 .db-desc { font-size: var(--text-xs); color: var(--color-text-faint); line-height: 1.3; }
+.db-type-disabled { opacity: 0.55; cursor: not-allowed; }
+.db-type-disabled:hover { border-color: var(--color-border); transform: none; box-shadow: none; }
+.db-badge {
+    display: inline-block;
+    margin-left: 4px;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: rgba(245, 158, 11, 0.16);
+    color: #B45309;
+    font-size: 10px;
+    font-weight: 600;
+    vertical-align: middle;
+}
 
 .db-fields { animation: stepFadeIn 0.35s ease; }
 

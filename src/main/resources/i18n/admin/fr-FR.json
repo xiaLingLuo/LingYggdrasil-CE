@@ -48,6 +48,7 @@
     "logout": "Déconnexion"
   },
   "adminSidebar": {
+    "plugins": "Gestion des plugins",
     "menu": "Menu d'administration",
     "dashboard": "Tableau de bord",
     "system": "Gestion du système",
@@ -413,6 +414,34 @@
     "removed": "Retiré"
   },
   "admin": {
+    "plugins": {
+      "title": "Gestion des plugins",
+      "desc": "Afficher et gérer les plugins installés.",
+      "overview": "Aperçu",
+      "riskNotice": "Les plugins sont du code entièrement fiable. Ne chargez pas de plugins provenant de sources non fiables ; vous êtes responsable des conséquences.",
+      "empty": "Aucun plugin installé.",
+      "authors": "Auteurs",
+      "apiVer": "API",
+      "logs": "Journal du système de plugins",
+      "logsEmpty": "Aucun journal.",
+      "listTitle": "Plugins",
+      "unknownAuthor": "Inconnu",
+      "none": "Aucun",
+      "dependencies": "Dépendances requises",
+      "hotReloadWarning": "L'auteur déclare que ce plugin ne peut pas être rechargé à chaud.",
+      "action": {
+        "start": "Démarrer",
+        "stop": "Arrêter",
+        "reload": "Recharger"
+      },
+      "status": {
+        "enabled": "En cours",
+        "disabled": "Arrêté",
+        "missingDependency": "Dépendances manquantes",
+        "loadFailed": "Échec du chargement",
+        "incompatible": "API incompatible"
+      }
+    },
     "common": {
       "loading": "Chargement...",
       "operation": "Opération",
@@ -448,6 +477,7 @@
       "body": "Cette permission permet de créer ou de modifier des comptes administrateurs et leurs groupes de permissions. Son détenteur peut s'élever lui-même ou élever autrui au rang de compte tout-puissant, quasiment identique à root, et ainsi obtenir le contrôle total de l'ensemble du panneau d'administration. Ne l'accordez qu'à des administrateurs en qui vous avez entièrement confiance, et ne l'activez jamais à la légère."
     },
     "permCat": {
+      "plugins": "Gestion des plugins",
       "access": "Droits d'accès",
       "features": "Droits fonctionnels",
       "dashboard": "Tableau de bord",
@@ -515,6 +545,8 @@
       "logActionsDesc": "Sélectionnez les types d'opérations à consigner",
       "logDownloadInterval": "Intervalle de téléchargement des journaux (minutes)",
       "logDownloadIntervalDesc": "Après chaque téléchargement, l'utilisateur doit attendre cette durée avant de pouvoir télécharger à nouveau",
+      "logClearInterval": "Intervalle d'effacement des journaux (minutes)",
+      "logClearIntervalDesc": "Durée d'attente avant de pouvoir effacer à nouveau les journaux",
       "blacklistTitle": "Contrôle de la liste noire des noms d'utilisateur",
       "blacklistLabel": "Liste noire des noms d'utilisateur",
       "blacklistDesc": "Un nom d'utilisateur par ligne, prend en charge le joker * (ex. *admin* interdit tout nom contenant admin)",
@@ -643,7 +675,22 @@
       "installedAt": "Date d'installation",
       "starTitle": "Soutenir le projet",
       "starDesc": "Si ce projet vous est utile, n'hésitez pas à lui donner une étoile ⭐ sur GitHub ; votre soutien est notre motivation pour le maintenir !",
-      "starBtn": "Mettre une étoile sur GitHub"
+      "starBtn": "Mettre une étoile sur GitHub",
+      "startupParams": "Paramètres de démarrage",
+      "startupParamsDesc": "Configuration d'exécution",
+      "systems": "Systèmes principaux",
+      "systemUser": "Système utilisateur",
+      "systemYggdrasil": "Système Yggdrasil",
+      "systemAdmin": "Système d'administration",
+      "ip": "IP",
+      "port": "Port",
+      "retention": "Conservation",
+      "logLevel": "Niveau de journalisation",
+      "auditLog": "Journal d'audit",
+      "pluginSystemLog": "Journal du système de plugins",
+      "logging": "Journalisation",
+      "enabled": "Activé",
+      "disabled": "Désactivé"
     },
     "security": {
       "title": "Paramètres de sécurité",
@@ -914,6 +961,13 @@
     "backToForm": "Retour à la modification"
   },
   "msg": {
+    "pluginOperationSuccess": "Opération réussie",
+    "pluginNotFound": "Plugin introuvable",
+    "pluginNotHotReloadable": "L'auteur déclare que ce plugin ne peut pas être rechargé à chaud.",
+    "pluginMissingDependency": "Dépendances obligatoires manquantes",
+    "pluginIncompatible": "La version de l'API du plugin est incompatible",
+    "pluginNotEnabled": "Le plugin n'est pas en cours d'exécution",
+    "pluginLoadFailed": "Échec du chargement du plugin",
     "requestError": "Format de requête incorrect",
     "nicknameEmpty": "Le pseudo ne peut pas être vide",
     "nicknameTooLong": "Le pseudo ne doit pas dépasser 32 caractères",

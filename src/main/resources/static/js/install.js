@@ -35,6 +35,15 @@ window.InstallWizard = {
     },
 
     selectDbType(type) {
+        if (type === 'pgsql') {
+            var message = t('install.pgsqlUnavailable');
+            if (typeof showToast === 'function') {
+                showToast(message, 'error');
+            } else {
+                alert(message);
+            }
+            return;
+        }
         this.dbType = type;
         document.getElementById('dbType').value = type;
 
@@ -53,7 +62,7 @@ window.InstallWizard = {
             if (serverFields) serverFields.style.display = 'block';
             const portInput = document.getElementById('dbPort');
             if (portInput) {
-                portInput.value = type === 'mysql' ? '3306' : '5432';
+                portInput.value = '3306';
             }
         }
     },
@@ -187,7 +196,7 @@ window.InstallWizard = {
 
         const emailEnabled = document.getElementById('emailEnabled').checked;
         const type = this.dbType;
-        const typeLabel = { sqlite: 'SQLite', mysql: 'MySQL', pgsql: 'PostgreSQL' }[type] || type;
+        const typeLabel = { sqlite: 'SQLite', mysql: 'MySQL' }[type] || type;
 
         let dbRows = '';
         if (type === 'sqlite') {
@@ -298,7 +307,7 @@ window.InstallWizard = {
             payload.sqlitePath = this.val('sqlitePath') || './data.db';
         } else {
             payload.dbHost     = this.val('dbHost') || 'localhost';
-            payload.dbPort     = parseInt(this.val('dbPort')) || (type === 'mysql' ? 3306 : 5432);
+            payload.dbPort     = parseInt(this.val('dbPort')) || 3306;
             payload.dbName     = this.val('dbName') || 'yggdrasil';
             payload.dbUsername = this.val('dbUsername');
             payload.dbPassword = this.val('dbPassword');

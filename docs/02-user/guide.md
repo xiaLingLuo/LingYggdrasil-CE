@@ -6,7 +6,7 @@
 http://<服务器地址>:35565
 ```
 
-> 管理后台见[管理后台指南](admin-guide.md)，客户端接入协议见 [Yggdrasil API](yggdrasil-api.md)。
+> 管理后台见[管理后台指南](../03-admin/guide.md)，客户端接入协议见 [Yggdrasil API](../04-yggdrasil/api.md)。
 
 ## 注册与登录
 
@@ -92,7 +92,7 @@ http://<服务器地址>:35565
 - 下载日志（txt，受下载间隔限制）。
 - 清空日志。
 
-日志内容与保留策略由管理员配置，详见[配置参考](configuration.md#用户操作日志)。
+日志内容与保留策略由管理员配置，详见[配置参考](../01-overview/configuration.md#用户操作日志)。
 
 ## 语言与主题
 
