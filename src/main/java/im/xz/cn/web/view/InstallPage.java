@@ -15,21 +15,50 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-
 package im.xz.cn.web.view;
 
 import im.xz.cn.i18n.I18n;
-import im.xz.cn.web.PageRenderer;
+import im.xz.cn.i18n.LocaleContext;
 
-public class InstallPage {
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
-    public static String generateInstallPageContent(String token) {
-        return PageRenderer.tr("""
-            <input type="hidden" id="install-token" value="%s">
-            <button type="button" class="theme-toggle install-theme-toggle" data-action="toggleTheme" aria-label="{{nav.theme}}" title="{{nav.theme}}"><i class="fas fa-moon"></i></button>
+public final class InstallPage {
+
+    private static final Pattern TOKEN = Pattern.compile("\\{\\{([a-zA-Z0-9_.]+)}}");
+
+    private static final String SVG_OPEN =
+            "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" "
+            + "stroke-linecap=\"round\" stroke-linejoin=\"round\">";
+
+    private static final String ICON_TREE =
+            "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\">"
+            + "<path d=\"M12 2 6.5 9.5h3L5 15.5h5V22h4v-6.5h5l-4.5-6h3L12 2Z\"/></svg>";
+
+    private static final String ICON_MOON = SVG_OPEN
+            + "<path d=\"M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z\"/></svg>";
+
+    private static final String ICON_DATABASE = SVG_OPEN
+            + "<ellipse cx=\"12\" cy=\"5\" rx=\"8\" ry=\"3\"/>"
+            + "<path d=\"M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5\"/>"
+            + "<path d=\"M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3\"/></svg>";
+
+    private InstallPage() {
+    }
+
+    public static String generateInstallPage(String token) {
+        String locale = LocaleContext.get();
+        String css = readResource("/install/install.css");
+        String js = readResource("/install/install.js");
+        String i18n = I18n.rawJson(locale);
+        String body = tr("""
+            <input type="hidden" id="install-token" value="__INSTALL_TOKEN__">
+            <button type="button" class="install-theme-toggle" id="themeToggle" data-action="toggleTheme" aria-label="{{nav.theme}}" title="{{nav.theme}}">__ICON_MOON__</button>
             <div class="install-wrapper">
                 <div class="install-header">
-                    <div class="install-logo"><img src="/icons/app.ico" class="logo-icon" alt="LingYggdrasil"></div>
+                    <div class="install-logo">__ICON_TREE__</div>
                     <h1 class="install-title">{{install.title}}</h1>
                     <p class="install-subtitle">{{install.subtitle}}</p>
                 </div>
@@ -63,7 +92,7 @@ public class InstallPage {
                         <div class="form-group">
                             <label class="form-label">{{install.password}} <span class="req">*</span></label>
                             <input type="password" id="rootPassword" class="form-input" placeholder="{{install.passwordPlaceholder}}" autocomplete="new-password">
-                            <div class="form-hint">{{install.passwordHint}}<span>@</span><span>$</span><span>!</span><span>%%</span><span>*</span><span>?</span><span>&amp;</span></div>
+                            <div class="form-hint">{{install.passwordHint}}<span>@</span><span>$</span><span>!</span><span>%</span><span>*</span><span>?</span><span>&amp;</span></div>
                         </div>
                         <div class="form-group">
                             <label class="form-label">{{install.confirmPassword}} <span class="req">*</span></label>
@@ -116,17 +145,17 @@ public class InstallPage {
                         <p class="step-desc">{{install.dbDesc}}</p>
                         <div class="db-type-selector">
                             <div class="db-type-card active" data-type="sqlite" data-action="InstallWizard.selectDbType" data-args='["sqlite"]'>
-                                <div class="db-icon"><i class="fas fa-database"></i></div>
+                                <div class="db-icon">__ICON_DATABASE__</div>
                                 <div class="db-name">SQLite</div>
                                 <div class="db-desc">{{install.sqliteDesc}}</div>
                             </div>
                             <div class="db-type-card" data-type="mysql" data-action="InstallWizard.selectDbType" data-args='["mysql"]'>
-                                <div class="db-icon"><i class="fas fa-database"></i></div>
+                                <div class="db-icon">__ICON_DATABASE__</div>
                                 <div class="db-name">MySQL</div>
                                 <div class="db-desc">{{install.mysqlDesc}}</div>
                             </div>
                             <div class="db-type-card db-type-disabled" data-type="pgsql" data-disabled="true" data-action="InstallWizard.selectDbType" data-args='["pgsql"]'>
-                                <div class="db-icon"><i class="fas fa-database"></i></div>
+                                <div class="db-icon">__ICON_DATABASE__</div>
                                 <div class="db-name">PostgreSQL <span class="db-badge">{{install.pgsqlUnavailableBadge}}</span></div>
                                 <div class="db-desc">{{install.pgsqlUnavailable}}</div>
                             </div>
@@ -196,7 +225,64 @@ public class InstallPage {
                     </div>
                 </div>
             </div>
-            <script src="/js/install.js"></script>
-            """.formatted(token));
+            <footer class="page-footer">
+                <p>LingYggdrasil __APP_VERSION__</p>
+            </footer>
+            """);
+
+        body = body.replace("__INSTALL_TOKEN__", escapeAttribute(token))
+                   .replace("__ICON_MOON__", ICON_MOON)
+                   .replace("__ICON_TREE__", ICON_TREE)
+                   .replace("__ICON_DATABASE__", ICON_DATABASE)
+                   .replace("__APP_VERSION__", escapeHtml(im.xz.cn.config.AppConfig.APP_VERSION));
+
+        String earlyTheme = "<script>(function(){try{var t=localStorage.getItem('ling-theme');"
+                + "if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';"
+                + "document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){}})();</script>";
+
+        return "<!DOCTYPE html>\n"
+                + "<html lang=\"" + escapeAttribute(locale) + "\">\n"
+                + "<head>\n"
+                + "<meta charset=\"UTF-8\">\n"
+                + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+                + "<title>" + escapeHtml(I18n.t("msg.installWizardTitle")) + " - LingYggdrasil</title>\n"
+                + earlyTheme + "\n"
+                + "<style>\n" + css + "\n</style>\n"
+                + "</head>\n"
+                + "<body>\n"
+                + body + "\n"
+                + "<script>window.__INSTALL_I18N__=" + i18n + ";</script>\n"
+                + "<script>\n" + js + "\n</script>\n"
+                + "</body>\n"
+                + "</html>\n";
+    }
+
+    private static String tr(String template) {
+        Matcher m = TOKEN.matcher(template);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            m.appendReplacement(sb, Matcher.quoteReplacement(I18n.t(m.group(1))));
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
+
+    private static String readResource(String path) {
+        try (InputStream is = InstallPage.class.getResourceAsStream(path)) {
+            if (is == null) return "";
+            return new String(is.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private static String escapeHtml(String input) {
+        if (input == null) return "";
+        return input.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+                .replace("\"", "&quot;").replace("'", "&#x27;");
+    }
+
+    private static String escapeAttribute(String input) {
+        return escapeHtml(input);
     }
 }

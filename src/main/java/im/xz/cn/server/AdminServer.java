@@ -117,7 +117,7 @@ public class AdminServer {
                     )
             );
 
-            config.staticFiles.add("/static", Location.CLASSPATH);
+            ServerFactory.registerStaticRoutes(config.routes);
             ServerFactory.registerIconRoutes(config.routes);
 
             config.jsonMapper(new JavalinJackson());

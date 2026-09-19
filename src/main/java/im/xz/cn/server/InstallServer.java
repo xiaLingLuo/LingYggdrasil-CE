@@ -18,13 +18,10 @@
 package im.xz.cn.server;
 
 import io.javalin.Javalin;
-import io.javalin.http.staticfiles.Location;
 import io.javalin.json.JavalinJackson;
-import im.xz.cn.bootstrap.ServerFactory;
 import im.xz.cn.i18n.LocaleContext;
 import im.xz.cn.i18n.LocaleResolver;
 import im.xz.cn.server.handler.install.InstallHandler;
-import im.xz.cn.common.FooterInfo;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,33 +33,19 @@ import im.xz.cn.logging.logApi;
 public class InstallServer {
     private static final logApi logger = logApi.getLogger(InstallServer.class);
 
-    private Javalin app;
     private static final String TOKEN_FILE = ".INSTALL_TOKEN";
+    private static final String BIND_HOST = "127.0.0.1";
+    private static final int PORT = 35598;
+
+    private Javalin app;
 
     public void start() {
         String token = generateOrLoadToken();
         InstallHandler.setInstallToken(token);
         InstallHandler.setInstallServer(this);
 
-        int port = 35598;
-
-
         app = Javalin.create(config -> {
             config.http.defaultContentType = "text/html; charset=utf-8";
-
-            ServerFactory.configureSecurityHeaders(config);
-
-            config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> {
-                rule.allowHost(
-                    "http://localhost:35565",
-                    "http://localhost:35577",
-                    "http://localhost:35599",
-                    "http://localhost:35598"
-                );
-                rule.allowCredentials = true;
-            }));
-            config.staticFiles.add("/static", Location.CLASSPATH);
-            ServerFactory.registerIconRoutes(config.routes);
             config.jsonMapper(new JavalinJackson());
 
             config.routes.before(ctx -> {
@@ -75,11 +58,10 @@ public class InstallServer {
             config.routes.get("/", InstallHandler::renderInstallPage);
             config.routes.get("/api/status", InstallHandler::getStatus);
             config.routes.post("/api/install", InstallHandler::doInstall);
-
-            config.routes.get("/api/footer-info", ctx -> ctx.json(FooterInfo.getFooterData()));
         });
 
-        app.start("127.0.0.1", port);
+        app.start(BIND_HOST, PORT);
+        logger.info("[InstallServer] 安装向导已启动: http://{}:{}", BIND_HOST, PORT);
     }
 
     public void stop() {

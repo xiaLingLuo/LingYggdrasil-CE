@@ -94,10 +94,6 @@ public final class PluginManager {
         return bootstrapped;
     }
 
-    /**
-     * Snapshots the concrete built-in routes of a server so plugins can never claim them.
-     * Wildcard/parameterised routes are skipped (plugins cannot register placeholders anyway).
-     */
     public synchronized void captureBuiltinRoutes(InternalRouter router, boolean userServer) {
         if (router == null) return;
         Set<String> target = userServer ? builtinUserRoutes : builtinYggdrasilRoutes;

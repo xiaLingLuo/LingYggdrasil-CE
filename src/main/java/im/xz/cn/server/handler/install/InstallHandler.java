@@ -32,9 +32,7 @@ import im.xz.cn.model.Admin;
 import im.xz.cn.security.PasswordValidator;
 import im.xz.cn.server.InstallServer;
 import im.xz.cn.common.UuidUtil;
-import im.xz.cn.web.view.Css;
 import im.xz.cn.web.view.InstallPage;
-import im.xz.cn.web.PageRenderer;
 import im.xz.cn.rate.InstallRateLimiter;
 import io.javalin.http.Context;
 
@@ -73,19 +71,7 @@ public class InstallHandler {
             return;
         }
 
-        String token = ctx.queryParam("token");
-
-
-
-
-
-        String html = PageRenderer.renderPage(
-            I18n.t("msg.installWizardTitle"),
-            InstallPage.generateInstallPageContent(installToken),
-            "install",
-            Css.getInstallCssImport()
-        );
-        ctx.html(html);
+        ctx.html(InstallPage.generateInstallPage(installToken));
     }
 
     public static void getStatus(Context ctx) {

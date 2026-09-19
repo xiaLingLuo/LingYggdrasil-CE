@@ -24,7 +24,6 @@ import io.javalin.http.Context;
 import io.javalin.http.Handler;
 import io.javalin.http.HandlerType;
 import io.javalin.http.NotFoundResponse;
-import io.javalin.http.staticfiles.Location;
 import io.javalin.http.staticfiles.ResourceHandler;
 import io.javalin.json.JavalinJackson;
 import io.javalin.router.Endpoint;
@@ -117,19 +116,61 @@ public class ServerFactory {
         routes.get("/builtin-icons/{name}", ctx -> serveIcon(ctx, true));
     }
 
+    private static final String[] STATIC_DIRECTORIES = {"css", "js", "img", "fonts"};
+
+    private static final java.util.Map<String, String> STATIC_MIME = java.util.Map.ofEntries(
+        java.util.Map.entry("css", "text/css"),
+        java.util.Map.entry("js", "text/javascript"),
+        java.util.Map.entry("mjs", "text/javascript"),
+        java.util.Map.entry("json", "application/json"),
+        java.util.Map.entry("xml", "text/xml"),
+        java.util.Map.entry("svg", "image/svg+xml"),
+        java.util.Map.entry("ico", "image/x-icon"),
+        java.util.Map.entry("png", "image/png"),
+        java.util.Map.entry("jpg", "image/jpeg"),
+        java.util.Map.entry("jpeg", "image/jpeg"),
+        java.util.Map.entry("gif", "image/gif"),
+        java.util.Map.entry("webp", "image/webp"),
+        java.util.Map.entry("woff2", "font/woff2"),
+        java.util.Map.entry("woff", "font/woff"),
+        java.util.Map.entry("ttf", "font/ttf"),
+        java.util.Map.entry("txt", "text/plain")
+    );
+
+    public static void registerStaticRoutes(RoutesConfig routes) {
+        for (String dir : STATIC_DIRECTORIES) {
+            routes.get("/" + dir + "/*", ctx -> serveStatic(ctx, dir));
+        }
+    }
+
+    private static void serveStatic(Context ctx, String dir) {
+        String prefix = "/" + dir + "/";
+        String path = ctx.path();
+        if (!path.startsWith(prefix)) {
+            ctx.status(404).result("Not Found");
+            return;
+        }
+        String relative = path.substring(prefix.length());
+        if (relative.isEmpty() || relative.contains("..") || relative.indexOf('\\') >= 0) {
+            ctx.status(404).result("Not Found");
+            return;
+        }
+        InputStream in = ServerFactory.class.getResourceAsStream("/static/" + dir + "/" + relative);
+        if (in == null) {
+            ctx.status(404).result("Not Found");
+            return;
+        }
+        String ext = relative.contains(".")
+                ? relative.substring(relative.lastIndexOf('.') + 1).toLowerCase()
+                : "";
+        ctx.contentType(STATIC_MIME.getOrDefault(ext, "application/octet-stream"));
+        ctx.result(in);
+    }
+
     private static final HandlerType[] PLUGIN_CATCH_ALL_METHODS = {
         HandlerType.GET, HandlerType.POST, HandlerType.PUT, HandlerType.DELETE, HandlerType.PATCH
     };
 
-    /**
-     * Registers the single dynamic entry point used to dispatch plugin routes.
-     * <p>
-     * Built-in routes are registered before this catch-all and therefore always win, and
-     * {@link im.xz.cn.plugin.PluginManager#captureBuiltinRoutes} additionally forbids plugins
-     * from claiming any built-in path. The catch-all only runs when no built-in route matched,
-     * so it first gives static resources a chance to be served (they are otherwise shadowed by
-     * the catch-all), then falls back to the plugin route tables.
-     */
     public static void registerPluginCatchAll(Javalin app, boolean userServer) {
         im.xz.cn.plugin.PluginManager manager = im.xz.cn.plugin.PluginManager.getInstance();
         manager.captureBuiltinRoutes(app.unsafe.internalRouter, userServer);
@@ -205,7 +246,7 @@ public class ServerFactory {
             configureSecurityHeaders(config);
 
             if (staticDir != null) {
-                config.staticFiles.add(staticDir, Location.CLASSPATH);
+                registerStaticRoutes(config.routes);
             }
 
             config.jsonMapper(new JavalinJackson());

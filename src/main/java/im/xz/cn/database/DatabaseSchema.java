@@ -155,12 +155,45 @@ public class DatabaseSchema {
         }
     }
 
+    private static boolean columnExists(DatabaseManager db, String table, String column) {
+        try {
+            switch (db.getDbType()) {
+                case "mysql" -> {
+                    var rows = db.executeQuery(
+                        "SELECT column_name FROM information_schema.columns "
+                            + "WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?",
+                        table, column);
+                    return !rows.isEmpty();
+                }
+                case "pgsql" -> {
+                    var rows = db.executeQuery(
+                        "SELECT column_name FROM information_schema.columns "
+                            + "WHERE table_name = ? AND column_name = ?",
+                        table, column);
+                    return !rows.isEmpty();
+                }
+                default -> {
+                    var rows = db.executeQuery("PRAGMA table_info(" + table + ")");
+                    for (var row : rows) {
+                        Object name = row.get("name");
+                        if (name != null && column.equalsIgnoreCase(String.valueOf(name))) return true;
+                    }
+                    return false;
+                }
+            }
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     private static void migrateRootInfo(DatabaseManager db, boolean rootInfoExisted) {
         try {
             var countRow = db.executeQuerySingle("SELECT COUNT(*) AS cnt FROM root_info");
             long rootCount = (countRow != null && countRow.get("cnt") != null)
                     ? ((Number) countRow.get("cnt")).longValue() : 0;
             if (rootCount > 0) return;
+
+            if (!columnExists(db, "admins", "role")) return;
 
             var roots = db.executeQuery("SELECT * FROM admins WHERE role = 'root'");
             if (roots.isEmpty()) return; 

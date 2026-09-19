@@ -989,10 +989,6 @@ public class Css {
         return "<link rel=\"stylesheet\" href=\"/css/admin.css\">";
     }
 
-    public static String getInstallCssImport() {
-        return "@import url('/css/install.css');";
-    }
-
     public static String getWorldCss() {
         return """
             .world-tabs { display: flex; gap: var(--space-2); margin-bottom: var(--space-5); flex-wrap: wrap; }
