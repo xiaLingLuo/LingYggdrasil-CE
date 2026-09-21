@@ -22,9 +22,11 @@ import im.xz.cn.config.SystemConfig;
 import im.xz.cn.web.PageRenderer;
 
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Year;
 import java.util.LinkedHashMap;
@@ -87,13 +89,30 @@ public class FooterInfo {
 
         if (hasIcp || hasPsr) {
             StringBuilder footer = new StringBuilder();
-            if (hasIcp) footer.append(escapeHtml(icp));
+            if (hasIcp) {
+                footer.append("<a href=\"https://beian.miit.gov.cn\" target=\"_blank\">")
+                        .append(escapeHtml(icp.trim()))
+                        .append("</a>");
+            }
             if (hasIcp && hasPsr) footer.append(" | ");
-            if (hasPsr) footer.append(escapeHtml(psr));
+            if (hasPsr) {
+                String code = URLEncoder.encode(beianCode(psr.trim()), StandardCharsets.UTF_8);
+                footer.append("<img src=\"/img/beian.png\" class=\"align-top\" style=\"width: 17px\"> ")
+                        .append("<a href=\"https://beian.mps.gov.cn/#/query/webSearch?code=")
+                        .append(escapeHtml(code))
+                        .append("\" rel=\"noreferrer\" target=\"_blank\">")
+                        .append(escapeHtml(psr.trim()))
+                        .append("</a>");
+            }
             return html.replace(FOOTER_PLACEHOLDER, footer.toString());
         } else {
             return html.replace(FOOTER_PLACEHOLDER, "");
         }
+    }
+
+    private static String beianCode(String record) {
+        java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("\\d+").matcher(record);
+        return matcher.find() ? matcher.group() : record;
     }
 
     private static String escapeHtml(String input) {

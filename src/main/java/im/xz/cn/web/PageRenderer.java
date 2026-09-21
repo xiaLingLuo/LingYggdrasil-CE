@@ -190,7 +190,7 @@ public class PageRenderer {
         return """
             <footer class="page-footer">
                 <p>%s, Powered by <a href="https://github.com/xiaLingLuo/LingYggdrasil-CE" target="_blank" rel="noopener">LingYggdrasil</a> %s</p>
-                <p class="footer-records" style="margin-top:4px;font-size:12px;color:#999;">%s</p>
+                <p class="footer-records" style="margin-top:4px;font-size:12px;">%s</p>
             </footer>
             """.formatted(escapeHtml(siteName), escapeHtml(AppConfig.APP_VERSION), FooterInfo.FOOTER_PLACEHOLDER);
     }

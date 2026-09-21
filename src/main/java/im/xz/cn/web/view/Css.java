@@ -330,6 +330,9 @@ public class Css {
                 border-top: 1px solid var(--color-border);
             }
             .page-footer p { margin: 0; }
+            .page-footer a { color: inherit; text-decoration: none; }
+            .page-footer a:visited, .page-footer a:hover, .page-footer a:active { color: inherit; text-decoration: none; }
+            .align-top { vertical-align: top; }
 
             .badge {
                 display: inline-flex;
