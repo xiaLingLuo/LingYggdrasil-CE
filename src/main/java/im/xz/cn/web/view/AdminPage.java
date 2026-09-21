@@ -375,7 +375,7 @@ public class AdminPage {
                         </div>
                         <div class="info-item">
                             <div class="info-label">{{admin.appinfo.version}}</div>
-                            <div class="info-value" id="appVersion">{{admin.common.loading}}</div>
+                            <div class="info-value appinfo-version"><span id="appVersion">{{admin.common.loading}}</span><button class="btn btn-secondary" data-action="openUpdateModal">{{admin.appinfo.checkUpdate}}</button></div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">{{admin.appinfo.repo}}</div>
@@ -398,6 +398,23 @@ public class AdminPage {
                     <a class="btn btn-primary" href="https://github.com/xiaLingLuo/LingYggdrasil-CE" target="_blank" rel="noopener">
                         <i class="fab fa-github"></i> {{admin.appinfo.starBtn}}
                     </a>
+                </div>
+            </div>
+            <div id="updateModal" class="modal" style="display:none;">
+                <div class="modal-overlay" data-action="closeModal" data-args='["updateModal"]'></div>
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3>{{admin.appinfo.updateTitle}}</h3>
+                        <button class="modal-close" data-action="closeModal" data-args='["updateModal"]'>&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="update-source-btns">
+                            <button class="btn btn-secondary" data-action="checkUpdate" data-args='["github"]'>{{admin.appinfo.updateSourceGithub}}</button>
+                            <button class="btn btn-secondary" data-action="checkUpdate" data-args='["cn"]'>{{admin.appinfo.updateSourceCn}}</button>
+                            <div id="updateLoading" class="update-loading" style="display:none;"><i class="fas fa-spinner fa-spin"></i><span>{{admin.appinfo.updateChecking}}</span></div>
+                        </div>
+                        <div id="updateResult" class="update-result">{{admin.appinfo.updateNotChecked}}</div>
+                    </div>
                 </div>
             </div>
             <script src="/js/admin-appinfo.js"></script>

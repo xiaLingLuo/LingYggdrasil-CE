@@ -46,14 +46,20 @@
     }
 
     var toastTimer = null;
+    var toastHideTimer = null;
     function showToast(message, type) {
         var toast = ensureToast();
         toast.textContent = message === null || message === undefined ? '' : String(message);
         toast.className = 'toast toast-' + (type || 'info');
         toast.style.display = 'block';
         if (toastTimer) clearTimeout(toastTimer);
+        if (toastHideTimer) clearTimeout(toastHideTimer);
         toastTimer = setTimeout(function () {
-            toast.style.display = 'none';
+            toast.classList.add('toast-hide');
+            toastHideTimer = setTimeout(function () {
+                toast.style.display = 'none';
+                toast.classList.remove('toast-hide');
+            }, 300);
         }, 3000);
     }
 

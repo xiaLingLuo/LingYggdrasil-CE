@@ -92,7 +92,7 @@ public class AdminServer {
         AdminAdminHandler adminAdminHandler = new AdminAdminHandler(adminDao, rootInfoDao);
         im.xz.cn.server.handler.admin.AdminPermGroupHandler permGroupHandler =
                 new im.xz.cn.server.handler.admin.AdminPermGroupHandler(permGroupDao, rootInfoDao);
-        AdminAppInfoHandler appInfoHandler = new AdminAppInfoHandler();
+        AdminAppInfoHandler appInfoHandler = new AdminAppInfoHandler(cacheDao);
         AdminProfilesHandler profilesHandler = new AdminProfilesHandler(profileDao, userDao, adminDao, systemConfig);
         AdminSkinHandler skinHandler = new AdminSkinHandler(textureDao, textureService, userDao, db, systemConfig);
         AdminCapeHandler capeHandler = new AdminCapeHandler(textureDao, textureService, userDao, db, systemConfig);
@@ -302,6 +302,7 @@ public class AdminServer {
             config.routes.post("/admin/api/yggdrasil/switch-mode", yggdrasilHandler::switchMode);
 
             config.routes.get("/admin/api/appinfo", appInfoHandler::getAppInfo);
+            config.routes.post("/admin/api/appinfo/check-update", appInfoHandler::checkUpdate);
 
             config.routes.get("/admin/plugins", pluginHandler::pluginsPage);
             config.routes.get("/admin/plugins/{plugin}/{menu}", pluginHandler::pluginMenuPage);

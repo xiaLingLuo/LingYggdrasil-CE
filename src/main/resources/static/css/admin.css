@@ -737,6 +737,24 @@ body:has(.admin-login-container) > .page-footer {
 .appinfo-name { display: inline-flex; align-items: center; gap: 8px; }
 .appinfo-icon { width: 20px; height: 20px; flex-shrink: 0; }
 
+.appinfo-version { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.appinfo-version .btn { padding: 5px 12px; font-size: 13px; }
+.update-source-btns { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.update-loading { display: inline-flex; align-items: center; gap: 8px; color: var(--color-text-muted); font-size: 14px; }
+.update-result {
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: #FAFBFD;
+    border: 1px solid #F0F0F5;
+    border-radius: 12px;
+    color: var(--color-text);
+    line-height: 1.8;
+    word-break: break-all;
+}
+.update-result-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.update-result-text { flex: 1; min-width: 0; }
+.update-result .btn { flex-shrink: 0; white-space: nowrap; }
+
 .startup-desc { margin: 0 0 var(--space-5); color: var(--color-text-muted); font-size: var(--text-sm); }
 .startup-section { margin-bottom: var(--space-6); }
 .startup-section:last-child { margin-bottom: 0; }
@@ -824,6 +842,11 @@ body:has(.admin-login-container) > .page-footer {
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
     z-index: 2000;
     animation: toastSlideIn 0.3s ease;
+}
+.toast-hide {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .toast-success {

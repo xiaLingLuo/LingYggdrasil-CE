@@ -433,6 +433,11 @@ body select {
     z-index: 2000;
     animation: toastSlideIn 0.3s ease;
 }
+.toast-hide {
+    opacity: 0;
+    transform: translateX(40px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
 .toast-success {
     background: #E8F5E9;
     color: #2E7D32;

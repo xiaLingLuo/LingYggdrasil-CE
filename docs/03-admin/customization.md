@@ -21,7 +21,7 @@
 
 ```text
 运行目录/
-├── LingYggdrasil-2.2.6.jar
+├── LingYggdrasil-2.2.7.jar
 └── icons/
     └── app.ico        # 你的自定义图标
 ```
