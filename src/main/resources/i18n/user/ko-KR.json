@@ -163,7 +163,8 @@
       "skinCount": "스킨 수",
       "capeCount": "망토 수",
       "publicCount": "공개 텍스처 수",
-      "friendCount": "친구 수"
+      "friendCount": "친구 수",
+      "registeredAt": "가입일"
     },
     "guide": {
       "apiMissing": "관리자가 아직 API 외부 도메인을 설정하지 않았습니다. 관리자에게 문의해 주세요",

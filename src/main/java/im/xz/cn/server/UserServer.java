@@ -62,6 +62,18 @@ import im.xz.cn.logging.logApi;
 public class UserServer {
     private static final logApi logger = logApi.getLogger(UserServer.class);
 
+    private static final String[] FEATURE_ROOTS = {
+            "/profiles", "/skins", "/capes", "/friends", "/shared", "/settings", "/logs",
+            "/api/profiles", "/api/skins", "/api/capes", "/api/friends", "/api/world",
+            "/api/shared", "/api/settings", "/api/textures"
+    };
+
+    private static final String[] FEATURE_PUBLIC = {
+            "/api/skins/download", "/api/capes/download",
+            "/api/settings/theme", "/api/settings/language",
+            "/api/world/textures", "/api/friends/texture"
+    };
+
     private final Javalin app;
     private final int port;
 
@@ -150,6 +162,25 @@ public class UserServer {
                     }
                 }
                 im.xz.cn.security.UserPermissions.set(java.util.Set.of());
+            });
+
+            config.routes.before(ctx -> {
+                if (SessionManager.getUserId(ctx) == null) return;
+                String path = ctx.path();
+                String p = (path.length() > 1 && path.endsWith("/")) ? path.substring(0, path.length() - 1) : path;
+                if (!isProtectedFeaturePath(p)) return;
+                String[] required = requiredUserPerms(p);
+                if (required != null) {
+                    for (String perm : required) {
+                        if (im.xz.cn.security.UserPermissions.has(perm)) return;
+                    }
+                }
+                if (path.startsWith("/api/")) {
+                    ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.noPermission")));
+                } else {
+                    ctx.redirect("/dashboard");
+                }
+                ctx.skipRemainingHandlers();
             });
 
             config.routes.before(ctx -> {
@@ -356,6 +387,64 @@ public class UserServer {
         });
 
         ServerFactory.registerPluginCatchAll(app, true);
+    }
+
+    private static boolean isProtectedFeaturePath(String p) {
+        boolean underRoot = false;
+        for (String root : FEATURE_ROOTS) {
+            if (p.equals(root) || p.startsWith(root + "/")) { underRoot = true; break; }
+        }
+        if (!underRoot) return false;
+        for (String pub : FEATURE_PUBLIC) {
+            if (p.equals(pub) || p.startsWith(pub + "/")) return false;
+        }
+        return true;
+    }
+
+    private static String[] requiredUserPerms(String path) {
+        String p = path;
+        if (p.length() > 1 && p.endsWith("/")) p = p.substring(0, p.length() - 1);
+        switch (p) {
+            case "/profiles": return new String[]{"user.profiles"};
+            case "/skins": return new String[]{"user.skins"};
+            case "/capes": return new String[]{"user.capes"};
+            case "/friends": return new String[]{"user.friends"};
+            case "/shared": return new String[]{"user.world"};
+            case "/settings":
+            case "/logs":
+            case "/logs/download":
+            case "/logs/clear": return new String[]{"user.settings"};
+            default: break;
+        }
+        if (p.startsWith("/api/profiles") || p.equals("/api/textures/my")) {
+            return new String[]{"user.profiles"};
+        }
+        if (p.startsWith("/api/skins")) return new String[]{"user.skins"};
+        if (p.startsWith("/api/capes")) return new String[]{"user.capes"};
+        if (p.startsWith("/api/friends/share-texture")
+                || p.startsWith("/api/friends/unshare-texture")
+                || p.startsWith("/api/friends/return-texture")
+                || p.contains("/shared-textures")
+                || p.contains("/my-shared")) {
+            return new String[]{"user.friends", "user.world"};
+        }
+        if (p.startsWith("/api/friends/blocked") || p.equals("/api/friends/unblock")) {
+            return new String[]{"user.friends", "user.settings"};
+        }
+        if (p.startsWith("/api/friends")) return new String[]{"user.friends"};
+        if (p.startsWith("/api/shared")
+                || p.startsWith("/api/world/like")
+                || p.startsWith("/api/world/favorite")) {
+            return new String[]{"user.world"};
+        }
+        if (p.startsWith("/api/settings/nickname")
+                || p.startsWith("/api/settings/email")
+                || p.startsWith("/api/settings/password")
+                || p.startsWith("/api/settings/send-verify-code")) {
+            return new String[]{"user.settings"};
+        }
+        if (p.startsWith("/api/textures/visibility")) return new String[]{"user.skins", "user.capes"};
+        return null;
     }
 
     public void start(String host, int port) {

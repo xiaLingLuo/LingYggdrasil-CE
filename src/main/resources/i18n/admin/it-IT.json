@@ -531,6 +531,9 @@
       "editEmailTitle": "Modifica email",
       "newEmail": "Nuova email",
       "newEmailPlaceholder": "Inserisci la nuova email",
+      "editNicknameTitle": "Modifica nickname",
+      "newNickname": "Nuovo nickname",
+      "newNicknamePlaceholder": "Inserisci il nuovo nickname",
       "confirmEdit": "Conferma modifica",
       "permGroups": "Gestione gruppi di permessi utente",
       "userCount": "{0} utenti",
@@ -555,6 +558,7 @@
       "deleteConfirm": "Vuoi davvero eliminare l'utente \"{0}\"? Questa operazione è irreversibile.",
       "enterUsername": "Inserisci il nome utente",
       "enterEmail": "Inserisci l'email",
+      "enterNickname": "Inserisci il nickname",
       "createFillAll": "Nome utente, email e password non possono essere vuoti",
       "ban": "Banna",
       "toggleVerifyTitle": "Clicca per cambiare lo stato di verifica email"

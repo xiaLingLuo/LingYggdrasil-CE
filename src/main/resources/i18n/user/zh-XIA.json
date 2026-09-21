@@ -163,7 +163,8 @@
       "skinCount": "外觀之數",
       "capeCount": "披風之數",
       "publicCount": "公開材質之數",
-      "friendCount": "友之數"
+      "friendCount": "友之數",
+      "registeredAt": "註之時"
     },
     "guide": {
       "apiMissing": "管理之人尚未置 API 外網之域，請聯絡管理之人",

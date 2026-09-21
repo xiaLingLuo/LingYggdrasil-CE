@@ -119,7 +119,7 @@ public class UserDashboardHandler {
         ctx.html(UserPage.renderDashboardPage(
                 csrfToken, sysConfig.getSiteName(),
                 user.getDisplayName(), user.getUsername(), user.getEmail(),
-                user.isEmailVerified(), user.getCreatedAt(),
+                user.isEmailVerified(), user.getCreatedAt(), user.getPermGroup(),
                 sysConfig.getApiDomain(), profiles.size(), skinCount, capeCount, publicCount, friendCount));
     }
 

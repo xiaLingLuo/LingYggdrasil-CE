@@ -531,6 +531,9 @@
       "editEmailTitle": "E-Mail ändern",
       "newEmail": "Neue E-Mail",
       "newEmailPlaceholder": "Bitte neue E-Mail eingeben",
+      "editNicknameTitle": "Spitznamen ändern",
+      "newNickname": "Neuer Spitzname",
+      "newNicknamePlaceholder": "Neuen Spitznamen eingeben",
       "confirmEdit": "Änderung bestätigen",
       "permGroups": "Verwaltung der Benutzerberechtigungsgruppen",
       "userCount": "{0} Benutzer",
@@ -555,6 +558,7 @@
       "deleteConfirm": "Möchten Sie den Benutzer \"{0}\" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.",
       "enterUsername": "Bitte Benutzernamen eingeben",
       "enterEmail": "Bitte E-Mail eingeben",
+      "enterNickname": "Bitte Spitznamen eingeben",
       "createFillAll": "Benutzername, E-Mail und Passwort dürfen nicht leer sein",
       "ban": "Sperren",
       "toggleVerifyTitle": "Klicken, um den E-Mail-Verifizierungsstatus umzuschalten"

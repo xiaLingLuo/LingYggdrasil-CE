@@ -531,6 +531,9 @@
       "editEmailTitle": "修改邮箱",
       "newEmail": "新邮箱",
       "newEmailPlaceholder": "请输入新邮箱",
+      "editNicknameTitle": "修改昵称",
+      "newNickname": "新昵称",
+      "newNicknamePlaceholder": "输入新昵称",
       "confirmEdit": "确认修改",
       "permGroups": "用户权限组管理",
       "userCount": "{0} 个用户",
@@ -555,6 +558,7 @@
       "deleteConfirm": "确定要删除用户 \"{0}\" 吗？此操作不可撤销。",
       "enterUsername": "请输入用户名",
       "enterEmail": "请输入邮箱",
+      "enterNickname": "请输入昵称",
       "createFillAll": "用户名、邮箱和密码不能为空",
       "ban": "封禁",
       "toggleVerifyTitle": "点击切换邮箱验证状态"

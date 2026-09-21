@@ -163,7 +163,8 @@
       "skinCount": "スキン数",
       "capeCount": "マント数",
       "publicCount": "公開テクスチャ数",
-      "friendCount": "フレンド数"
+      "friendCount": "フレンド数",
+      "registeredAt": "登録日時"
     },
     "guide": {
       "apiMissing": "管理者が API の外部ドメインを設定していません。管理者にお問い合わせください",

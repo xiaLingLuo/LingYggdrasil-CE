@@ -531,6 +531,9 @@
       "editEmailTitle": "修改電子郵件",
       "newEmail": "新電子郵件",
       "newEmailPlaceholder": "請輸入新電子郵件",
+      "editNicknameTitle": "修改暱稱",
+      "newNickname": "新暱稱",
+      "newNicknamePlaceholder": "輸入新暱稱",
       "confirmEdit": "確認修改",
       "permGroups": "使用者權限群組管理",
       "userCount": "{0} 個使用者",
@@ -555,6 +558,7 @@
       "deleteConfirm": "確定要刪除使用者 \"{0}\" 嗎？此操作不可撤銷。",
       "enterUsername": "請輸入使用者名稱",
       "enterEmail": "請輸入電子郵件",
+      "enterNickname": "請輸入暱稱",
       "createFillAll": "使用者名稱、電子郵件和密碼不能為空",
       "ban": "封鎖",
       "toggleVerifyTitle": "點擊切換電子郵件驗證狀態"

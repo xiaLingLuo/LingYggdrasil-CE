@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.2.2-blueviolet?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/version-2.2.6-blueviolet?style=flat-square" alt="Version" />
   <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square" alt="Java" />
   <a href="https://www.gnu.org/licenses/agpl-3.0">
     <img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg?style=flat-square" alt="License: AGPL-3.0" />
@@ -52,10 +52,10 @@ How many steps does it take to put an elephant into a fridge? Getting LingYggdra
 # 1. Confirm the Java version
 java --version
 
-# 2. Download LingYggdrasil-2.2.2.jar and put it in a standalone empty directory
+# 2. Download LingYggdrasil-2.2.6.jar and put it in a standalone empty directory
 
 # 3. Launch (this directory becomes the data directory)
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.2.2.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.2.6.jar
 ```
 
 On first launch it automatically enters the **installation wizard** (`http://<server-address>:35598`). Just follow the prompts to set up the administrator account, database, and mail configuration. After installation, the program provides three services at the same time:
@@ -88,7 +88,7 @@ See the **[Getting Started guide](docs/01-overview/getting-started.md)** for the
 - **Admin plugin management** — a top-level "Plugin Management" menu whose overview shows icon, name, version, authors, description, and running state, with manual start/stop.
 - **Plugin secondary menus** — a plugin may register at most one secondary menu in the admin panel to host its own controls.
 - **Dynamic permission nodes** — built-in and plugin nodes are registered dynamically by source (`LingYggdrasil` / each plugin), and the permission group page groups them by source.
-- **Plugin development API** — the build also produces `LingYggdrasil-plugin-api-2.2.2.jar`, self-contained, for plugin developers to compile against.
+- **Plugin development API** — the build also produces `LingYggdrasil-plugin-api-2.2.6.jar`, self-contained, for plugin developers to compile against.
 
 > Plugins are **fully trusted code**. Do not load plugins from untrusted sources; you bear the consequences of loading third-party plugins. See [Plugin System](docs/05-plugins/management.md).
 

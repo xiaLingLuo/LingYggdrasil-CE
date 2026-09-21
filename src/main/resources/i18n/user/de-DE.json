@@ -163,7 +163,8 @@
       "skinCount": "Anzahl Skins",
       "capeCount": "Anzahl Umhänge",
       "publicCount": "Anzahl öffentlicher Materialien",
-      "friendCount": "Anzahl Freunde"
+      "friendCount": "Anzahl Freunde",
+      "registeredAt": "Registriert am"
     },
     "guide": {
       "apiMissing": "Der Administrator hat die externe API-Domain noch nicht konfiguriert, bitte an den Administrator wenden",

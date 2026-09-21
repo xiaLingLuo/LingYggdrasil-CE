@@ -125,7 +125,7 @@ After=network.target
 Type=simple
 User=lingyggdrasil
 WorkingDirectory=/opt/lingyggdrasil
-ExecStart=/usr/bin/java -Xms512M -Xmx2G -jar /opt/lingyggdrasil/LingYggdrasil-2.2.2.jar
+ExecStart=/usr/bin/java -Xms512M -Xmx2G -jar /opt/lingyggdrasil/LingYggdrasil-2.2.6.jar
 Restart=on-failure
 RestartSec=5
 
@@ -171,7 +171,7 @@ tar czf lingyggdrasil-backup-$(date +%F).tar.gz \
 
 ```bash
 sudo systemctl stop lingyggdrasil
-cp LingYggdrasil-2.2.2.jar /opt/lingyggdrasil/
+cp LingYggdrasil-2.2.6.jar /opt/lingyggdrasil/
 sudo systemctl start lingyggdrasil
 ```
 

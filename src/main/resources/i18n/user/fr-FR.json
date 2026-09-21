@@ -163,7 +163,8 @@
       "skinCount": "Nombre de skins",
       "capeCount": "Nombre de capes",
       "publicCount": "Nombre de textures publiques",
-      "friendCount": "Nombre d'amis"
+      "friendCount": "Nombre d'amis",
+      "registeredAt": "Date d'inscription"
     },
     "guide": {
       "apiMissing": "L'administrateur n'a pas encore configuré le nom de domaine externe de l'API, veuillez contacter l'administrateur",

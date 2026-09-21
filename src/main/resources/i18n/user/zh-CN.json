@@ -163,7 +163,8 @@
       "skinCount": "皮肤数",
       "capeCount": "披风数",
       "publicCount": "公开材质数",
-      "friendCount": "好友数"
+      "friendCount": "好友数",
+      "registeredAt": "注册时间"
     },
     "guide": {
       "apiMissing": "管理员尚未配置 API 外网域名，请联系管理员",

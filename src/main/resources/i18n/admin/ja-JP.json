@@ -531,6 +531,9 @@
       "editEmailTitle": "メールアドレスを変更",
       "newEmail": "新しいメールアドレス",
       "newEmailPlaceholder": "新しいメールアドレスを入力してください",
+      "editNicknameTitle": "ニックネームを変更",
+      "newNickname": "新しいニックネーム",
+      "newNicknamePlaceholder": "新しいニックネームを入力",
       "confirmEdit": "変更を確認",
       "permGroups": "ユーザー権限グループ管理",
       "userCount": "{0} 人のユーザー",
@@ -555,6 +558,7 @@
       "deleteConfirm": "ユーザー \"{0}\" を削除してもよろしいですか？この操作は元に戻せません。",
       "enterUsername": "ユーザー名を入力してください",
       "enterEmail": "メールアドレスを入力してください",
+      "enterNickname": "ニックネームを入力してください",
       "createFillAll": "ユーザー名、メールアドレス、パスワードは必須です",
       "ban": "停止",
       "toggleVerifyTitle": "クリックしてメール認証状態を切り替え"

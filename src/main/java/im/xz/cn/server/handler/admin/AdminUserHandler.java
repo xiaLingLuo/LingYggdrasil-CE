@@ -105,10 +105,6 @@ public class AdminUserHandler {
     @SuppressWarnings("unchecked")
     public void deleteUser(Context ctx) {
         if (!im.xz.cn.security.AdminPermissions.require(ctx, "admin.users.delete")) return;
-        if (!isRoot(ctx)) {
-            ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.rootOnly")));
-            return;
-        }
         Map<String, String> body = ctx.bodyAsClass(Map.class);
         String id = body.get("id");
         if (id == null) {
@@ -129,10 +125,6 @@ public class AdminUserHandler {
     @SuppressWarnings("unchecked")
     public void setEmailVerified(Context ctx) {
         if (!im.xz.cn.security.AdminPermissions.require(ctx, "admin.users.verify")) return;
-        if (!isRoot(ctx)) {
-            ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.rootOnly")));
-            return;
-        }
         Map<String, String> body = ctx.bodyAsClass(Map.class);
         String id = body.get("id");
         String verifiedRaw = body.get("verified");
@@ -154,10 +146,6 @@ public class AdminUserHandler {
     @SuppressWarnings("unchecked")
     public void updateUsername(Context ctx) {
         if (!im.xz.cn.security.AdminPermissions.require(ctx, "admin.users.edit")) return;
-        if (!isRoot(ctx)) {
-            ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.rootOnly")));
-            return;
-        }
         Map<String, String> body = ctx.bodyAsClass(Map.class);
         String id = body.get("id");
         String username = body.get("username");
@@ -188,12 +176,32 @@ public class AdminUserHandler {
     }
 
     @SuppressWarnings("unchecked")
-    public void createUser(Context ctx) {
-        if (!im.xz.cn.security.AdminPermissions.require(ctx, "admin.users.create")) return;
-        if (!isRoot(ctx)) {
-            ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.rootOnly")));
+    public void updateNickname(Context ctx) {
+        if (!im.xz.cn.security.AdminPermissions.require(ctx, "admin.users.edit")) return;
+        Map<String, String> body = ctx.bodyAsClass(Map.class);
+        String id = body.get("id");
+        String nickname = body.get("nickname");
+        if (id == null || nickname == null || nickname.isBlank()) {
+            ctx.status(400).json(Map.of("success", false, "message", I18n.t("msg.nicknameEmpty")));
             return;
         }
+        if (nickname.length() > 32) {
+            ctx.status(400).json(Map.of("success", false, "message", I18n.t("msg.nicknameTooLong")));
+            return;
+        }
+        User user = userDao.findById(id);
+        if (user == null) {
+            ctx.status(404).json(Map.of("success", false, "message", I18n.t("msg.userNotFound")));
+            return;
+        }
+        userDao.updateNickname(id, nickname);
+        AuditLogger.logSensitiveOperation(getAdminName(ctx), "UPDATE_NICKNAME:" + id, IpUtil.getClientIp(ctx));
+        ctx.json(Map.of("success", true, "message", I18n.t("msg.nicknameUpdated")));
+    }
+
+    @SuppressWarnings("unchecked")
+    public void createUser(Context ctx) {
+        if (!im.xz.cn.security.AdminPermissions.require(ctx, "admin.users.create")) return;
         Map<String, String> body = ctx.bodyAsClass(Map.class);
         String username = body.get("username");
         String email = body.get("email");
@@ -260,10 +268,6 @@ public class AdminUserHandler {
     @SuppressWarnings("unchecked")
     public void updateEmail(Context ctx) {
         if (!im.xz.cn.security.AdminPermissions.require(ctx, "admin.users.edit")) return;
-        if (!isRoot(ctx)) {
-            ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.rootOnly")));
-            return;
-        }
         Map<String, String> body = ctx.bodyAsClass(Map.class);
         String id = body.get("id");
         String email = body.get("email");
@@ -294,9 +298,5 @@ public class AdminUserHandler {
         if (adminId == null) return "unknown";
         Admin admin = adminDao.findById(adminId);
         return admin != null ? admin.getUsername() : "unknown";
-    }
-
-    private boolean isRoot(Context ctx) {
-        return SessionManager.isAdminRoot(ctx);
     }
 }

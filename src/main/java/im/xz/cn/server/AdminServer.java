@@ -266,6 +266,7 @@ public class AdminServer {
             config.routes.get("/admin/api/users", userHandler::getUsers);
             config.routes.post("/admin/api/users/delete", userHandler::deleteUser);
             config.routes.post("/admin/api/users/username", userHandler::updateUsername);
+            config.routes.post("/admin/api/users/nickname", userHandler::updateNickname);
             config.routes.post("/admin/api/users/verify-email", userHandler::setEmailVerified);
             config.routes.post("/admin/api/users/email", userHandler::updateEmail);
             config.routes.post("/admin/api/users/create", userHandler::createUser);

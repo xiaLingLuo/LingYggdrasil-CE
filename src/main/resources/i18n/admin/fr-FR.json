@@ -531,6 +531,9 @@
       "editEmailTitle": "Modifier l'e-mail",
       "newEmail": "Nouvel e-mail",
       "newEmailPlaceholder": "Saisissez le nouvel e-mail",
+      "editNicknameTitle": "Modifier le pseudo",
+      "newNickname": "Nouveau pseudo",
+      "newNicknamePlaceholder": "Saisissez le nouveau pseudo",
       "confirmEdit": "Confirmer la modification",
       "permGroups": "Gestion des groupes de permissions utilisateurs",
       "userCount": "{0} utilisateurs",
@@ -555,6 +558,7 @@
       "deleteConfirm": "Voulez-vous vraiment supprimer l'utilisateur \"{0}\" ? Cette action est irréversible.",
       "enterUsername": "Veuillez saisir le nom d'utilisateur",
       "enterEmail": "Veuillez saisir l'e-mail",
+      "enterNickname": "Veuillez saisir un pseudo",
       "createFillAll": "Le nom d'utilisateur, l'e-mail et le mot de passe ne peuvent pas être vides",
       "ban": "Bannir",
       "toggleVerifyTitle": "Cliquez pour basculer l'état de vérification de l'e-mail"

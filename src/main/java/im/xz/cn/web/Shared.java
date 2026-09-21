@@ -24,14 +24,29 @@ import im.xz.cn.i18n.I18n;
 public class Shared {
 
     public static String buildUserSidebar(String currentPage) {
-        String dashActive = "dashboard".equals(currentPage) ? "active" : "";
-        String profActive = "profiles".equals(currentPage) ? "active" : "";
-        String skinActive = "skins".equals(currentPage) ? "active" : "";
-        String capeActive = "capes".equals(currentPage) ? "active" : "";
-        String sharedActive = "shared".equals(currentPage) ? "active" : "";
-        String friendsActive = "friends".equals(currentPage) ? "active" : "";
-        String setActive = "settings".equals(currentPage) ? "active" : "";
-        String logsActive = "logs".equals(currentPage) ? "active" : "";
+        StringBuilder items = new StringBuilder();
+        items.append(userSidebarItem("/dashboard", "dashboard", "fa-gauge-high", I18n.t("sidebar.dashboard"), currentPage));
+        if (im.xz.cn.security.UserPermissions.has("user.profiles")) {
+            items.append(userSidebarItem("/profiles", "profiles", "fa-users", I18n.t("sidebar.profiles"), currentPage));
+        }
+        if (im.xz.cn.security.UserPermissions.has("user.skins")) {
+            items.append(userSidebarItem("/skins", "skins", "fa-shirt", I18n.t("sidebar.skins"), currentPage));
+        }
+        if (im.xz.cn.security.UserPermissions.has("user.capes")) {
+            items.append(userSidebarItem("/capes", "capes", "fa-vest-patches", I18n.t("sidebar.capes"), currentPage));
+        }
+        if (im.xz.cn.security.UserPermissions.has("user.world")) {
+            items.append(userSidebarItem("/shared", "shared", "fa-share-nodes", I18n.t("sidebar.shared"), currentPage));
+        }
+        if (im.xz.cn.security.UserPermissions.has("user.friends")) {
+            items.append(userSidebarItem("/friends", "friends", "fa-user-group", I18n.t("sidebar.friends"), currentPage));
+        }
+        if (im.xz.cn.security.UserPermissions.has("user.settings")) {
+            items.append(userSidebarItem("/settings", "settings", "fa-gear", I18n.t("sidebar.settings"), currentPage));
+            items.append(userSidebarItem("/logs", "logs", "fa-clipboard-list", I18n.t("sidebar.logs"), currentPage));
+        }
+        items.append("<a href=\"/logout\" class=\"sidebar-item\"><span><i class=\"fas fa-right-from-bracket\"></i> ")
+                .append(I18n.t("sidebar.logout")).append("</span></a>");
         return """
             <aside class="sidebar">
                 <div class="sidebar-header">
@@ -39,28 +54,16 @@ public class Shared {
                     <span>%s</span>
                 </div>
                 <div class="sidebar-menu">
-                    <a href="/dashboard" class="sidebar-item %s"><span><i class="fas fa-gauge-high"></i> %s</span></a>
-                    <a href="/profiles" class="sidebar-item %s"><span><i class="fas fa-users"></i> %s</span></a>
-                    <a href="/skins" class="sidebar-item %s"><span><i class="fas fa-shirt"></i> %s</span></a>
-                    <a href="/capes" class="sidebar-item %s"><span><i class="fas fa-vest-patches"></i> %s</span></a>
-                    <a href="/shared" class="sidebar-item %s"><span><i class="fas fa-share-nodes"></i> %s</span></a>
-                    <a href="/friends" class="sidebar-item %s"><span><i class="fas fa-user-group"></i> %s</span></a>
-                    <a href="/settings" class="sidebar-item %s"><span><i class="fas fa-gear"></i> %s</span></a>
-                    <a href="/logs" class="sidebar-item %s"><span><i class="fas fa-clipboard-list"></i> %s</span></a>
-                    <a href="/logout" class="sidebar-item"><span><i class="fas fa-right-from-bracket"></i> %s</span></a>
+                    %s
                 </div>
             </aside>
-            """.formatted(
-                I18n.t("sidebar.userMenu"),
-                dashActive, I18n.t("sidebar.dashboard"),
-                profActive, I18n.t("sidebar.profiles"),
-                skinActive, I18n.t("sidebar.skins"),
-                capeActive, I18n.t("sidebar.capes"),
-                sharedActive, I18n.t("sidebar.shared"),
-                friendsActive, I18n.t("sidebar.friends"),
-                setActive, I18n.t("sidebar.settings"),
-                logsActive, I18n.t("sidebar.logs"),
-                I18n.t("sidebar.logout"));
+            """.formatted(I18n.t("sidebar.userMenu"), items.toString());
+    }
+
+    private static String userSidebarItem(String href, String page, String icon, String label, String currentPage) {
+        String active = page.equals(currentPage) ? "active" : "";
+        return "<a href=\"" + href + "\" class=\"sidebar-item " + active
+                + "\"><span><i class=\"fas " + icon + "\"></i> " + label + "</span></a>\n";
     }
 
     public static String buildUserLayout(String siteName, String currentPage, String content, String jsName) {

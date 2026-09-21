@@ -47,9 +47,8 @@ public class AdminAdminHandler {
     public void adminsPage(Context ctx) {
         String adminUsername = ctx.sessionAttribute("adminUsername");
         String adminRole = AdminLayoutHelper.roleLabel(ctx);
-        boolean isRoot = SessionManager.isAdminRoot(ctx);
         String csrfToken = SessionManager.getOrCreateCsrfToken(ctx);
-        ctx.html(AdminPage.renderAdminsPage(adminUsername, adminRole, isRoot, csrfToken));
+        ctx.html(AdminPage.renderAdminsPage(adminUsername, adminRole, csrfToken));
     }
 
     public void getAdmins(Context ctx) {

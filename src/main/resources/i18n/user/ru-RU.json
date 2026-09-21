@@ -163,7 +163,8 @@
       "skinCount": "Скинов",
       "capeCount": "Плащей",
       "publicCount": "Публичных материалов",
-      "friendCount": "Друзей"
+      "friendCount": "Друзей",
+      "registeredAt": "Дата регистрации"
     },
     "guide": {
       "apiMissing": "Администратор ещё не настроил внешний домен API, обратитесь к администратору",

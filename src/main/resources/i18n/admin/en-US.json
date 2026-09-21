@@ -531,6 +531,9 @@
       "editEmailTitle": "Change Email",
       "newEmail": "New email",
       "newEmailPlaceholder": "Enter new email",
+      "editNicknameTitle": "Change Nickname",
+      "newNickname": "New nickname",
+      "newNicknamePlaceholder": "Enter new nickname",
       "confirmEdit": "Confirm changes",
       "permGroups": "User Permission Group Management",
       "userCount": "{0} users",
@@ -555,6 +558,7 @@
       "deleteConfirm": "Are you sure you want to delete user \"{0}\"? This action cannot be undone.",
       "enterUsername": "Please enter a username",
       "enterEmail": "Please enter an email",
+      "enterNickname": "Please enter a nickname",
       "createFillAll": "Username, email, and password cannot be empty",
       "ban": "Ban",
       "toggleVerifyTitle": "Click to toggle email verification status"

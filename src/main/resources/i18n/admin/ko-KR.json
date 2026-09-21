@@ -531,6 +531,9 @@
       "editEmailTitle": "이메일 변경",
       "newEmail": "새 이메일",
       "newEmailPlaceholder": "새 이메일을 입력하세요",
+      "editNicknameTitle": "닉네임 변경",
+      "newNickname": "새 닉네임",
+      "newNicknamePlaceholder": "새 닉네임 입력",
       "confirmEdit": "수정 확인",
       "permGroups": "사용자 권한 그룹 관리",
       "userCount": "사용자 {0}명",
@@ -555,6 +558,7 @@
       "deleteConfirm": "사용자 \"{0}\"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
       "enterUsername": "사용자 이름을 입력하세요",
       "enterEmail": "이메일을 입력하세요",
+      "enterNickname": "닉네임을 입력해 주세요",
       "createFillAll": "사용자 이름, 이메일 및 비밀번호는 비워 둘 수 없습니다",
       "ban": "정지",
       "toggleVerifyTitle": "클릭하여 이메일 인증 상태 전환"

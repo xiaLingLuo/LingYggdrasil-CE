@@ -56,7 +56,7 @@ function renderPermGroups(groups) {
         list.innerHTML = '<p class="text-muted">' + t('admin.admins.noPerms') + '</p>';
         return;
     }
-    var editable = permGroupsCan('groups.edit');
+    var editable = permGroupsCan('admin.groups.edit');
     var html = '';
     groups.forEach(function (g) {
         var isAll = (g.permissions || '').trim() === '*';

@@ -163,7 +163,8 @@
       "skinCount": "Skins",
       "capeCount": "Capes",
       "publicCount": "Public Textures",
-      "friendCount": "Friends"
+      "friendCount": "Friends",
+      "registeredAt": "Registered"
     },
     "guide": {
       "apiMissing": "The administrator has not configured the API public domain. Please contact the administrator.",

@@ -71,7 +71,9 @@ function renderUsers(users) {
             <td>${esc(u.email)}
                 <button class="pencil-btn act-email" title="${t('admin.users.editEmailTitle')}" data-id="${esc(u.id)}" data-email="${esc(u.email)}"><i class="fas fa-pencil"></i></button>
             </td>
-            <td>${esc(u.nickname || '-')}</td>
+            <td>${esc(u.nickname || '-')}
+                <button class="pencil-btn act-nickname" title="${t('admin.users.editNicknameTitle')}" data-id="${esc(u.id)}" data-nickname="${esc(u.nickname || '')}"><i class="fas fa-pencil"></i></button>
+            </td>
             <td><span class="role-badge role-badge-default">${esc(groupLabel(u.permGroup))}</span>
                 ${can('admin.users.edit') ? `<button class="pencil-btn act-group" title="${t('admin.admins.permGroup')}" data-id="${esc(u.id)}" data-group="${esc(u.permGroup || 'default')}"><i class="fas fa-pencil"></i></button>` : ''}
             </td>
@@ -140,6 +142,12 @@ function openEmailModal(id, currentEmail) {
     document.getElementById('emailModal').style.display = 'flex';
 }
 
+function openNicknameModal(id, currentNickname) {
+    document.getElementById('editNicknameUserId').value = id;
+    document.getElementById('newNickname').value = currentNickname || '';
+    document.getElementById('nicknameModal').style.display = 'flex';
+}
+
 function closeModal(id) {
     document.getElementById(id).style.display = 'none';
 }
@@ -191,6 +199,17 @@ async function submitEmail() {
     }
 }
 
+async function submitNickname() {
+    const id = document.getElementById('editNicknameUserId').value;
+    const nickname = document.getElementById('newNickname').value.trim();
+    if (!nickname) { showToast(t('admin.users.enterNickname'), 'error'); return; }
+    const result = await apiPost('/admin/api/users/nickname', { id, nickname });
+    if (result && result.success) {
+        closeModal('nicknameModal');
+        reloadUsers();
+    }
+}
+
 async function reloadUsers() {
     try {
         const res = await fetch('/admin/api/users');
@@ -227,6 +246,7 @@ async function apiPost(url, body) {
             else if (btn.classList.contains('act-delete')) deleteUser(btn.dataset.id, btn.dataset.name);
             else if (btn.classList.contains('act-username')) openUsernameModal(btn.dataset.id, btn.dataset.name);
             else if (btn.classList.contains('act-email')) openEmailModal(btn.dataset.id, btn.dataset.email);
+            else if (btn.classList.contains('act-nickname')) openNicknameModal(btn.dataset.id, btn.dataset.nickname);
             else if (btn.classList.contains('act-verify')) toggleEmailVerified(btn.dataset.id, btn.dataset.verified === 'true');
         });
     }

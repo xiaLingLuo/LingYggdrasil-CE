@@ -25,21 +25,12 @@ import im.xz.cn.web.Shared;
 
 public class UserPage {
 
-    public static String welcomeSection(String displayName, String username, String email, boolean emailVerified, String createdAt) {
-        String emailBadge = emailVerified
-                ? "<span class='badge badge-success'>" + I18n.t("user.dashboard.verified") + "</span>"
-                : "<span class='badge badge-warning'>" + I18n.t("user.dashboard.unverified") + "</span>";
-        String date = createdAt != null ? createdAt.substring(0, Math.min(10, createdAt.length())) : "-";
+    public static String welcomeSection(String displayName) {
         return """
             <div class="welcome-section">
                 <h2>%s <i class="fas fa-wand-magic-sparkles"></i></h2>
-                <p class="text-muted">%s</p>
-                <p class="text-muted">%s</p>
             </div>
-            """.formatted(
-                I18n.t("user.dashboard.welcome", esc(displayName)),
-                I18n.t("user.dashboard.account", esc(username), esc(email), emailBadge),
-                I18n.t("user.dashboard.registeredAt", date));
+            """.formatted(I18n.t("user.dashboard.welcome", esc(displayName)));
     }
 
     public static String pageHeader(String title, String desc) {
@@ -98,13 +89,27 @@ public class UserPage {
             """, displayUrl));
     }
 
-    public static String accountInfoContent(String username, String email, int profileCount,
-                                            int skinCount, int capeCount, int publicCount, int friendCount) {
+    public static String accountInfoContent(String username, String permGroup, String email,
+                                            boolean emailVerified, String createdAt,
+                                            int profileCount, int skinCount, int capeCount,
+                                            int publicCount, int friendCount) {
+        String emailBadge = emailVerified
+                ? "<span class='badge badge-success'>" + I18n.t("user.dashboard.verified") + "</span>"
+                : "<span class='badge badge-warning'>" + I18n.t("user.dashboard.unverified") + "</span>";
+        String groupName = (permGroup != null && !permGroup.isBlank()) ? permGroup : "default";
+        String groupAlias = I18n.tOrNull("permGroup." + groupName);
+        if (groupAlias == null || groupAlias.isBlank()) groupAlias = groupName;
+        String groupBadge = "<span class='badge badge-info'>" + esc(groupAlias) + "</span>";
+        String date = createdAt != null ? createdAt.substring(0, Math.min(10, createdAt.length())) : "-";
         return """
             <div class="account-info">
                 <div class="account-field">
                     <div class="account-field-label">%s</div>
-                    <div class="account-field-value">%s</div>
+                    <div class="account-field-value">%s %s</div>
+                </div>
+                <div class="account-field">
+                    <div class="account-field-label">%s</div>
+                    <div class="account-field-value">%s %s</div>
                 </div>
                 <div class="account-field">
                     <div class="account-field-label">%s</div>
@@ -119,8 +124,9 @@ public class UserPage {
                 %s
             </div>
             """.formatted(
-                I18n.t("user.account.username"), esc(username),
-                I18n.t("user.account.email"), esc(email),
+                I18n.t("user.account.username"), esc(username), groupBadge,
+                I18n.t("user.account.email"), esc(email), emailBadge,
+                I18n.t("user.account.registeredAt"), date,
                 statTile(profileCount, "user.account.profileCount"),
                 statTile(skinCount, "user.account.skinCount"),
                 statTile(capeCount, "user.account.capeCount"),
@@ -264,14 +270,15 @@ public class UserPage {
 
     public static String renderDashboardPage(String csrfToken, String siteName,
                                               String displayName, String username, String email,
-                                              boolean emailVerified, String createdAt,
+                                              boolean emailVerified, String createdAt, String permGroup,
                                               String apiDomain, int profileCount,
                                               int skinCount, int capeCount, int publicCount, int friendCount) {
-        String welcome = welcomeSection(displayName, username, email, emailVerified, createdAt);
+        String welcome = welcomeSection(displayName);
         String guide = yggdrasilGuide(apiDomain);
         String guideSection = PageRenderer.renderCard(I18n.t("user.dashboard.guideTitle"), guide);
         String accountSection = PageRenderer.renderCard(I18n.t("user.dashboard.accountTitle"),
-                accountInfoContent(username, email, profileCount, skinCount, capeCount, publicCount, friendCount));
+                accountInfoContent(username, permGroup, email, emailVerified, createdAt,
+                        profileCount, skinCount, capeCount, publicCount, friendCount));
         String widgets = "<div class='card-grid dashboard-grid' data-sortable='user-dashboard'>"
                 + "<div class='sortable-item' data-widget='guide'>" + guideSection + "</div>"
                 + "<div class='sortable-item' data-widget='account'>" + accountSection + "</div>"

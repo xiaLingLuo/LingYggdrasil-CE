@@ -531,6 +531,9 @@
       "editEmailTitle": "修其郵",
       "newEmail": "新郵",
       "newEmailPlaceholder": "請輸新郵",
+      "editNicknameTitle": "修其名",
+      "newNickname": "新名",
+      "newNicknamePlaceholder": "輸新名",
       "confirmEdit": "准其修",
       "permGroups": "人之權組之治",
       "userCount": "{0} 人",
@@ -555,6 +558,7 @@
       "deleteConfirm": "必欲刪人 \"{0}\" 乎？此舉不可復也。",
       "enterUsername": "請輸人名",
       "enterEmail": "請輸郵",
+      "enterNickname": "請輸名",
       "createFillAll": "人名、郵與密碼不可空也",
       "ban": "封",
       "toggleVerifyTitle": "點以易郵驗之態"

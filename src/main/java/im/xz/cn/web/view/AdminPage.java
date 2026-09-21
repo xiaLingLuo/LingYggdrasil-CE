@@ -644,6 +644,27 @@ public class AdminPage {
                 </div>
             </div>
 
+            <div id="nicknameModal" class="modal" style="display:none;">
+                <div class="modal-overlay" data-action="closeModal" data-args='["nicknameModal"]'></div>
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3>%s</h3>
+                        <button class="modal-close" data-action="closeModal" data-args='["nicknameModal"]'>&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" id="editNicknameUserId">
+                        <div class="form-group">
+                            <label class="form-label">%s</label>
+                            <input type="text" id="newNickname" class="form-input" placeholder="%s" maxlength="32">
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" data-action="closeModal" data-args='["nicknameModal"]'>%s</button>
+                        <button class="btn btn-primary" data-action="submitNickname">%s</button>
+                    </div>
+                </div>
+            </div>
+
             <div id="userGroupModal" class="modal" style="display:none;">
                 <div class="modal-overlay" data-action="closeModal" data-args='["userGroupModal"]'></div>
                 <div class="modal-card">
@@ -711,13 +732,18 @@ public class AdminPage {
                 I18n.t("admin.users.newEmail"),
                 I18n.t("admin.users.newEmailPlaceholder"),
                 I18n.t("admin.common.cancel"),
+                I18n.t("admin.common.confirmEdit"),
+                I18n.t("admin.users.editNicknameTitle"),
+                I18n.t("admin.users.newNickname"),
+                I18n.t("admin.users.newNicknamePlaceholder"),
+                I18n.t("admin.common.cancel"),
                 I18n.t("admin.common.confirmEdit")));
         String body = renderAdminLayout("users", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
         return PageRenderer.renderAdminPage(I18n.t("admin.users.title"), body, "admin", css);
     }
 
-    public static String renderAdminsPage(String adminUsername, String adminRole, boolean isRoot, String csrfToken) {
+    public static String renderAdminsPage(String adminUsername, String adminRole, String csrfToken) {
         String createBtn = im.xz.cn.security.AdminPermissions.has("admin.admins.create")
                 ? "<button class=\"btn btn-primary\" data-action=\"openCreateModal\">" + I18n.t("admin.admins.createBtn") + "</button>"
                 : "";
@@ -845,10 +871,9 @@ public class AdminPage {
             </div>
 
             <div id="toast" class="toast" style="display:none;"></div>
-            <script>window.IS_ROOT = %s;</script>
             <script src="/js/admin-perm-groups.js"></script>
             <script src="/js/admin-admins.js"></script>
-            """.formatted(createBtn, Boolean.toString(isRoot)));
+            """.formatted(createBtn));
         String body = renderAdminLayout("admins", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
         return PageRenderer.renderAdminPage(I18n.t("admin.admins.title"), body, "admin", css);

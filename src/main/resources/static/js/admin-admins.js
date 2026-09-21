@@ -15,7 +15,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-const IS_ROOT = window.IS_ROOT || false;
 const PERMS = window.__ADMIN_PERMS__ || [];
 let allAdmins = [];
 let allGroups = [];
@@ -82,7 +81,7 @@ function renderAdmins(admins) {
 }
 
 function openCreateModal() {
-    if (!can('admins.create')) return;
+    if (!can('admin.admins.create')) return;
     document.getElementById('createUsername').value = '';
     document.getElementById('createEmail').value = '';
     document.getElementById('createPassword').value = '';
@@ -92,7 +91,7 @@ function openCreateModal() {
 }
 
 function openEditModal(id, username, email, group) {
-    if (!can('admins.edit')) return;
+    if (!can('admin.admins.edit')) return;
     document.getElementById('editAdminId').value = id;
     document.getElementById('editUsername').value = username;
     document.getElementById('editEmail').value = email;
@@ -107,7 +106,7 @@ function closeModal(id) {
 }
 
 async function submitCreate() {
-    if (!can('admins.create')) { showToast(t('admin.admins.noPermission'), 'error'); return; }
+    if (!can('admin.admins.create')) { showToast(t('admin.admins.noPermission'), 'error'); return; }
 
     const username = document.getElementById('createUsername').value.trim();
     const email = document.getElementById('createEmail').value.trim();
@@ -127,7 +126,7 @@ async function submitCreate() {
 }
 
 async function submitEdit() {
-    if (!can('admins.edit')) { showToast(t('admin.admins.noPermission'), 'error'); return; }
+    if (!can('admin.admins.edit')) { showToast(t('admin.admins.noPermission'), 'error'); return; }
 
     const id = document.getElementById('editAdminId').value;
     const username = document.getElementById('editUsername').value.trim();
@@ -149,7 +148,7 @@ async function submitEdit() {
 }
 
 async function deleteAdmin(id, username) {
-    if (!can('admins.delete')) { showToast(t('admin.admins.noPermission'), 'error'); return; }
+    if (!can('admin.admins.delete')) { showToast(t('admin.admins.noPermission'), 'error'); return; }
     showConfirmDialog(t('admin.admins.deleteConfirm', username), async function() {
         const result = await apiPost('/admin/api/admins/delete', { id });
         if (result && result.success) {

@@ -163,7 +163,8 @@
       "skinCount": "Skin",
       "capeCount": "Mantelli",
       "publicCount": "Materiali pubblici",
-      "friendCount": "Amici"
+      "friendCount": "Amici",
+      "registeredAt": "Data di registrazione"
     },
     "guide": {
       "apiMissing": "L'amministratore non ha ancora configurato il dominio esterno dell'API, contatta l'amministratore",

@@ -531,6 +531,9 @@
       "editEmailTitle": "Изменить email",
       "newEmail": "Новый email",
       "newEmailPlaceholder": "Введите новый email",
+      "editNicknameTitle": "Изменить никнейм",
+      "newNickname": "Новый никнейм",
+      "newNicknamePlaceholder": "Введите новый никнейм",
       "confirmEdit": "Подтвердить изменения",
       "permGroups": "Управление группами прав пользователей",
       "userCount": "Пользователей: {0}",
@@ -555,6 +558,7 @@
       "deleteConfirm": "Удалить пользователя \"{0}\"? Это действие необратимо.",
       "enterUsername": "Введите имя пользователя",
       "enterEmail": "Введите email",
+      "enterNickname": "Введите никнейм",
       "createFillAll": "Имя пользователя, email и пароль не могут быть пустыми",
       "ban": "Заблокировать",
       "toggleVerifyTitle": "Нажмите, чтобы изменить статус подтверждения email"
