@@ -25,6 +25,7 @@ const ENCRYPTION_LEVELS = [
 ];
 
 let currentLevel = 1;
+var originalRootUsername = null;
 
 function renderLevelCards() {
     var container = document.getElementById('encryptionLevelList');
@@ -81,11 +82,45 @@ function selectLevel(level) {
     try {
         var res = await fetch('/admin/api/security/settings');
         if (res.status === 401) { window.location.href = '/admin/login'; return; }
+        if (!res.ok) throw new Error('settings request failed');
         var data = await res.json();
         currentLevel = data.encryptionLevel || 1;
         var hiddenInput = document.getElementById('encryptionLevel');
         if (hiddenInput) hiddenInput.value = currentLevel;
+        document.getElementById('pngValidationEnabled').checked = data.pngValidationEnabled !== false;
+        document.getElementById('pngMaxWidth').value = data.pngMaxWidth || 4096;
+        document.getElementById('pngMaxHeight').value = data.pngMaxHeight || 4096;
+        document.getElementById('pngMaxPixels').value = data.pngMaxPixels || 1048576;
+        document.getElementById('pngMaxChunkSizeKib').value = data.pngMaxChunkSizeKib || 1024;
+        document.getElementById('pngStrictChunkMode').checked = data.pngStrictChunkMode !== false;
+        document.getElementById('pngMaxConcurrent').value = data.pngMaxConcurrent || 4;
+        setValue('userSessionTimeoutSeconds', data.userSessionTimeoutSeconds);
+        setValue('adminSessionTimeoutSeconds', data.adminSessionTimeoutSeconds);
+        setValue('loginMaxAttemptsPerIp', data.loginMaxAttemptsPerIp);
+        setValue('loginMaxAttemptsPerAccount', data.loginMaxAttemptsPerAccount);
+        setValue('loginLockoutSeconds', data.loginLockoutSeconds);
+        setValue('loginRateWindowSeconds', data.loginRateWindowSeconds);
+        setValue('requestIntervals', data.requestIntervals);
+        setValue('requestRates', data.requestRates);
+        setValue('corsOrigins', data.corsOrigins);
+        setValue('headerCsp', data.headerCsp);
+        setValue('headerHsts', data.headerHsts);
+        setValue('headerContentTypeOptions', data.headerContentTypeOptions);
+        setValue('headerFrameOptions', data.headerFrameOptions);
+        setValue('headerXssProtection', data.headerXssProtection);
+        setValue('headerReferrerPolicy', data.headerReferrerPolicy);
+        setValue('headerPermissionsPolicy', data.headerPermissionsPolicy);
+        setValue('headerCacheControl', data.headerCacheControl);
         renderLevelCards();
+        var rootUsernameInput = document.getElementById('rootNewUsername');
+        if (rootUsernameInput) {
+            var rootRes = await fetch('/admin/api/security/root');
+            if (rootRes.status === 401) { window.location.href = '/admin/login'; return; }
+            if (!rootRes.ok) throw new Error('root settings request failed');
+            var rootData = await rootRes.json();
+            rootUsernameInput.value = rootData.username || '';
+            originalRootUsername = rootUsernameInput.value;
+        }
     } catch (err) {
         console.error('Failed to load settings:', err);
         showToast(t('admin.security.loadFailed'), 'error');
@@ -105,6 +140,183 @@ async function saveSettings() {
             showToast(data.message || t('admin.security.saveFailed'), 'error');
             return false;
         }
+        showToast(t('admin.security.saved'), 'success');
+        return true;
+    } catch (err) {
+        showToast(t('common.networkError'), 'error');
+        return false;
+    }
+}
+
+async function savePngSettings() {
+    var form = document.getElementById('pngUploadSettings');
+    var inputs = form.querySelectorAll('input[type="number"]');
+    for (var i = 0; i < inputs.length; i++) {
+        if (!inputs[i].reportValidity()) return false;
+    }
+
+    var settings = {
+        key: 'png_upload_settings',
+        pngValidationEnabled: document.getElementById('pngValidationEnabled').checked,
+        pngMaxWidth: parseInt(document.getElementById('pngMaxWidth').value, 10),
+        pngMaxHeight: parseInt(document.getElementById('pngMaxHeight').value, 10),
+        pngMaxPixels: parseInt(document.getElementById('pngMaxPixels').value, 10),
+        pngMaxChunkSizeKib: parseInt(document.getElementById('pngMaxChunkSizeKib').value, 10),
+        pngMaxConcurrent: parseInt(document.getElementById('pngMaxConcurrent').value, 10),
+        pngStrictChunkMode: document.getElementById('pngStrictChunkMode').checked
+    };
+
+    try {
+        var res = await fetch('/admin/api/security/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
+            body: JSON.stringify(settings)
+        });
+        var data = await res.json();
+        if (!data.success) {
+            showToast(data.message || t('admin.security.saveFailed'), 'error');
+            return false;
+        }
+        showToast(t('admin.security.saved'), 'success');
+        return true;
+    } catch (err) {
+        showToast(t('common.networkError'), 'error');
+        return false;
+    }
+}
+
+function setValue(id, value) {
+    var el = document.getElementById(id);
+    if (el) el.value = value === null || value === undefined ? '' : value;
+}
+
+function numValue(id) {
+    return parseInt(document.getElementById(id).value, 10);
+}
+
+function textValue(id) {
+    var el = document.getElementById(id);
+    return el ? el.value : '';
+}
+
+async function postSecuritySettings(payload) {
+    var res = await fetch('/admin/api/security/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
+        body: JSON.stringify(payload)
+    });
+    return res.json();
+}
+
+async function saveFrequencySettings() {
+    var form = document.getElementById('frequencySettings');
+    var inputs = form.querySelectorAll('input[type="number"]');
+    for (var i = 0; i < inputs.length; i++) {
+        if (!inputs[i].reportValidity()) return false;
+    }
+    var settings = {
+        key: 'frequency_settings',
+        userSessionTimeoutSeconds: numValue('userSessionTimeoutSeconds'),
+        adminSessionTimeoutSeconds: numValue('adminSessionTimeoutSeconds'),
+        loginMaxAttemptsPerIp: numValue('loginMaxAttemptsPerIp'),
+        loginMaxAttemptsPerAccount: numValue('loginMaxAttemptsPerAccount'),
+        loginLockoutSeconds: numValue('loginLockoutSeconds'),
+        loginRateWindowSeconds: numValue('loginRateWindowSeconds'),
+        requestIntervals: textValue('requestIntervals'),
+        requestRates: textValue('requestRates')
+    };
+    try {
+        var data = await postSecuritySettings(settings);
+        if (!data.success) {
+            showToast(data.message || t('admin.security.saveFailed'), 'error');
+            return false;
+        }
+        showToast(t('admin.security.saved'), 'success');
+        return true;
+    } catch (err) {
+        showToast(t('common.networkError'), 'error');
+        return false;
+    }
+}
+
+async function saveCorsSettings() {
+    var settings = {
+        key: 'cors_security_settings',
+        corsOrigins: textValue('corsOrigins'),
+        headerCsp: textValue('headerCsp'),
+        headerHsts: textValue('headerHsts'),
+        headerContentTypeOptions: textValue('headerContentTypeOptions'),
+        headerFrameOptions: textValue('headerFrameOptions'),
+        headerXssProtection: textValue('headerXssProtection'),
+        headerReferrerPolicy: textValue('headerReferrerPolicy'),
+        headerPermissionsPolicy: textValue('headerPermissionsPolicy'),
+        headerCacheControl: textValue('headerCacheControl')
+    };
+    try {
+        var data = await postSecuritySettings(settings);
+        if (!data.success) {
+            showToast(data.message || t('admin.security.saveFailed'), 'error');
+            return false;
+        }
+        showToast(t('admin.security.saved'), 'success');
+        return true;
+    } catch (err) {
+        showToast(t('common.networkError'), 'error');
+        return false;
+    }
+}
+
+function confirmCorsSettings(btn) {
+    showConfirmDialog(t('admin.security.corsConfirm'), function () {
+        var state = startBtnLoading(btn);
+        saveCorsSettings().then(function (ok) {
+            finishBtnLoading(state, ok !== false);
+        }, function () {
+            finishBtnLoading(state, false);
+        });
+    });
+}
+
+async function saveRootSettings() {
+    var usernameInput = document.getElementById('rootNewUsername');
+    var currentPasswordInput = document.getElementById('rootCurrentPassword');
+    if (!usernameInput.reportValidity() || !currentPasswordInput.reportValidity()) return false;
+    if (usernameInput.value !== originalRootUsername) {
+        if (usernameInput.value.length < 3 || usernameInput.value.length > 32) {
+            showToast(t('msg.usernameLength'), 'error');
+            return false;
+        }
+        if (!/^[A-Za-z0-9_]+$/.test(usernameInput.value)) {
+            showToast(t('msg.usernameCharset'), 'error');
+            return false;
+        }
+    }
+
+    var settings = {
+        newUsername: usernameInput.value,
+        currentPassword: currentPasswordInput.value,
+        newPassword: document.getElementById('rootNewPassword').value,
+        confirmPassword: document.getElementById('rootConfirmPassword').value
+    };
+    try {
+        var res = await fetch('/admin/api/security/root', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
+            body: JSON.stringify(settings)
+        });
+        if (res.status === 401) { window.location.href = '/admin/login'; return false; }
+        var data = await res.json();
+        if (!data.success) {
+            showToast(data.message || t('admin.security.saveFailed'), 'error');
+            return false;
+        }
+        usernameInput.value = data.username || settings.newUsername;
+        originalRootUsername = usernameInput.value;
+        var sidebarUsername = document.querySelector('.sidebar-username');
+        if (sidebarUsername) sidebarUsername.textContent = usernameInput.value;
+        currentPasswordInput.value = '';
+        document.getElementById('rootNewPassword').value = '';
+        document.getElementById('rootConfirmPassword').value = '';
         showToast(t('admin.security.saved'), 'success');
         return true;
     } catch (err) {

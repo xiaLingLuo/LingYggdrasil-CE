@@ -75,6 +75,13 @@ public class CacheDao {
                 key, value, type, now, expiresAt
             );
         }
+        if (affected == 0) {
+            affected = db.executeUpdate(
+                "UPDATE cache_store SET cache_value = ?, cache_type = ?, created_at = ?, expires_at = ? " +
+                "WHERE cache_key = ? AND expires_at <= ?",
+                value, type, now, expiresAt, key, now
+            );
+        }
         return affected > 0;
     }
 
@@ -116,12 +123,17 @@ public class CacheDao {
     }
 
     public int incrementAndGet(String key, String type, int ttlSeconds) {
+        return incrementAndGet(key, type, ttlSeconds, false);
+    }
+
+    public int incrementAndGet(String key, String type, int ttlSeconds, boolean refreshTtl) {
         String now = TimeUtil.now();
+        String expiresAt = TimeUtil.plusSeconds(ttlSeconds);
         String castType = "mysql".equalsIgnoreCase(db.getDbType()) ? "SIGNED" : "INTEGER";
-        int affected = db.executeUpdate("UPDATE cache_store SET cache_value = CAST(cache_value AS " + castType + ") + 1 WHERE cache_key = ? AND expires_at > ?", key, now);
+        int affected = incrementExisting(key, now, expiresAt, castType, refreshTtl);
         if (affected == 0) {
             if (putIfAbsent(key, "1", type, ttlSeconds)) return 1;
-            affected = db.executeUpdate("UPDATE cache_store SET cache_value = CAST(cache_value AS " + castType + ") + 1 WHERE cache_key = ? AND expires_at > ?", key, now);
+            incrementExisting(key, now, expiresAt, castType, refreshTtl);
         }
         String val = get(key);
         try {
@@ -129,5 +141,18 @@ public class CacheDao {
         } catch (NumberFormatException e) {
             return 1;
         }
+    }
+
+    private int incrementExisting(String key, String now, String expiresAt, String castType, boolean refreshTtl) {
+        if (refreshTtl) {
+            return db.executeUpdate(
+                    "UPDATE cache_store SET cache_value = CAST(cache_value AS " + castType + ") + 1, created_at = ?, expires_at = ? " +
+                    "WHERE cache_key = ? AND expires_at > ?",
+                    now, expiresAt, key, now);
+        }
+        return db.executeUpdate(
+                "UPDATE cache_store SET cache_value = CAST(cache_value AS " + castType + ") + 1 " +
+                "WHERE cache_key = ? AND expires_at > ?",
+                key, now);
     }
 }

@@ -78,11 +78,13 @@ public class AdminSkinHandler {
             """;
         var rows = db.executeQuery(sql);
         List<Map<String, Object>> result = new ArrayList<>();
+        List<String> hashes = rows.stream().map(row -> String.valueOf(row.get("hash"))).toList();
+        Map<String, String> aliases = metaDao.getAdminAliases(hashes);
         for (var row : rows) {
             Map<String, Object> map = new LinkedHashMap<>();
             String hash = String.valueOf(row.get("hash"));
             map.put("hash", hash);
-            String adminAlias = metaDao.getAdminAlias(hash);
+            String adminAlias = aliases.get(hash);
             map.put("adminAlias", adminAlias != null ? adminAlias : "");
             map.put("originalName", row.get("original_name"));
             map.put("size", row.get("size"));

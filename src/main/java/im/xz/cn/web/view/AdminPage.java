@@ -503,11 +503,113 @@ public class AdminPage {
                 + "</span><span class=\"startup-val\">" + esc(value) + "</span></div>";
     }
 
-    public static String renderSecurityPage(String adminUsername, String adminRole, String csrfToken) {
-        String content = tr("""
+    public static String renderSecurityPage(String adminUsername, String adminRole, String csrfToken, boolean isRoot) {
+        String rootManagementCard = isRoot ? tr("""
+            <div class="settings-card card">
+                <div class="card-header"><h3 class="card-title">{{admin.security.rootManagement}}</h3></div>
+                <div class="card-body" id="rootManagementSettings">
+                    <p class="setting-desc" style="margin-bottom:16px">{{admin.security.rootManagementIntro}}</p>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.rootUsername}}</div>
+                            <div class="setting-desc">{{admin.security.rootUsernameDesc}}</div>
+                        </div>
+                        <input type="text" id="rootNewUsername" class="form-input setting-input" required autocomplete="username">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.rootCurrentPassword}}</div>
+                            <div class="setting-desc">{{admin.security.rootCurrentPasswordDesc}}</div>
+                        </div>
+                        <input type="password" id="rootCurrentPassword" class="form-input setting-input" required autocomplete="current-password">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.rootNewPassword}}</div>
+                            <div class="setting-desc">{{admin.security.rootNewPasswordDesc}}</div>
+                        </div>
+                        <input type="password" id="rootNewPassword" class="form-input setting-input" maxlength="128" autocomplete="new-password">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.rootConfirmPassword}}</div>
+                        </div>
+                        <input type="password" id="rootConfirmPassword" class="form-input setting-input" maxlength="128" autocomplete="new-password">
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" data-action="saveRootSettings">{{admin.security.save}}</button>
+                    </div>
+                </div>
+            </div>
+            """) : "";
+        String contentTemplate = tr("""
             <div class="page-header">
                 <h2>{{admin.security.title}}</h2>
                 <p class="page-desc">{{admin.security.desc}}</p>
+            </div>
+            <div class="settings-card card">
+                <div class="card-header"><h3 class="card-title">{{admin.security.pngUploadManagement}}</h3></div>
+                <div class="card-body" id="pngUploadSettings">
+                    <p class="setting-desc" style="margin-bottom:16px">{{admin.security.pngUploadIntro}}</p>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.pngValidationEnabled}}</div>
+                            <div class="setting-desc">{{admin.security.pngValidationEnabledDesc}}</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="pngValidationEnabled">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.pngMaxWidth}}</div>
+                            <div class="setting-desc">{{admin.security.pngDimensionDesc}}</div>
+                        </div>
+                        <input type="number" id="pngMaxWidth" class="form-input setting-input" min="1" max="4096" step="1" required>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.pngMaxHeight}}</div>
+                            <div class="setting-desc">{{admin.security.pngDimensionDesc}}</div>
+                        </div>
+                        <input type="number" id="pngMaxHeight" class="form-input setting-input" min="1" max="4096" step="1" required>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.pngMaxPixels}}</div>
+                            <div class="setting-desc">{{admin.security.pngMaxPixelsDesc}}</div>
+                        </div>
+                        <input type="number" id="pngMaxPixels" class="form-input setting-input" min="1" max="1048576" step="1" required>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.pngMaxChunkSize}}</div>
+                            <div class="setting-desc">{{admin.security.pngMaxChunkSizeDesc}}</div>
+                        </div>
+                        <input type="number" id="pngMaxChunkSizeKib" class="form-input setting-input" min="1" max="16384" step="1" required>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.pngStrictChunkMode}}</div>
+                            <div class="setting-desc">{{admin.security.pngStrictChunkModeDesc}}</div>
+                        </div>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="pngStrictChunkMode">
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.pngMaxConcurrent}}</div>
+                            <div class="setting-desc">{{admin.security.pngMaxConcurrentDesc}}</div>
+                        </div>
+                        <input type="number" id="pngMaxConcurrent" class="form-input setting-input" min="1" max="99999" step="1" required>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" data-action="savePngSettings">{{admin.security.save}}</button>
+                    </div>
+                </div>
             </div>
             <div class="settings-card card">
                 <div class="card-header"><h3 class="card-title">{{admin.security.encryptionLevel}}</h3></div>
@@ -517,14 +619,147 @@ public class AdminPage {
                     <div id="encryptionLevelList" class="encryption-level-list">
                     </div>
                     <input type="hidden" id="encryptionLevel" value="1">
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" data-action="saveSettings">{{admin.security.save}}</button>
+                    </div>
                 </div>
             </div>
-            <div class="settings-actions">
-                <button class="btn btn-primary" data-action="saveSettings">{{admin.security.save}}</button>
+            <div class="settings-card card">
+                <div class="card-header"><h3 class="card-title">{{admin.security.frequencySettings}}</h3></div>
+                <div class="card-body" id="frequencySettings">
+                    <p class="setting-desc" style="margin-bottom:16px">{{admin.security.frequencyIntro}}</p>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.userSessionTimeout}}</div>
+                            <div class="setting-desc">{{admin.security.userSessionTimeoutDesc}}</div>
+                        </div>
+                        <input type="number" id="userSessionTimeoutSeconds" class="form-input setting-input" min="1" step="1" required>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.adminSessionTimeout}}</div>
+                            <div class="setting-desc">{{admin.security.adminSessionTimeoutDesc}}</div>
+                        </div>
+                        <input type="number" id="adminSessionTimeoutSeconds" class="form-input setting-input" min="1" step="1" required>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.loginMaxAttemptsPerIp}}</div>
+                            <div class="setting-desc">{{admin.security.loginMaxAttemptsPerIpDesc}}</div>
+                        </div>
+                        <input type="number" id="loginMaxAttemptsPerIp" class="form-input setting-input" min="1" step="1" required>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.loginMaxAttemptsPerAccount}}</div>
+                            <div class="setting-desc">{{admin.security.loginMaxAttemptsPerAccountDesc}}</div>
+                        </div>
+                        <input type="number" id="loginMaxAttemptsPerAccount" class="form-input setting-input" min="1" step="1" required>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.loginLockoutSeconds}}</div>
+                            <div class="setting-desc">{{admin.security.loginLockoutSecondsDesc}}</div>
+                        </div>
+                        <input type="number" id="loginLockoutSeconds" class="form-input setting-input" min="1" step="1" required>
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.loginRateWindowSeconds}}</div>
+                            <div class="setting-desc">{{admin.security.loginRateWindowSecondsDesc}}</div>
+                        </div>
+                        <input type="number" id="loginRateWindowSeconds" class="form-input setting-input" min="1" step="1" required>
+                    </div>
+                    <div class="setting-item" style="align-items:flex-start">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.requestIntervals}}</div>
+                            <div class="setting-desc">{{admin.security.requestIntervalsDesc}}</div>
+                        </div>
+                    </div>
+                    <textarea id="requestIntervals" class="form-input setting-textarea" rows="8"></textarea>
+                    <div class="setting-item" style="align-items:flex-start;margin-top:16px">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.requestRates}}</div>
+                            <div class="setting-desc">{{admin.security.requestRatesDesc}}</div>
+                        </div>
+                    </div>
+                    <textarea id="requestRates" class="form-input setting-textarea" rows="8"></textarea>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" data-action="saveFrequencySettings">{{admin.security.save}}</button>
+                    </div>
+                </div>
             </div>
+            <div class="settings-card card">
+                <div class="card-header"><h3 class="card-title">{{admin.security.corsSettings}}</h3></div>
+                <div class="card-body" id="corsSettings">
+                    <div class="setting-desc" style="color:#DC2626;font-weight:700;margin-bottom:16px">{{admin.security.dangerWarning}}</div>
+                    <p class="setting-desc" style="margin-bottom:16px">{{admin.security.corsIntro}}</p>
+                    <div class="setting-item" style="align-items:flex-start">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.corsOrigins}}</div>
+                            <div class="setting-desc">{{admin.security.corsOriginsDesc}}</div>
+                        </div>
+                    </div>
+                    <textarea id="corsOrigins" class="form-input setting-textarea" rows="5"></textarea>
+                    <div class="setting-item" style="align-items:flex-start;margin-top:16px">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.headerCsp}}</div>
+                            <div class="setting-desc">{{admin.security.headerCspDesc}}</div>
+                        </div>
+                    </div>
+                    <textarea id="headerCsp" class="form-input setting-textarea" rows="3"></textarea>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.headerHsts}}</div>
+                        </div>
+                        <input type="text" id="headerHsts" class="form-input setting-input">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.headerContentTypeOptions}}</div>
+                        </div>
+                        <input type="text" id="headerContentTypeOptions" class="form-input setting-input">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.headerFrameOptions}}</div>
+                        </div>
+                        <input type="text" id="headerFrameOptions" class="form-input setting-input">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.headerXssProtection}}</div>
+                        </div>
+                        <input type="text" id="headerXssProtection" class="form-input setting-input">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.headerReferrerPolicy}}</div>
+                        </div>
+                        <input type="text" id="headerReferrerPolicy" class="form-input setting-input">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.headerPermissionsPolicy}}</div>
+                        </div>
+                        <input type="text" id="headerPermissionsPolicy" class="form-input setting-input">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.security.headerCacheControl}}</div>
+                        </div>
+                        <input type="text" id="headerCacheControl" class="form-input setting-input">
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" data-action="confirmCorsSettings" data-this>{{admin.security.save}}</button>
+                    </div>
+                </div>
+            </div>
+            __ROOT_MANAGEMENT_CARD__
             <div id="toast" class="toast" style="display:none;"></div>
             <script src="/js/admin-security.js"></script>
             """);
+        String content = contentTemplate.replace("__ROOT_MANAGEMENT_CARD__", rootManagementCard);
         String body = renderAdminLayout("security", adminUsername, adminRole, content, csrfToken);
         String css = Css.getAdminCssLink();
         return PageRenderer.renderAdminPage(I18n.t("admin.security.title"), body, "admin", css);
@@ -1479,6 +1714,20 @@ public class AdminPage {
                             <div class="setting-desc">{{admin.profiles.maxAccountsPerIpDesc}}</div>
                         </div>
                         <input type="number" id="maxAccountsPerIp" class="form-input setting-input" data-setting-key="max_accounts_per_ip" placeholder="3">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
+                            <div class="setting-label">{{admin.profiles.nameLengthRange}}</div>
+                            <div class="setting-desc">{{admin.profiles.nameLengthRangeDesc}}</div>
+                        </div>
+                        <div style="display:flex;align-items:center;gap:8px">
+                            <input type="number" id="minProfileNameLength" class="form-input setting-input" placeholder="1" min="1" max="64">
+                            <span style="color:#999">~</span>
+                            <input type="number" id="maxProfileNameLength" class="form-input setting-input" placeholder="16" min="1" max="64">
+                        </div>
+                    </div>
+                    <div class="settings-actions">
+                        <button class="btn btn-primary" data-action="saveProfileNameRange">{{admin.common.save}}</button>
                     </div>
                     <button class="btn btn-primary" data-action="saveSection" data-this style="margin-top:16px">{{admin.common.save}}</button>
                 </div>

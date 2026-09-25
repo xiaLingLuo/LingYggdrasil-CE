@@ -74,6 +74,7 @@ public class ProfileDao {
             }
         } catch (SQLException e) {
             log.error("ProfileDao.findByUserId failed: {}", e.getMessage(), e);
+            throw new RuntimeException("ProfileDao.findByUserId failed", e);
         }
         return profiles;
     }
@@ -99,6 +100,7 @@ public class ProfileDao {
             }
         } catch (SQLException e) {
             log.error("ProfileDao.findByNames failed: {}", e.getMessage(), e);
+            throw new RuntimeException("ProfileDao.findByNames failed", e);
         }
         return profiles;
     }
@@ -121,6 +123,7 @@ public class ProfileDao {
             }
         } catch (SQLException e) {
             log.error("ProfileDao.findAll failed: {}", e.getMessage(), e);
+            throw new RuntimeException("ProfileDao.findAll failed", e);
         }
         return profiles;
     }
@@ -196,6 +199,7 @@ public class ProfileDao {
             }
         } catch (SQLException e) {
             log.error("ProfileDao query failed: {}", e.getMessage(), e);
+            throw new RuntimeException("ProfileDao query failed", e);
         }
         return null;
     }

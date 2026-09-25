@@ -18,6 +18,17 @@
 (function() {
     var DEFAULT_SKIN_URL = '/img/juststeve.png';
     var profilesById = {};
+
+    function profileNameMinLength() {
+        return (typeof window.PROFILE_NAME_MIN_LENGTH === 'number' && window.PROFILE_NAME_MIN_LENGTH > 0)
+            ? window.PROFILE_NAME_MIN_LENGTH : 1;
+    }
+
+    function profileNameMaxLength() {
+        return (typeof window.PROFILE_NAME_MAX_LENGTH === 'number' && window.PROFILE_NAME_MAX_LENGTH > 0)
+            ? window.PROFILE_NAME_MAX_LENGTH : 16;
+    }
+
     var PROFILE_ADD_TILE = '<div class="profile-item profile-add-tile card-animate" id="profileAddTile">' +
         '<div class="profile-add-icon"><span>+</span></div>' +
         '<div class="profile-add-text">' + t('user.profiles.add') + '</div>' +
@@ -106,7 +117,7 @@
             '<h3>' + t('user.profiles.create') + '</h3>' +
             '<div class="form-group">' +
             '<label class="form-label">' + t('user.profiles.name') + '</label>' +
-            '<input type="text" class="form-input" id="newProfileName" placeholder="' + t('user.profiles.namePlaceholder') + '" maxlength="16">' +
+            '<input type="text" class="form-input" id="newProfileName" placeholder="' + t('user.profiles.namePlaceholder') + '" maxlength="' + profileNameMaxLength() + '">' +
             '</div>' +
             '<div id="createMsg" class="msg-area"></div>' +
             '<div class="modal-actions" id="createProfileActions"></div>' +
@@ -142,7 +153,8 @@
         var name = input ? input.value.trim() : '';
 
         if (!name) { showMsg(msgDiv, t('user.profiles.nameRequired'), false); return; }
-        if (name.length > 16) { showMsg(msgDiv, t('user.profiles.nameTooLong'), false); return; }
+        if (name.length < profileNameMinLength()) { showMsg(msgDiv, t('user.profiles.nameTooShort'), false); return; }
+        if (name.length > profileNameMaxLength()) { showMsg(msgDiv, t('user.profiles.nameTooLong'), false); return; }
         if (!/^[a-zA-Z0-9_\u4e00-\u9fa5-]+$/.test(name)) { showMsg(msgDiv, t('user.profiles.nameInvalid'), false); return; }
 
         try {
@@ -183,7 +195,7 @@
 
         function sourceLabel(src) {
             if (!src || src === 'none') return t('user.profiles.sourceNone');
-            if (src === 'friend') return t('user.profiles.sourceFriend');
+            if (src === 'friend' || src.indexOf('friend:') === 0) return t('user.profiles.sourceFriend');
             if (src === 'public') return t('user.profiles.sourceFavorite');
             return t('user.profiles.sourceMine');
         }
@@ -231,7 +243,7 @@
             '<div class="profile-edit-left">' +
             '<div class="form-group">' +
             '<label class="form-label">' + t('user.profiles.name') + '</label>' +
-            '<input type="text" class="form-input" id="editName" value="' + escapeHtml(currentName) + '" maxlength="16">' +
+            '<input type="text" class="form-input" id="editName" value="' + escapeHtml(currentName) + '" maxlength="' + profileNameMaxLength() + '">' +
             '</div>' +
             '<div class="form-group">' +
             '<label class="form-label">' + t('user.profiles.model') + '</label>' +
@@ -526,7 +538,8 @@
         var msgDiv = document.getElementById('editMsg');
 
         if (!name) { showMsg(msgDiv, t('user.profiles.nameRequired'), false); return; }
-        if (name.length > 16) { showMsg(msgDiv, t('user.profiles.nameTooLong'), false); return; }
+        if (name.length < profileNameMinLength()) { showMsg(msgDiv, t('user.profiles.nameTooShort'), false); return; }
+        if (name.length > profileNameMaxLength()) { showMsg(msgDiv, t('user.profiles.nameTooLong'), false); return; }
         if (!/^[a-zA-Z0-9_\u4e00-\u9fa5-]+$/.test(name)) { showMsg(msgDiv, t('user.profiles.nameInvalid'), false); return; }
 
         try {

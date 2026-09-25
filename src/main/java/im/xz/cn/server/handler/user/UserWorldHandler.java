@@ -99,7 +99,8 @@ public class UserWorldHandler {
             after = null;
         }
 
-        List<Texture> textures = textureDao.findPublicTextures(type, after, limit);
+        List<TextureDao.PublicTexture> texturePage = textureDao.findPublicTextures(type, after, limit);
+        List<Texture> textures = texturePage.stream().map(TextureDao.PublicTexture::texture).toList();
 
         List<String> textureIds = new ArrayList<>();
         Set<String> ownerIds = new HashSet<>();
@@ -142,7 +143,8 @@ public class UserWorldHandler {
         }
 
         boolean loginRequired = isAnonymous && textures.size() >= limit;
-        String nextAfterV = (isAnonymous || textures.isEmpty()) ? null : textures.getLast().getCreatedAt();
+        String nextAfterV = (isAnonymous || texturePage.isEmpty())
+                ? null : textureDao.encodeCursor(texturePage.getLast());
         boolean hasMoreV = !isAnonymous && textures.size() >= limit;
 
         Map<String, Object> response = new LinkedHashMap<>();
@@ -222,6 +224,12 @@ public class UserWorldHandler {
                         ctx.json(Map.of("success", false, "message", I18n.t("msg.maxFavoritesReached", maxFavorites)));
                         return;
                     }
+                }
+                Texture held = textureDao.findByUserAndHash(user.getId(), texture.getType(), texture.getHash());
+                if (held != null) {
+                    ctx.json(Map.of("success", false, "message",
+                            I18n.t("msg.libraryAlreadyHas", displayAlias(held))));
+                    return;
                 }
                 if (!canReference(user, texture)) {
                     ctx.json(Map.of("success", false, "message", I18n.t("msg.textureNotPublicShared")));
@@ -341,9 +349,12 @@ public class UserWorldHandler {
     public void shareToFriend(Context ctx) {
         User user = checkAuth(ctx);
         if (user == null) return;
+        String friendId = null;
+        String textureType = null;
+        String textureHash = null;
         try {
             Map<String, Object> body = new ObjectMapper().readValue(ctx.body(), new TypeReference<>() {});
-            String friendId = (String) body.get("friendId");
+            friendId = (String) body.get("friendId");
             String textureId = (String) body.get("textureId");
             if (friendId == null || friendId.isBlank() || textureId == null || textureId.isBlank()) {
                 ctx.json(Map.of("success", false, "message", I18n.t("msg.paramsMissing")));
@@ -358,21 +369,43 @@ public class UserWorldHandler {
                 ctx.json(Map.of("success", false, "message", I18n.t("msg.textureNotFound")));
                 return;
             }
-            friendSharedDao.share(user.getId(), friendId, textureId);
-            Texture existing = textureDao.findByUserAndHash(friendId, texture.getType(), texture.getHash());
-            if (existing == null) {
-                Texture refTex = new Texture(UUID.randomUUID().toString(), friendId,
-                    texture.getType(), texture.getHash(), texture.getAlias(), null, 0,
-                    "image/png", TimeUtil.now());
-                refTex.setReferenceType("friend");
-                refTex.setRefOwnerId(user.getId());
-                refTex.setRefCreatedAt(TimeUtil.now());
-                textureDao.insert(refTex);
+            textureType = texture.getType();
+            textureHash = texture.getHash();
+            User friend = userDao.findById(friendId);
+            if (friend == null) {
+                ctx.json(Map.of("success", false, "message", I18n.t("msg.friendCodeNotFound")));
+                return;
             }
+            if (textureDao.holdsTexture(friendId, textureType, textureHash)) {
+                ctx.json(Map.of("success", false, "message",
+                        I18n.t("msg.textureAlreadyOwnedByFriend", displayName(friend))));
+                return;
+            }
+            friendSharedDao.share(user.getId(), friendId, textureId);
+            Texture refTex = new Texture(UUID.randomUUID().toString(), friendId,
+                textureType, textureHash, texture.getAlias(), null, 0,
+                "image/png", TimeUtil.now());
+            refTex.setReferenceType(im.xz.cn.common.ReferenceType.friend(
+                    im.xz.cn.common.UuidUtil.generateFriendCode(user.getId())));
+            refTex.setRefOwnerId(user.getId());
+            refTex.setRefCreatedAt(TimeUtil.now());
+            textureDao.insert(refTex);
             ctx.json(Map.of("success", true, "message", I18n.t("msg.sharedToFriend")));
         } catch (Exception e) {
+            if (im.xz.cn.database.DatabaseManager.isDuplicateKeyViolation(e)) {
+                ctx.json(Map.of("success", false, "message", duplicateShareMessage(friendId, textureType, textureHash)));
+                return;
+            }
             ctx.json(Map.of("success", false, "message", I18n.t("msg.requestError")));
         }
+    }
+
+    private String duplicateShareMessage(String friendId, String type, String hash) {
+        if (friendId != null && type != null && hash != null && !textureDao.holdsTexture(friendId, type, hash)) {
+            return I18n.t("msg.alreadySharedToFriend");
+        }
+        User friend = friendId == null ? null : userDao.findById(friendId);
+        return I18n.t("msg.textureAlreadyOwnedByFriend", displayName(friend));
     }
 
     public void unshareFromFriend(Context ctx) {
@@ -386,19 +419,21 @@ public class UserWorldHandler {
                 ctx.json(Map.of("success", false, "message", I18n.t("msg.paramsMissing")));
                 return;
             }
-            friendSharedDao.unshare(user.getId(), friendId, textureId);
             Texture t = textureDao.findById(textureId);
-            if (t != null) {
-                textureDao.deleteRefByOwner(friendId, t.getType(), t.getHash(), user.getId());
-                profileDao.clearTextureRefByHash(friendId, t.getType(), t.getHash());
+            if (t == null || !t.getUserId().equals(user.getId())) {
+                ctx.json(Map.of("success", false, "message", I18n.t("msg.textureNotFound")));
+                return;
             }
-            ctx.json(Map.of("success", true, "message", I18n.t("msg.shareCancelled")));
+            friendSharedDao.deleteByOwnerAndTexture(user.getId(), textureId);
+            textureDao.deleteRefByOwner(friendId, t.getType(), t.getHash(), user.getId());
+            profileDao.clearTextureRefByHash(friendId, t.getType(), t.getHash());
+            ctx.json(Map.of("success", true, "message", I18n.t("msg.shareRevoked")));
         } catch (Exception e) {
             ctx.json(Map.of("success", false, "message", I18n.t("msg.requestError")));
         }
     }
 
-    public void returnSharedTexture(Context ctx) {
+    public void deleteReceivedTexture(Context ctx) {
         User user = checkAuth(ctx);
         if (user == null) return;
         try {
@@ -413,12 +448,97 @@ public class UserWorldHandler {
                 ctx.json(Map.of("success", false, "message", I18n.t("msg.textureNotExist")));
                 return;
             }
-            textureDao.deleteFriendRef(user.getId(), t.getType(), t.getHash(), t.getUserId());
+            String ownerId = t.getUserId();
+            if (!friendSharedDao.exists(ownerId, user.getId(), textureId)) {
+                ctx.json(Map.of("success", false, "message", I18n.t("msg.textureNotExist")));
+                return;
+            }
+            textureDao.deleteRefByOwner(user.getId(), t.getType(), t.getHash(), ownerId);
             profileDao.clearTextureRefByHash(user.getId(), t.getType(), t.getHash());
-            ctx.json(Map.of("success", true, "message", I18n.t("msg.returned")));
+            friendSharedDao.deleteByOwnerAndTexture(ownerId, textureId);
+            ctx.json(Map.of("success", true, "message", I18n.t("msg.receivedTextureDeleted")));
         } catch (Exception e) {
             ctx.json(Map.of("success", false, "message", I18n.t("msg.requestError")));
         }
+    }
+
+    public void updateReceivedAlias(Context ctx) {
+        User user = checkAuth(ctx);
+        if (user == null) return;
+        try {
+            Map<String, Object> body = new ObjectMapper().readValue(ctx.body(), new TypeReference<>() {});
+            String textureId = (String) body.get("textureId");
+            String alias = (String) body.get("alias");
+            if (textureId == null || textureId.isBlank()) {
+                ctx.json(Map.of("success", false, "message", I18n.t("msg.missingTextureId")));
+                return;
+            }
+            Texture t = textureDao.findById(textureId);
+            if (t == null || !friendSharedDao.exists(t.getUserId(), user.getId(), textureId)) {
+                ctx.json(Map.of("success", false, "message", I18n.t("msg.textureNotExist")));
+                return;
+            }
+            if (alias != null && !alias.isBlank()) {
+                boolean blacklisted = "CAPE".equalsIgnoreCase(t.getType())
+                        ? sysConfig.isCapeNameBlacklisted(alias.trim())
+                        : sysConfig.isSkinNameBlacklisted(alias.trim());
+                if (blacklisted) {
+                    ctx.json(Map.of("success", false, "message", I18n.t("msg.nameTaken")));
+                    return;
+                }
+            }
+            textureDao.updateRefAlias(user.getId(), t.getType(), t.getHash(), alias);
+            ctx.json(Map.of("success", true, "message", I18n.t("msg.aliasUpdated")));
+        } catch (Exception e) {
+            ctx.json(Map.of("success", false, "message", I18n.t("msg.requestError")));
+        }
+    }
+
+    public void getOutgoingShared(Context ctx) {
+        User user = checkAuth(ctx);
+        if (user == null) return;
+        var rows = friendSharedDao.findOutgoing(user.getId());
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (var row : rows) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            String type = String.valueOf(row.get("type"));
+            map.put("textureId", String.valueOf(row.get("texture_id")));
+            map.put("friendId", String.valueOf(row.get("friend_id")));
+            map.put("type", type);
+            map.put("hash", row.get("hash"));
+            map.put("alias", row.get("texture_alias"));
+            map.put("originalName", row.get("original_name"));
+            map.put("size", row.get("size"));
+            map.put("friendName", displayNameValues(row.get("friend_nickname"), row.get("friend_username")));
+            map.put("friendCode", row.get("friend_code"));
+            map.put("createdAt", String.valueOf(row.get("created_at")));
+            map.put("thumbnailUrl", "/api/publicTexture/" + type.toLowerCase() + "/" + row.get("hash"));
+            result.add(map);
+        }
+        ctx.json(Map.of("success", true, "textures", result));
+    }
+
+    public void getIncomingShared(Context ctx) {
+        User user = checkAuth(ctx);
+        if (user == null) return;
+        var rows = friendSharedDao.findIncoming(user.getId());
+        List<Map<String, Object>> result = new ArrayList<>();
+        for (var row : rows) {
+            Map<String, Object> map = new LinkedHashMap<>();
+            String type = String.valueOf(row.get("type"));
+            map.put("textureId", String.valueOf(row.get("texture_id")));
+            map.put("type", type);
+            map.put("hash", row.get("hash"));
+            map.put("alias", row.get("receiver_alias") != null ? row.get("receiver_alias") : row.get("texture_alias"));
+            map.put("originalName", row.get("original_name"));
+            map.put("size", row.get("size"));
+            map.put("ownerName", displayNameValues(row.get("owner_nickname"), row.get("owner_username")));
+            map.put("ownerCode", row.get("owner_friend_code"));
+            map.put("createdAt", String.valueOf(row.get("created_at")));
+            map.put("thumbnailUrl", "/api/publicTexture/" + type.toLowerCase() + "/" + row.get("hash"));
+            result.add(map);
+        }
+        ctx.json(Map.of("success", true, "textures", result));
     }
 
     public void getFriendSharedTextures(Context ctx) {
@@ -563,6 +683,23 @@ public class UserWorldHandler {
             }
         }
         return names;
+    }
+
+    private static String displayName(User user) {
+        if (user == null) return "";
+        String nickname = user.getNickname();
+        return nickname != null && !nickname.isBlank() ? nickname : user.getUsername();
+    }
+
+    private static String displayNameValues(Object nickname, Object username) {
+        if (nickname != null && !String.valueOf(nickname).isBlank()) return String.valueOf(nickname);
+        return username == null ? "" : String.valueOf(username);
+    }
+
+    private static String displayAlias(Texture texture) {
+        if (texture.getAlias() != null && !texture.getAlias().isBlank()) return texture.getAlias();
+        if (texture.getOriginalName() != null && !texture.getOriginalName().isBlank()) return texture.getOriginalName();
+        return texture.getHash() == null ? "" : texture.getHash();
     }
 
     private User checkAuth(Context ctx) {

@@ -342,8 +342,13 @@ public class UserPage {
                 + "<div id='toast' class='toast' style='display:none;'></div>";
         String body = Shared.buildUserLayout(siteName, "profiles", content, "profiles");
         String apiDomainInject = "<script>window.YGGDRASIL_API_DOMAIN='" + esc(apiDomain != null ? apiDomain : "") + "';</script>";
+        String nameLengthInject = "<script>window.PROFILE_NAME_MIN_LENGTH="
+                + im.xz.cn.config.SystemConfig.getInstance().getMinProfileNameLength()
+                + ";window.PROFILE_NAME_MAX_LENGTH="
+                + im.xz.cn.config.SystemConfig.getInstance().getMaxProfileNameLength() + ";</script>";
         String csrf = Shared.csrfInject(csrfToken)
                 + apiDomainInject
+                + nameLengthInject
                 + "<script src=\"/js/skinview3d.bundle.js\"></script>";
         return PageRenderer.renderPage(I18n.t("user.profiles.title"), csrf + body, "user",
                 Css.getUserCssLink(), Css.getUserDashboardCss());
@@ -474,11 +479,21 @@ public class UserPage {
 
     public static String renderSharedPage(String csrfToken) {
         String content = pageHeader(I18n.t("user.shared.title"), I18n.t("user.shared.desc"))
-                + """
-            <div class="texture-grid" id="sharedGrid"><p class="text-muted" style="grid-column:1/-1">""" + I18n.t("common.loading") + """
-            </p></div>
+                + PageRenderer.tr("""
+            <div class="shared-section">
+                <h3 class="shared-section-title"><i class="fas fa-share-nodes"></i> {{shared.myShared}}</h3>
+                <div class="texture-grid" id="outgoingGrid"><p class="text-muted" style="grid-column:1/-1">{{common.loading}}</p></div>
+            </div>
+            <div class="shared-section">
+                <h3 class="shared-section-title"><i class="fas fa-inbox"></i> {{shared.received}}</h3>
+                <div class="texture-grid" id="incomingGrid"><p class="text-muted" style="grid-column:1/-1">{{common.loading}}</p></div>
+            </div>
+            <div class="shared-section">
+                <h3 class="shared-section-title"><i class="fas fa-star"></i> {{shared.myFavorites}}</h3>
+                <div class="texture-grid" id="favoritesGrid"><p class="text-muted" style="grid-column:1/-1">{{common.loading}}</p></div>
+            </div>
             <div id="toast" class="toast" style="display:none"></div>
-            """;
+            """);
         String navbar = PageRenderer.renderNavbar(I18n.t("nav.userCenter"), "user", false);
         String sidebar = Shared.buildUserSidebar("shared");
         String body = navbar + """

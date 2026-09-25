@@ -85,6 +85,7 @@ public class AdminServer {
         AdminDashboardHandler dashboardHandler = new AdminDashboardHandler(userDao, profileDao, tokenDao, adminDao);
         AdminSystemHandler systemHandler = new AdminSystemHandler(systemConfig, cacheDao, tokenDao, db);
         AdminSecurityHandler securityHandler = new AdminSecurityHandler(systemConfig, db);
+        RootManagementHandler rootManagementHandler = new RootManagementHandler(db);
         im.xz.cn.database.dao.UserLogDao userLogDao = new im.xz.cn.database.dao.UserLogDao(db);
         AdminUserHandler userHandler = new AdminUserHandler(userDao, adminDao, systemConfig, userPermGroupDao, userLogDao);
         im.xz.cn.server.handler.admin.AdminUserPermGroupHandler userPermGroupHandler =
@@ -106,16 +107,7 @@ public class AdminServer {
             ServerFactory.configureThreadLocalCleanup(config);
             ServerFactory.configureSecurityHeaders(config);
 
-            config.bundledPlugins.enableCors(cors ->
-                    cors.addRule(rule ->
-                            rule.allowHost(
-                                    "http://localhost:35565",
-                                    "http://localhost:35577",
-                                    "http://localhost:35599",
-                                    "http://localhost:35598"
-                            )
-                    )
-            );
+            ServerFactory.configureCors(config);
 
             ServerFactory.registerStaticRoutes(config.routes);
             ServerFactory.registerIconRoutes(config.routes);
@@ -156,7 +148,7 @@ public class AdminServer {
             config.routes.before("/admin/*", ctx -> {
                 var session = ctx.req().getSession(false);
                 if (session != null) {
-                    session.setMaxInactiveInterval(15 * 60);
+                    session.setMaxInactiveInterval(systemConfig.getAdminSessionTimeoutSeconds());
                 }
                 String path = ctx.path();
                 if (path.length() > 1 && path.endsWith("/")) {
@@ -262,6 +254,8 @@ public class AdminServer {
 
             config.routes.get("/admin/api/security/settings", securityHandler::getSettings);
             config.routes.post("/admin/api/security/settings", securityHandler::updateSettings);
+            config.routes.get("/admin/api/security/root", rootManagementHandler::getSettings);
+            config.routes.post("/admin/api/security/root", rootManagementHandler::updateSettings);
 
             config.routes.get("/admin/api/users", userHandler::getUsers);
             config.routes.post("/admin/api/users/delete", userHandler::deleteUser);

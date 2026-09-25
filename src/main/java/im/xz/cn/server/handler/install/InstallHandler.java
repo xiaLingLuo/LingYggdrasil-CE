@@ -31,11 +31,13 @@ import im.xz.cn.database.DatabaseManager;
 import im.xz.cn.model.Admin;
 import im.xz.cn.security.PasswordValidator;
 import im.xz.cn.server.InstallServer;
+import im.xz.cn.common.AppIcons;
 import im.xz.cn.common.UuidUtil;
 import im.xz.cn.web.view.InstallPage;
 import im.xz.cn.rate.InstallRateLimiter;
 import io.javalin.http.Context;
 
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Connection;
@@ -49,20 +51,11 @@ public class InstallHandler {
     private static final logApi logger = logApi.getLogger(InstallHandler.class);
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static String installToken;
     private static InstallServer installServer;
     private static final InstallRateLimiter rateLimiter = new InstallRateLimiter();
 
-    public static void setInstallToken(String token) {
-        installToken = token;
-    }
-
     public static void setInstallServer(InstallServer server) {
         installServer = server;
-    }
-
-    private static boolean validateToken(String token) {
-        return installToken != null && installToken.equals(token);
     }
 
     public static void renderInstallPage(Context ctx) {
@@ -71,18 +64,24 @@ public class InstallHandler {
             return;
         }
 
-        ctx.html(InstallPage.generateInstallPage(installToken));
+        ctx.html(InstallPage.generateInstallPage());
+    }
+
+    public static void serveIcon(Context ctx) {
+        String name = ctx.pathParam("name");
+        InputStream in = AppIcons.builtinStream(name);
+        if (in == null) {
+            ctx.status(404).result("Icon not found");
+            return;
+        }
+        ctx.contentType(name != null && name.toLowerCase().endsWith(".ico")
+                ? "image/x-icon" : "application/octet-stream");
+        ctx.result(in);
     }
 
     public static void getStatus(Context ctx) {
         if (AppConfig.getInstance().isInstalled()) {
             ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.systemInstalled")));
-            return;
-        }
-
-        String token = ctx.header("X-Install-Token");
-        if (!validateToken(token)) {
-            ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.invalidInstallToken")));
             return;
         }
 
@@ -92,12 +91,6 @@ public class InstallHandler {
     public static void doInstall(Context ctx) {
         if (AppConfig.getInstance().isInstalled()) {
             ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.systemInstalled")));
-            return;
-        }
-
-        String token = ctx.header("X-Install-Token");
-        if (!validateToken(token)) {
-            ctx.status(403).json(Map.of("success", false, "message", I18n.t("msg.invalidInstallToken")));
             return;
         }
 
@@ -231,7 +224,6 @@ public class InstallHandler {
 
             appConfig.createInstalledFile();
 
-            InstallServer.deleteTokenFile();
             if (installServer != null) {
                 new Thread(() -> {
                     try {

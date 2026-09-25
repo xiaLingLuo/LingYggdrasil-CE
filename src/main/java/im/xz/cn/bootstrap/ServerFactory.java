@@ -50,7 +50,7 @@ public class ServerFactory {
     }
 
     public static Javalin create(int port, String staticDir, Consumer<RoutesConfig> routeConfig) {
-        return create(port, staticDir, routeConfig, DEFAULT_CORS_ORIGINS);
+        return createServer(port, staticDir, routeConfig);
     }
 
     public static void configureSessionCookie(JavalinConfig config) {
@@ -71,6 +71,35 @@ public class ServerFactory {
         });
     }
 
+    public static java.util.List<String> configuredCorsOrigins() {
+        java.util.List<String> origins = new java.util.ArrayList<>();
+        String raw = im.xz.cn.config.SystemConfig.getInstance().getCorsOrigins();
+        if (raw == null || raw.isBlank()) {
+            for (String fallback : DEFAULT_CORS_ORIGINS) origins.add(fallback);
+            return origins;
+        }
+        for (String line : raw.split("\\r?\\n")) {
+            String origin = line.trim();
+            if (!origin.isEmpty() && im.xz.cn.config.SystemConfig.isValidCorsOrigin(origin)) {
+                origins.add(origin);
+            }
+        }
+        if (origins.isEmpty()) {
+            for (String fallback : DEFAULT_CORS_ORIGINS) origins.add(fallback);
+        }
+        return origins;
+    }
+
+    public static void configureCors(JavalinConfig config) {
+        java.util.List<String> origins = configuredCorsOrigins();
+        config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> {
+            for (String origin : origins) {
+                rule.allowHost(origin);
+            }
+            rule.allowCredentials = true;
+        }));
+    }
+
     public static void configureThreadLocalCleanup(JavalinConfig config) {
         config.jetty.modifyServletContextHandler(handler ->
             handler.addFilter((request, response, chain) -> {
@@ -89,26 +118,27 @@ public class ServerFactory {
 
     public static void configureSecurityHeaders(JavalinConfig config) {
         config.routes.before(ctx -> {
+            im.xz.cn.config.SystemConfig sysConfig = im.xz.cn.config.SystemConfig.getInstance();
             String nonce = im.xz.cn.web.Csp.newNonce();
-            ctx.header("X-Content-Type-Options", "nosniff");
-            ctx.header("X-Frame-Options", "DENY");
-            ctx.header("X-XSS-Protection", "0");
-            ctx.header("Referrer-Policy", "strict-origin-when-cross-origin");
-            ctx.header("Cache-Control", "no-store");
-            ctx.header("Content-Security-Policy",
-                    "default-src 'self'; "
-                    + "script-src 'self' 'nonce-" + nonce + "'; "
-                    + "style-src 'self' 'unsafe-inline'; "
-                    + "img-src 'self' data: https: http:; "
-                    + "font-src 'self' data:; "
-                    + "connect-src 'self'; "
-                    + "frame-ancestors 'none'; "
-                    + "base-uri 'self'; "
-                    + "form-action 'self'; "
-                    + "object-src 'none';");
-            ctx.header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
-            ctx.header("Permissions-Policy", "geolocation=(), microphone=(), camera=(), payment=(), usb=()");
+            setHeader(ctx, "Content-Security-Policy", sysConfig.getHeaderCsp().replace("{nonce}", nonce));
+            setHeader(ctx, "Strict-Transport-Security", sysConfig.getHeaderHsts());
+            setHeader(ctx, "X-Content-Type-Options", sysConfig.getHeaderContentTypeOptions());
+            setHeader(ctx, "X-Frame-Options", sysConfig.getHeaderFrameOptions());
+            setHeader(ctx, "X-XSS-Protection", sysConfig.getHeaderXssProtection());
+            setHeader(ctx, "Referrer-Policy", sysConfig.getHeaderReferrerPolicy());
+            setHeader(ctx, "Permissions-Policy", sysConfig.getHeaderPermissionsPolicy());
+            setHeader(ctx, "Cache-Control", sysConfig.getHeaderCacheControl());
         });
+    }
+
+    private static void setHeader(Context ctx, String name, String value) {
+        if (value == null) return;
+        String sanitized = value.replace("\r", "").replace("\n", "").trim();
+        if (sanitized.isEmpty()) return;
+        if (sanitized.length() > 4096) {
+            sanitized = sanitized.substring(0, 4096);
+        }
+        ctx.header(name, sanitized);
     }
 
     public static void registerIconRoutes(RoutesConfig routes) {
@@ -226,22 +256,14 @@ public class ServerFactory {
         return "application/octet-stream";
     }
 
-    public static Javalin create(int port, String staticDir, Consumer<RoutesConfig> routeConfig, String[] corsOrigins) {
+    private static Javalin createServer(int port, String staticDir, Consumer<RoutesConfig> routeConfig) {
         return Javalin.create(config -> {
             config.http.defaultContentType = "text/html; charset=utf-8";
 
             configureSessionCookie(config, "LING_API_SESSION");
             configureThreadLocalCleanup(config);
 
-            String[] origins = (corsOrigins != null && corsOrigins.length > 0) ? corsOrigins : DEFAULT_CORS_ORIGINS;
-            config.bundledPlugins.enableCors(cors -> {
-                cors.addRule(rule -> {
-                    for (String origin : origins) {
-                        rule.allowHost(origin);
-                    }
-                    rule.allowCredentials = true;
-                });
-            });
+            configureCors(config);
 
             configureSecurityHeaders(config);
 

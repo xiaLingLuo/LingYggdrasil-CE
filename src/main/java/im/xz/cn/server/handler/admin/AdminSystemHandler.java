@@ -204,6 +204,8 @@ public class AdminSystemHandler {
         settings.put("allowDownloadCape", systemConfig.isAllowDownloadCape());
 
         settings.put("maxProfilesPerUser", systemConfig.getMaxProfilesPerUser());
+        settings.put("minProfileNameLength", systemConfig.getMinProfileNameLength());
+        settings.put("maxProfileNameLength", systemConfig.getMaxProfileNameLength());
         settings.put("maxAccountsPerIp", systemConfig.getMaxAccountsPerIp());
         settings.put("maxBlockedUsers", systemConfig.getMaxBlockedUsers());
         settings.put("maxFavorites", systemConfig.getMaxFavorites());
@@ -391,6 +393,37 @@ public class AdminSystemHandler {
             case "max_profiles_per_user":
                 systemConfig.setMaxProfilesPerUser(Integer.parseInt(value));
                 break;
+            case "profile_name_length_range": {
+                String[] parts = value.split(",", -1);
+                if (parts.length != 2) {
+                    ctx.status(400);
+                    ctx.json(Map.of("success", false, "message", I18n.t("msg.profileNameLengthRange")));
+                    return;
+                }
+                int minNameLength;
+                int maxNameLength;
+                try {
+                    minNameLength = Integer.parseInt(parts[0].trim());
+                    maxNameLength = Integer.parseInt(parts[1].trim());
+                } catch (NumberFormatException e) {
+                    ctx.status(400);
+                    ctx.json(Map.of("success", false, "message", I18n.t("msg.profileNameLengthRange")));
+                    return;
+                }
+                if (minNameLength < 1 || minNameLength > 64 || maxNameLength < 1 || maxNameLength > 64) {
+                    ctx.status(400);
+                    ctx.json(Map.of("success", false, "message", I18n.t("msg.profileNameLengthRange")));
+                    return;
+                }
+                if (maxNameLength < minNameLength) {
+                    ctx.status(400);
+                    ctx.json(Map.of("success", false, "message", I18n.t("msg.profileNameRangeInvalid")));
+                    return;
+                }
+                systemConfig.setMinProfileNameLength(minNameLength);
+                systemConfig.setMaxProfileNameLength(maxNameLength);
+                break;
+            }
             case "max_accounts_per_ip":
                 systemConfig.setMaxAccountsPerIp(Integer.parseInt(value));
                 break;

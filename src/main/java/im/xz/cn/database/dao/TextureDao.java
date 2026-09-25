@@ -25,13 +25,19 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 
 public class TextureDao {
     private static final logApi log = logApi.getLogger(TextureDao.class);
     private final DatabaseManager db;
+
+    public record PublicTexture(Texture texture, long popularity) {}
+
+    private record PageCursor(long popularity, String createdAt, String id) {}
 
     public TextureDao(DatabaseManager db) {
         this.db = db;
@@ -68,6 +74,7 @@ public class TextureDao {
             }
         } catch (SQLException e) {
             log.error("TextureDao.findAllByHash failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TextureDao.findAllByHash failed", e);
         }
         return list;
     }
@@ -81,6 +88,53 @@ public class TextureDao {
         return row != null;
     }
 
+    public boolean holdsTexture(String userId, String type, String hash) {
+        return hasReference(userId, type, hash);
+    }
+
+    public List<Texture> findRefsByOwner(String type, String hash, String refOwnerId) {
+        List<Texture> list = new ArrayList<>();
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT * FROM textures WHERE type = ? AND hash = ? AND ref_owner_id = ? "
+                             + "AND (reference_type = 'public' OR reference_type LIKE 'friend:%')")) {
+            ps.setString(1, type);
+            ps.setString(2, hash);
+            ps.setString(3, refOwnerId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(Texture.fromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("TextureDao.findRefsByOwner failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TextureDao.findRefsByOwner failed", e);
+        }
+        return list;
+    }
+
+    public List<Texture> findFriendRefsBetween(String userA, String userB) {
+        List<Texture> list = new ArrayList<>();
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                     "SELECT * FROM textures WHERE reference_type LIKE 'friend:%' AND "
+                             + "((user_id = ? AND ref_owner_id = ?) OR (user_id = ? AND ref_owner_id = ?))")) {
+            ps.setString(1, userA);
+            ps.setString(2, userB);
+            ps.setString(3, userB);
+            ps.setString(4, userA);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(Texture.fromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("TextureDao.findFriendRefsBetween failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TextureDao.findFriendRefsBetween failed", e);
+        }
+        return list;
+    }
+
     public void deleteRef(String userId, String type, String hash, String refType) {
         db.executeUpdate("DELETE FROM textures WHERE user_id = ? AND type = ? AND hash = ? AND reference_type = ?", userId, type, hash, refType);
     }
@@ -90,19 +144,19 @@ public class TextureDao {
     }
 
     public void deleteRefByOwner(String userId, String type, String hash, String refOwnerId) {
-        db.executeUpdate("DELETE FROM textures WHERE user_id = ? AND type = ? AND hash = ? AND reference_type = 'friend' AND ref_owner_id = ?", userId, type, hash, refOwnerId);
+        db.executeUpdate("DELETE FROM textures WHERE user_id = ? AND type = ? AND hash = ? AND reference_type LIKE 'friend:%' AND ref_owner_id = ?", userId, type, hash, refOwnerId);
     }
 
     public void deleteFriendRef(String userId, String type, String hash, String refOwnerId) {
-        db.executeUpdate("DELETE FROM textures WHERE user_id = ? AND type = ? AND hash = ? AND reference_type = 'friend' AND ref_owner_id = ?", userId, type, hash, refOwnerId);
+        db.executeUpdate("DELETE FROM textures WHERE user_id = ? AND type = ? AND hash = ? AND reference_type LIKE 'friend:%' AND ref_owner_id = ?", userId, type, hash, refOwnerId);
     }
 
     public void deleteRefsByOwner(String type, String hash, String refOwnerId) {
-        db.executeUpdate("DELETE FROM textures WHERE type = ? AND hash = ? AND ref_owner_id = ? AND reference_type IN ('public','friend')", type, hash, refOwnerId);
+        db.executeUpdate("DELETE FROM textures WHERE type = ? AND hash = ? AND ref_owner_id = ? AND (reference_type = 'public' OR reference_type LIKE 'friend:%')", type, hash, refOwnerId);
     }
 
     public void deleteAllRefsByHash(String type, String hash, String excludeUserId) {
-        db.executeUpdate("DELETE FROM textures WHERE type = ? AND hash = ? AND reference_type IN ('public','friend') AND user_id != ?", type, hash, excludeUserId);
+        db.executeUpdate("DELETE FROM textures WHERE type = ? AND hash = ? AND (reference_type = 'public' OR reference_type LIKE 'friend:%') AND user_id != ?", type, hash, excludeUserId);
     }
 
     public int countPublicByHash(String type, String hash, String excludeUserId) {
@@ -116,12 +170,12 @@ public class TextureDao {
     }
 
     public void deleteFriendRefs(String user1Id, String user2Id) {
-        db.executeUpdate("DELETE FROM textures WHERE reference_type = 'friend' AND ((user_id = ? AND ref_owner_id = ?) OR (user_id = ? AND ref_owner_id = ?))",
+        db.executeUpdate("DELETE FROM textures WHERE reference_type LIKE 'friend:%' AND ((user_id = ? AND ref_owner_id = ?) OR (user_id = ? AND ref_owner_id = ?))",
             user1Id, user2Id, user2Id, user1Id);
     }
 
     public void deleteAllRefsBetweenUsers(String user1Id, String user2Id) {
-        db.executeUpdate("DELETE FROM textures WHERE reference_type IN ('friend','public') AND ((user_id = ? AND ref_owner_id = ?) OR (user_id = ? AND ref_owner_id = ?))",
+        db.executeUpdate("DELETE FROM textures WHERE (reference_type = 'public' OR reference_type LIKE 'friend:%') AND ((user_id = ? AND ref_owner_id = ?) OR (user_id = ? AND ref_owner_id = ?))",
             user1Id, user2Id, user2Id, user1Id);
     }
 
@@ -138,20 +192,16 @@ public class TextureDao {
             }
         } catch (SQLException e) {
             log.error("TextureDao.findByUserId failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TextureDao.findByUserId failed", e);
         }
         return list;
     }
 
     public List<Texture> findSelfUploaded(String userId, String type) {
-        try {
-            return executeSelfUploadedQuery(userId, type);
-        } catch (SQLException e) {
-            log.error("[TextureDao] findSelfUploaded failed, returning empty: {}", e.getMessage(), e);
-            return new ArrayList<>();
-        }
+        return executeSelfUploadedQuery(userId, type);
     }
 
-    private List<Texture> executeSelfUploadedQuery(String userId, String type) throws SQLException {
+    private List<Texture> executeSelfUploadedQuery(String userId, String type) {
         List<Texture> list = new ArrayList<>();
         try (Connection conn = db.getConnection();
              PreparedStatement ps = conn.prepareStatement("SELECT * FROM textures WHERE user_id = ? AND type = ? AND (reference_type IS NULL OR reference_type = '' OR reference_type = 'self') ORDER BY created_at DESC, id DESC")) {
@@ -164,47 +214,76 @@ public class TextureDao {
             }
         } catch (SQLException e) {
             log.error("TextureDao.executeSelfUploadedQuery failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TextureDao.executeSelfUploadedQuery failed", e);
         }
         return list;
     }
 
-    public List<Texture> findPublicTextures(String type, String afterCreatedAt, int limit) {
-        List<Texture> list = new ArrayList<>();
+    public List<PublicTexture> findPublicTextures(String type, String after, int limit) {
+        List<PublicTexture> list = new ArrayList<>();
+        PageCursor cursor = decodeCursor(after);
+        String legacyAfter = after != null && !after.isEmpty() && cursor == null ? after : null;
+        String popularityExpr = "COALESCE(l.like_count, 0) + COALESCE(f.favorite_count, 0) * 5";
+        StringBuilder sql = new StringBuilder("SELECT t.*, ").append(popularityExpr).append(" AS popularity ")
+                .append("FROM textures t ")
+                .append("JOIN texture_visibility tv ON t.id = tv.texture_id ")
+                .append("LEFT JOIN (SELECT texture_id, COUNT(*) AS like_count FROM texture_likes GROUP BY texture_id) l ON l.texture_id = t.id ")
+                .append("LEFT JOIN (SELECT texture_id, COUNT(*) AS favorite_count FROM texture_favorites GROUP BY texture_id) f ON f.texture_id = t.id ")
+                .append("WHERE tv.is_public = 1 ");
+        if (type != null && !type.isEmpty()) sql.append("AND t.type = ? ");
+        if (legacyAfter != null) {
+            sql.append("AND t.created_at < ? ");
+        } else if (cursor != null) {
+            sql.append("AND (").append(popularityExpr).append(" < ? OR (")
+                    .append(popularityExpr).append(" = ? AND (t.created_at < ? OR (t.created_at = ? AND t.id < ?)))) ");
+        }
+        sql.append("ORDER BY popularity DESC, t.created_at DESC, t.id DESC LIMIT ?");
         try (Connection conn = db.getConnection()) {
-            String orderExpr = "(SELECT COUNT(*) FROM texture_likes tl WHERE tl.texture_id = t.id) + (SELECT COUNT(*) FROM texture_favorites tf WHERE tf.texture_id = t.id) * 5";
-            String sql;
-            if (type != null && !type.isEmpty()) {
-                if (afterCreatedAt != null && !afterCreatedAt.isEmpty()) {
-                    sql = "SELECT t.* FROM textures t JOIN texture_visibility tv ON t.id = tv.texture_id WHERE tv.is_public = 1 AND t.type = ? AND t.created_at < ? ORDER BY " + orderExpr + " DESC, t.created_at DESC LIMIT ?";
-                } else {
-                    sql = "SELECT t.* FROM textures t JOIN texture_visibility tv ON t.id = tv.texture_id WHERE tv.is_public = 1 AND t.type = ? ORDER BY " + orderExpr + " DESC, t.created_at DESC LIMIT ?";
-                }
-            } else {
-                if (afterCreatedAt != null && !afterCreatedAt.isEmpty()) {
-                    sql = "SELECT t.* FROM textures t JOIN texture_visibility tv ON t.id = tv.texture_id WHERE tv.is_public = 1 AND t.created_at < ? ORDER BY " + orderExpr + " DESC, t.created_at DESC LIMIT ?";
-                } else {
-                    sql = "SELECT t.* FROM textures t JOIN texture_visibility tv ON t.id = tv.texture_id WHERE tv.is_public = 1 ORDER BY " + orderExpr + " DESC, t.created_at DESC LIMIT ?";
-                }
-            }
-            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
                 int idx = 1;
                 if (type != null && !type.isEmpty()) {
                     ps.setString(idx++, type);
                 }
-                if (afterCreatedAt != null && !afterCreatedAt.isEmpty()) {
-                    ps.setString(idx++, afterCreatedAt);
+                if (legacyAfter != null) {
+                    ps.setString(idx++, legacyAfter);
+                } else if (cursor != null) {
+                    ps.setLong(idx++, cursor.popularity());
+                    ps.setLong(idx++, cursor.popularity());
+                    ps.setString(idx++, cursor.createdAt());
+                    ps.setString(idx++, cursor.createdAt());
+                    ps.setString(idx++, cursor.id());
                 }
                 ps.setInt(idx, limit);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
-                        list.add(Texture.fromResultSet(rs));
+                        list.add(new PublicTexture(Texture.fromResultSet(rs), rs.getLong("popularity")));
                     }
                 }
             }
         } catch (SQLException e) {
             log.error("TextureDao.findPublicTextures failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TextureDao.findPublicTextures failed", e);
         }
         return list;
+    }
+
+    public String encodeCursor(PublicTexture texture) {
+        String raw = texture.popularity() + "\n" + texture.texture().getCreatedAt() + "\n" + texture.texture().getId();
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(raw.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private PageCursor decodeCursor(String cursor) {
+        if (cursor == null || cursor.isEmpty()) return null;
+        try {
+            String decoded = new String(Base64.getUrlDecoder().decode(cursor), StandardCharsets.UTF_8);
+            String[] parts = decoded.split("\\n", 3);
+            if (parts.length != 3) return null;
+            long popularity = Long.parseLong(parts[0]);
+            if (popularity < 0 || parts[1].isEmpty() || parts[2].isEmpty()) return null;
+            return new PageCursor(popularity, parts[1], parts[2]);
+        } catch (IllegalArgumentException e) {
+            return null;
+        }
     }
 
     public List<Texture> findByUserId(String userId) {
@@ -219,6 +298,7 @@ public class TextureDao {
             }
         } catch (SQLException e) {
             log.error("TextureDao.findByUserId failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TextureDao.findByUserId failed", e);
         }
         return list;
     }
@@ -235,6 +315,7 @@ public class TextureDao {
             }
         } catch (SQLException e) {
             log.error("TextureDao.findAll failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TextureDao.findAll failed", e);
         }
         return list;
     }
@@ -279,6 +360,10 @@ public class TextureDao {
         db.executeUpdate("UPDATE textures SET alias = ? WHERE id = ?", alias, id);
     }
 
+    public void updateRefAlias(String userId, String type, String hash, String alias) {
+        db.executeUpdate("UPDATE textures SET alias = ? WHERE user_id = ? AND type = ? AND hash = ?", alias, userId, type, hash);
+    }
+
     public List<Map<String, Object>> queryRaw(String sql, Object... params) {
         return db.executeQuery(sql, params);
     }
@@ -296,6 +381,7 @@ public class TextureDao {
             }
         } catch (SQLException e) {
             log.error("TextureDao query failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TextureDao query failed", e);
         }
         return null;
     }

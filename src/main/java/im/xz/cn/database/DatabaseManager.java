@@ -57,6 +57,33 @@ public class DatabaseManager {
         return dbType;
     }
 
+    public static boolean isDuplicateKeyViolation(Throwable error) {
+        for (Throwable current = error; current != null; current = current.getCause()) {
+            if (current instanceof SQLException sqlException) {
+                String state = sqlException.getSQLState();
+                String message = sqlException.getMessage() == null
+                        ? "" : sqlException.getMessage().toLowerCase(java.util.Locale.ROOT);
+                if ("23505".equals(state)
+                        || sqlException.getErrorCode() == 1062
+                        || (sqlException.getErrorCode() == 19
+                        && (message.contains("unique constraint") || message.contains("primary key constraint")))) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static boolean isDuplicateIndexName(Throwable error) {
+        for (Throwable current = error; current != null; current = current.getCause()) {
+            if (current instanceof SQLException sqlException
+                    && (sqlException.getErrorCode() == 1061 || "42S11".equals(sqlException.getSQLState()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public Connection getConnection() throws SQLException {
         return dataSource.getConnection();
     }
@@ -91,6 +118,7 @@ public class DatabaseManager {
             }
         } catch (SQLException e) {
             log.error("Database executeQuery failed: {} | SQL: {}", e.getMessage(), sql, e);
+            throw new RuntimeException("Database query failed: " + e.getMessage(), e);
         }
         return results;
     }
@@ -113,6 +141,7 @@ public class DatabaseManager {
             }
         } catch (SQLException e) {
             log.error("Database executeQuerySingle failed: {} | SQL: {}", e.getMessage(), sql, e);
+            throw new RuntimeException("Database query failed: " + e.getMessage(), e);
         }
         return null;
     }
@@ -124,6 +153,7 @@ public class DatabaseManager {
             stmt.execute(sql);
         } catch (SQLException e) {
             log.error("Database executeRaw failed: {} | SQL: {}", e.getMessage(), sql, e);
+            throw new RuntimeException("Database executeRaw failed: " + e.getMessage(), e);
         }
     }
 

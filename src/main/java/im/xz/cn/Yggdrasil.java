@@ -68,14 +68,12 @@ public class Yggdrasil {
         log.info("╚═══════════════════════════════════════╝");
 
         AppConfig config = AppConfig.getInstance();
-        im.xz.cn.config.ServerConfig.getInstance().load();
-
-        im.xz.cn.i18n.I18n.releaseBundles();
-        im.xz.cn.common.AppIcons.init();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(Yggdrasil::shutdown));
-
         try {
+            im.xz.cn.config.ServerConfig.getInstance().load();
+            im.xz.cn.i18n.I18n.releaseBundles();
+            im.xz.cn.common.AppIcons.init();
+            Runtime.getRuntime().addShutdownHook(new Thread(Yggdrasil::shutdown));
+
             if (!config.isInstalled()) {
                 startInstallMode();
             } else {

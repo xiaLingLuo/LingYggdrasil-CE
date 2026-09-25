@@ -58,7 +58,8 @@ public class TextureVisibilityDao {
                 String id = UUID.randomUUID().toString();
                 String now = TimeUtil.now();
                 db.executeUpdate("INSERT INTO texture_visibility (id, user_id, texture_id, is_public, created_at) VALUES (?, ?, ?, ?, ?)", id, userId, textureId, isPublic ? 1 : 0, now);
-            } catch (Exception e) {
+            } catch (RuntimeException e) {
+                if (!DatabaseManager.isDuplicateKeyViolation(e)) throw e;
                 db.executeUpdate("UPDATE texture_visibility SET is_public = ? WHERE user_id = ? AND texture_id = ?", isPublic ? 1 : 0, userId, textureId);
             }
         }

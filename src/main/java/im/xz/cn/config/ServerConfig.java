@@ -27,8 +27,12 @@ import java.io.FileInputStream;
 import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.Writer;
+import java.math.BigDecimal;
+import java.net.InetAddress;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class ServerConfig {
     private static final logApi log = logApi.getLogger(ServerConfig.class);
@@ -94,62 +98,145 @@ public class ServerConfig {
 
     public synchronized void load() {
         if (loaded) return;
-        loaded = true;
-
         File file = new File(CONFIG_FILE);
         if (!file.exists()) {
             writeDefault();
         }
         try (InputStream is = new FileInputStream(file)) {
             Yaml yaml = new Yaml(new SafeConstructor(new LoaderOptions()));
-            Map<String, Object> root = yaml.load(is);
+            Map<String, Object> root = asMap(yaml.load(is), "root");
             if (root != null) apply(root);
+            normalizeRetention();
+            validate();
+            loaded = true;
         } catch (Exception e) {
+            resetDefaults();
             log.error("Failed to load {}: {}", CONFIG_FILE, e.getMessage(), e);
+            throw new IllegalStateException("Invalid " + CONFIG_FILE + ": " + e.getMessage(), e);
         }
-        normalizeRetention();
     }
 
-    @SuppressWarnings("unchecked")
+    private void resetDefaults() {
+        userEnabled = true;
+        userIp = "0.0.0.0";
+        userPort = 35565;
+        userLogRetentionDays = 30;
+        yggdrasilEnabled = true;
+        yggdrasilIp = "0.0.0.0";
+        yggdrasilPort = 35577;
+        yggdrasilLogRetentionDays = 30;
+        adminEnabled = true;
+        adminIp = "0.0.0.0";
+        adminPort = 35599;
+        adminLogRetentionDays = 30;
+        logLevel = "INFO";
+        auditLogEnabled = true;
+        auditLogRetentionDays = 90;
+        pluginSystemLogEnabled = true;
+        pluginSystemLogRetentionDays = 30;
+        loaded = false;
+    }
+
     private void apply(Map<String, Object> root) {
-        Map<String, Object> services = asMap(root.get("services"));
+        Map<String, Object> services = asMap(root.get("services"), "services");
         if (services != null) {
-            Map<String, Object> user = asMap(services.get("user"));
+            Map<String, Object> user = asMap(services.get("user"), "services.user");
             if (user != null) {
-                userEnabled = bool(user.get("enabled"), userEnabled);
-                userIp = str(user.get("ip"), userIp);
-                userPort = integer(user.get("port"), userPort);
-                userLogRetentionDays = integer(user.get("logRetentionDays"), userLogRetentionDays);
+                userEnabled = bool(user.get("enabled"), userEnabled, "services.user.enabled");
+                userIp = str(user.get("ip"), userIp, "services.user.ip");
+                userPort = integer(user.get("port"), userPort, "services.user.port");
+                userLogRetentionDays = integer(user.get("logRetentionDays"), userLogRetentionDays, "services.user.logRetentionDays");
             }
-            Map<String, Object> yggdrasil = asMap(services.get("yggdrasil"));
+            Map<String, Object> yggdrasil = asMap(services.get("yggdrasil"), "services.yggdrasil");
             if (yggdrasil != null) {
-                yggdrasilEnabled = bool(yggdrasil.get("enabled"), yggdrasilEnabled);
-                yggdrasilIp = str(yggdrasil.get("ip"), yggdrasilIp);
-                yggdrasilPort = integer(yggdrasil.get("port"), yggdrasilPort);
-                yggdrasilLogRetentionDays = integer(yggdrasil.get("logRetentionDays"), yggdrasilLogRetentionDays);
+                yggdrasilEnabled = bool(yggdrasil.get("enabled"), yggdrasilEnabled, "services.yggdrasil.enabled");
+                yggdrasilIp = str(yggdrasil.get("ip"), yggdrasilIp, "services.yggdrasil.ip");
+                yggdrasilPort = integer(yggdrasil.get("port"), yggdrasilPort, "services.yggdrasil.port");
+                yggdrasilLogRetentionDays = integer(yggdrasil.get("logRetentionDays"), yggdrasilLogRetentionDays, "services.yggdrasil.logRetentionDays");
             }
-            Map<String, Object> admin = asMap(services.get("admin"));
+            Map<String, Object> admin = asMap(services.get("admin"), "services.admin");
             if (admin != null) {
-                adminEnabled = bool(admin.get("enabled"), adminEnabled);
-                adminIp = str(admin.get("ip"), adminIp);
-                adminPort = integer(admin.get("port"), adminPort);
-                adminLogRetentionDays = integer(admin.get("logRetentionDays"), adminLogRetentionDays);
+                adminEnabled = bool(admin.get("enabled"), adminEnabled, "services.admin.enabled");
+                adminIp = str(admin.get("ip"), adminIp, "services.admin.ip");
+                adminPort = integer(admin.get("port"), adminPort, "services.admin.port");
+                adminLogRetentionDays = integer(admin.get("logRetentionDays"), adminLogRetentionDays, "services.admin.logRetentionDays");
             }
         }
 
-        Map<String, Object> logging = asMap(root.get("logging"));
+        Map<String, Object> logging = asMap(root.get("logging"), "logging");
         if (logging != null) {
-            logLevel = str(logging.get("level"), logLevel);
-            Map<String, Object> audit = asMap(logging.get("audit"));
+            logLevel = str(logging.get("level"), logLevel, "logging.level");
+            Map<String, Object> audit = asMap(logging.get("audit"), "logging.audit");
             if (audit != null) {
-                auditLogEnabled = bool(audit.get("enabled"), auditLogEnabled);
-                auditLogRetentionDays = integer(audit.get("retentionDays"), auditLogRetentionDays);
+                auditLogEnabled = bool(audit.get("enabled"), auditLogEnabled, "logging.audit.enabled");
+                auditLogRetentionDays = integer(audit.get("retentionDays"), auditLogRetentionDays, "logging.audit.retentionDays");
             }
-            Map<String, Object> plugin = asMap(logging.get("pluginSystem"));
+            Map<String, Object> plugin = asMap(logging.get("pluginSystem"), "logging.pluginSystem");
             if (plugin != null) {
-                pluginSystemLogEnabled = bool(plugin.get("enabled"), pluginSystemLogEnabled);
-                pluginSystemLogRetentionDays = integer(plugin.get("retentionDays"), pluginSystemLogRetentionDays);
+                pluginSystemLogEnabled = bool(plugin.get("enabled"), pluginSystemLogEnabled, "logging.pluginSystem.enabled");
+                pluginSystemLogRetentionDays = integer(plugin.get("retentionDays"), pluginSystemLogRetentionDays, "logging.pluginSystem.retentionDays");
             }
+        }
+    }
+
+    private void validate() {
+        validateService("services.user", userIp, userPort);
+        validateService("services.yggdrasil", yggdrasilIp, yggdrasilPort);
+        validateService("services.admin", adminIp, adminPort);
+        if (!Set.of("TRACE", "DEBUG", "INFO", "WARN", "ERROR").contains(logLevel.toUpperCase(java.util.Locale.ROOT))) {
+            throw new IllegalArgumentException("logging.level must be TRACE, DEBUG, INFO, WARN, or ERROR");
+        }
+        if (userEnabled && yggdrasilEnabled && sameEndpoint(userIp, userPort, yggdrasilIp, yggdrasilPort)) {
+            throw new IllegalArgumentException("services.user and services.yggdrasil cannot bind to the same address and port");
+        }
+        if (userEnabled && adminEnabled && sameEndpoint(userIp, userPort, adminIp, adminPort)) {
+            throw new IllegalArgumentException("services.user and services.admin cannot bind to the same address and port");
+        }
+        if (yggdrasilEnabled && adminEnabled && sameEndpoint(yggdrasilIp, yggdrasilPort, adminIp, adminPort)) {
+            throw new IllegalArgumentException("services.yggdrasil and services.admin cannot bind to the same address and port");
+        }
+    }
+
+    private static void validateService(String name, String ip, int port) {
+        if (port < 1 || port > 65535) {
+            throw new IllegalArgumentException(name + ".port must be between 1 and 65535");
+        }
+        validateIp(name + ".ip", ip);
+    }
+
+    private static void validateIp(String key, String ip) {
+        if (ip == null || ip.isBlank() || !ip.equals(ip.trim()) || !ip.matches("[0-9a-fA-F:.]+")) {
+            throw new IllegalArgumentException(key + " must be an IPv4 or IPv6 address");
+        }
+        try {
+            if (!ip.contains(":")) {
+                String[] parts = ip.split("\\.", -1);
+                if (parts.length != 4) throw new IllegalArgumentException(key + " must be an IPv4 or IPv6 address");
+                for (String part : parts) {
+                    if (part.length() > 1 && part.startsWith("0")) {
+                        throw new IllegalArgumentException(key + " contains a non-canonical IPv4 octet");
+                    }
+                    int value = Integer.parseInt(part);
+                    if (value < 0 || value > 255) throw new IllegalArgumentException(key + " contains an invalid IPv4 octet");
+                }
+            } else {
+                InetAddress.getByName(ip);
+            }
+        } catch (Exception e) {
+            if (e instanceof IllegalArgumentException argumentException) throw argumentException;
+            throw new IllegalArgumentException(key + " must be a valid IP address", e);
+        }
+    }
+
+    private static boolean sameEndpoint(String firstIp, int firstPort, String secondIp, int secondPort) {
+        if (firstPort != secondPort) return false;
+        try {
+            InetAddress first = InetAddress.getByName(firstIp);
+            InetAddress second = InetAddress.getByName(secondIp);
+            return first.isAnyLocalAddress() || second.isAnyLocalAddress()
+                    || Arrays.equals(first.getAddress(), second.getAddress());
+        } catch (Exception e) {
+            return firstIp.equalsIgnoreCase(secondIp);
         }
     }
 
@@ -177,35 +264,56 @@ public class ServerConfig {
         }
     }
 
-    @SuppressWarnings("unchecked")
-    private static Map<String, Object> asMap(Object value) {
-        return (value instanceof Map) ? (Map<String, Object>) value : null;
+    private static Map<String, Object> asMap(Object value, String key) {
+        if (value == null) return null;
+        if (!(value instanceof Map<?, ?> raw)) {
+            throw new IllegalArgumentException(key + " must be a mapping");
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        for (Map.Entry<?, ?> entry : raw.entrySet()) {
+            if (!(entry.getKey() instanceof String name)) {
+                throw new IllegalArgumentException(key + " contains a non-string key");
+            }
+            result.put(name, entry.getValue());
+        }
+        return result;
     }
 
-    private static String str(Object value, String def) {
+    private static String str(Object value, String def, String key) {
         if (value == null) return def;
-        String s = String.valueOf(value).trim();
-        return s.isEmpty() ? def : s;
+        if (!(value instanceof String s) || s.isBlank()) {
+            throw new IllegalArgumentException(key + " must be a non-empty string");
+        }
+        return s.trim();
     }
 
-    private static boolean bool(Object value, boolean def) {
+    private static boolean bool(Object value, boolean def, String key) {
         if (value instanceof Boolean b) return b;
         if (value instanceof String s) {
             if ("true".equalsIgnoreCase(s.trim())) return true;
             if ("false".equalsIgnoreCase(s.trim())) return false;
         }
-        return def;
+        if (value == null) return def;
+        throw new IllegalArgumentException(key + " must be true or false");
     }
 
-    private static int integer(Object value, int def) {
-        if (value instanceof Number n) return n.intValue();
+    private static int integer(Object value, int def, String key) {
+        if (value instanceof Number n) {
+            try {
+                return new BigDecimal(n.toString()).intValueExact();
+            } catch (ArithmeticException | NumberFormatException e) {
+                throw new IllegalArgumentException(key + " must be an integer", e);
+            }
+        }
         if (value instanceof String s) {
             try {
                 return Integer.parseInt(s.trim());
-            } catch (NumberFormatException ignored) {
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException(key + " must be an integer", e);
             }
         }
-        return def;
+        if (value == null) return def;
+        throw new IllegalArgumentException(key + " must be an integer");
     }
 
     public Map<String, Integer> logRetention() {

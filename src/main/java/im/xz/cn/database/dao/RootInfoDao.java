@@ -96,6 +96,7 @@ public class RootInfoDao {
             }
         } catch (SQLException e) {
             log.error("RootInfoDao query failed: {}", e.getMessage(), e);
+            throw new RuntimeException("RootInfoDao query failed", e);
         }
         return null;
     }

@@ -81,6 +81,8 @@ function setElValue(el, value) {
         setElValue(document.getElementById('allowDownloadSkin'), s.allowDownloadSkin);
         setElValue(document.getElementById('allowDownloadCape'), s.allowDownloadCape);
         setElValue(document.getElementById('maxProfilesPerUser'), s.maxProfilesPerUser);
+        setElValue(document.getElementById('minProfileNameLength'), s.minProfileNameLength);
+        setElValue(document.getElementById('maxProfileNameLength'), s.maxProfileNameLength);
         setElValue(document.getElementById('maxAccountsPerIp'), s.maxAccountsPerIp);
         setElValue(document.getElementById('maxBlockedUsers'), s.maxBlockedUsers);
         setElValue(document.getElementById('maxFavorites'), s.maxFavorites);
@@ -175,6 +177,36 @@ async function saveSection(btn) {
     changes.forEach(function(c) { initialValues[c.key] = c.value; });
     showToast('\u4FDD\u5B58\u6210\u529F', 'success');
     return true;
+}
+
+async function saveProfileNameRange() {
+    var minEl = document.getElementById('minProfileNameLength');
+    var maxEl = document.getElementById('maxProfileNameLength');
+    if (!minEl || !maxEl) return false;
+    if (!minEl.reportValidity() || !maxEl.reportValidity()) return false;
+    var min = parseInt(minEl.value, 10);
+    var max = parseInt(maxEl.value, 10);
+    if (isNaN(min) || isNaN(max) || min < 1 || min > 64 || max < 1 || max > 64) {
+        showToast(t('admin.profiles.nameLengthRangeDesc'), 'error');
+        return false;
+    }
+    if (max < min) {
+        showToast(t('msg.profileNameRangeInvalid'), 'error');
+        return false;
+    }
+    try {
+        var res = await fetch('/admin/api/system/settings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
+            body: JSON.stringify({ key: 'profile_name_length_range', value: min + ',' + max })
+        });
+        var d = await res.json();
+        if (!d.success) { showToast(d.message || t('common.failed'), 'error'); return false; }
+        initialValues['min_profile_name_length'] = String(min);
+        initialValues['max_profile_name_length'] = String(max);
+        showToast(t('common.saveSuccess'), 'success');
+        return true;
+    } catch (err) { showToast(t('common.networkError'), 'error'); return false; }
 }
 
 async function sendTestMail() {

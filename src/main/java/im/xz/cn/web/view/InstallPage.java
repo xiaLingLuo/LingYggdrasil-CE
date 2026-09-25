@@ -33,10 +33,6 @@ public final class InstallPage {
             "<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" "
             + "stroke-linecap=\"round\" stroke-linejoin=\"round\">";
 
-    private static final String ICON_TREE =
-            "<svg viewBox=\"0 0 24 24\" fill=\"currentColor\">"
-            + "<path d=\"M12 2 6.5 9.5h3L5 15.5h5V22h4v-6.5h5l-4.5-6h3L12 2Z\"/></svg>";
-
     private static final String ICON_MOON = SVG_OPEN
             + "<path d=\"M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z\"/></svg>";
 
@@ -48,17 +44,16 @@ public final class InstallPage {
     private InstallPage() {
     }
 
-    public static String generateInstallPage(String token) {
+    public static String generateInstallPage() {
         String locale = LocaleContext.get();
         String css = readResource("/install/install.css");
         String js = readResource("/install/install.js");
         String i18n = I18n.rawJson(locale);
         String body = tr("""
-            <input type="hidden" id="install-token" value="__INSTALL_TOKEN__">
             <button type="button" class="install-theme-toggle" id="themeToggle" data-action="toggleTheme" aria-label="{{nav.theme}}" title="{{nav.theme}}">__ICON_MOON__</button>
             <div class="install-wrapper">
                 <div class="install-header">
-                    <div class="install-logo">__ICON_TREE__</div>
+                    <div class="install-logo"><img src="/icons/app.ico" alt="LingYggdrasil"></div>
                     <h1 class="install-title">{{install.title}}</h1>
                     <p class="install-subtitle">{{install.subtitle}}</p>
                 </div>
@@ -230,9 +225,7 @@ public final class InstallPage {
             </footer>
             """);
 
-        body = body.replace("__INSTALL_TOKEN__", escapeAttribute(token))
-                   .replace("__ICON_MOON__", ICON_MOON)
-                   .replace("__ICON_TREE__", ICON_TREE)
+        body = body.replace("__ICON_MOON__", ICON_MOON)
                    .replace("__ICON_DATABASE__", ICON_DATABASE)
                    .replace("__APP_VERSION__", escapeHtml(im.xz.cn.config.AppConfig.APP_VERSION));
 
@@ -245,6 +238,7 @@ public final class InstallPage {
                 + "<head>\n"
                 + "<meta charset=\"UTF-8\">\n"
                 + "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+                + "<link rel=\"icon\" type=\"image/x-icon\" href=\"/icons/app.ico\">\n"
                 + "<title>" + escapeHtml(I18n.t("msg.installWizardTitle")) + " - LingYggdrasil</title>\n"
                 + earlyTheme + "\n"
                 + "<style>\n" + css + "\n</style>\n"

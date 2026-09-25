@@ -206,9 +206,10 @@
             '</div>' +
             '<div class="form-group" style="margin-top:8px">' +
             '<label class="form-label" style="margin-bottom:4px"><i class="fas fa-share-nodes"></i> ' + window.t('friends.shareTextures') + '</label>' +
-            '<div id="friendSharedList" style="max-height:160px;overflow-y:auto;border:1px solid #FFD6E8;border-radius:8px;padding:4px">' +
-            '<p class="text-muted" style="padding:8px;font-size:12px">' + window.t('friends.loading') + '</p></div>' +
-            '</div>' +
+            '<div class="friend-share-actions">' +
+            '<button type="button" class="btn btn-secondary btn-small" id="friendShareSkinBtn"><i class="fas fa-shirt"></i> ' + window.t('friends.shareSkin') + '</button>' +
+            '<button type="button" class="btn btn-secondary btn-small" id="friendShareCapeBtn"><i class="fas fa-scroll"></i> ' + window.t('friends.shareCape') + '</button>' +
+            '</div></div>' +
             '<div class="modal-actions">' +
             '<button class="btn btn-danger" id="friendDetailDeleteBtn">' + window.t('friends.deleteFriend') + '</button>' +
             '</div></div></div>';
@@ -233,77 +234,88 @@
             deleteFriend(dataset.friendId);
         });
 
-        loadFriendShared(dataset.friendId);
+        bindShareButtons(dataset.friendId);
     }
 
-    async function loadFriendShared(friendId) {
-        var container = document.getElementById('friendSharedList');
-        if (!container) return;
+    function bindShareButtons(friendId) {
+        var skinBtn = document.getElementById('friendShareSkinBtn');
+        var capeBtn = document.getElementById('friendShareCapeBtn');
+        if (skinBtn) skinBtn.addEventListener('click', function() { openSharePicker(friendId, 'SKIN'); });
+        if (capeBtn) capeBtn.addEventListener('click', function() { openSharePicker(friendId, 'CAPE'); });
+    }
+
+    async function openSharePicker(friendId, type) {
+        var existing = document.getElementById('sharePickerModal');
+        if (existing) existing.remove();
+        var isSkin = type === 'SKIN';
         try {
-            var [skinsResp, capesResp, mySharedResp] = await Promise.all([
-                fetch('/api/skins'),
-                fetch('/api/capes'),
+            var [listResp, sharedResp] = await Promise.all([
+                fetch(isSkin ? '/api/skins' : '/api/capes'),
                 fetch('/api/friends/' + encodeURIComponent(friendId) + '/my-shared')
             ]);
-            if (skinsResp.status === 401) return;
-            var skinsData = await skinsResp.json();
-            var capesData = await capesResp.json();
-            var mySharedData = await mySharedResp.json();
-
-            var mySkins = (skinsData.success && skinsData.skins) ? skinsData.skins : [];
-            var myCapes = (capesData.success && capesData.capes) ? capesData.capes : [];
+            if (listResp.status === 401) { window.location.href = '/login'; return; }
+            var listData = await listResp.json();
+            var sharedData = await sharedResp.json();
+            var mine = isSkin ? (listData.skins || []) : (listData.capes || []);
             var sharedIds = {};
-            if (mySharedData.success && mySharedData.textures) {
-                mySharedData.textures.forEach(function(t) { sharedIds[t.id] = true; });
+            if (sharedData.success && sharedData.textures) {
+                sharedData.textures.forEach(function(t) { sharedIds[t.id] = true; });
             }
 
-            var allTextures = [];
-            mySkins.forEach(function(s) { s.type = 'SKIN'; allTextures.push(s); });
-            myCapes.forEach(function(c) { c.type = 'CAPE'; allTextures.push(c); });
-
-            if (allTextures.length === 0) {
-                container.innerHTML = '<p class="text-muted" style="padding:8px;font-size:12px">' + window.t('friends.noTextures') + '</p>';
-                return;
-            }
-
-            var html = '';
-            allTextures.forEach(function(t) {
+            var rows = '';
+            mine.forEach(function(t) {
+                if (sharedIds[t.id]) return;
                 var displayName = t.alias || t.originalName || t.hash;
-                var checked = sharedIds[t.id] ? ' checked' : '';
-                var typeLabel = t.type === 'CAPE' ? window.t('texture.cape') : window.t('texture.skin');
-                html += '<label style="display:flex;align-items:center;gap:6px;padding:4px 6px;cursor:pointer;font-size:12px;border-radius:4px;' +
-                    '" onmouseover="this.style.background=\'#FFF8FC\'" onmouseout="this.style.background=\'\'">' +
-                    '<input type="checkbox" class="friend-share-check"' + checked +
-                    ' data-tid="' + escapeHtml(t.id) + '" data-fid="' + escapeHtml(friendId) + '">' +
-                    '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' + escapeHtml(displayName) + '</span>' +
-                    '<span style="color:#999;font-size:10px">' + typeLabel + '</span></label>';
+                rows += '<label class="share-picker-row">' +
+                    '<input type="checkbox" class="share-picker-check" value="' + escapeHtml(t.id) + '">' +
+                    '<span class="share-picker-name">' + escapeHtml(displayName) + '</span></label>';
             });
-            container.innerHTML = html;
+            if (!rows) {
+                rows = '<p class="text-muted share-picker-empty">' + window.t('friends.noShareable') + '</p>';
+            }
 
-            container.querySelectorAll('.friend-share-check').forEach(function(cb) {
-                cb.addEventListener('change', function() {
-                    toggleShareTextureToFriend(this.dataset.fid, this.dataset.tid, this.checked);
-                });
+            var overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'sharePickerModal';
+            overlay.style.zIndex = '1080';
+            overlay.innerHTML = '<div class="modal-box">' +
+                '<h3>' + window.t(isSkin ? 'friends.shareSkin' : 'friends.shareCape') + '</h3>' +
+                '<div class="share-picker-list">' + rows + '</div>' +
+                '<div class="modal-actions">' +
+                '<button type="button" class="btn btn-secondary" id="sharePickerCancel">' + window.t('common.cancel') + '</button>' +
+                '<button type="button" class="btn btn-primary" id="sharePickerConfirm">' + window.t('friends.initiateShare') + '</button>' +
+                '</div></div>';
+            document.body.appendChild(overlay);
+
+            document.getElementById('sharePickerCancel').addEventListener('click', function() { overlay.remove(); });
+            overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
+            document.getElementById('sharePickerConfirm').addEventListener('click', async function() {
+                var checks = overlay.querySelectorAll('.share-picker-check:checked');
+                if (checks.length === 0) return;
+                var ok = 0, fail = 0;
+                for (var i = 0; i < checks.length; i++) {
+                    var data = await sendShare(friendId, checks[i].value);
+                    if (data && data.success) ok++; else fail++;
+                }
+                if (ok > 0) showToast(window.t('friends.shareSuccess', ok), 'success');
+                if (fail > 0) showToast(window.t('friends.sharePartial'), 'error');
+                overlay.remove();
             });
         } catch (err) {
-            container.innerHTML = '<p class="text-muted" style="padding:8px;font-size:12px">' + window.t('friends.loadFailed') + '</p>';
+            showToast(window.t('common.networkError'), 'error');
         }
     }
 
-    async function toggleShareTextureToFriend(friendId, textureId, share) {
+    async function sendShare(friendId, textureId) {
         try {
-            var url = share ? '/api/friends/share-texture' : '/api/friends/unshare-texture';
-            var resp = await fetch(url, {
+            var resp = await fetch('/api/friends/share-texture', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
                 body: JSON.stringify({ friendId: friendId, textureId: textureId })
             });
-            var data = await resp.json();
-            if (!data.success) {
-                showToast(data.message || window.t('texture.operationFailed'), 'error');
-            }
+            return await resp.json();
         } catch (err) {
-            showToast(window.t('common.networkError'), 'error');
+            return { success: false };
         }
     }
 

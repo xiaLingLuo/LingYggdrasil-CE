@@ -70,6 +70,7 @@ public class UserDao {
             }
         } catch (SQLException e) {
             log.error("UserDao.findAll failed: {}", e.getMessage(), e);
+            throw new RuntimeException("UserDao.findAll failed", e);
         }
         return users;
     }
@@ -168,6 +169,7 @@ public class UserDao {
             }
         } catch (SQLException e) {
             log.error("UserDao query failed: {}", e.getMessage(), e);
+            throw new RuntimeException("UserDao query failed", e);
         }
         return null;
     }

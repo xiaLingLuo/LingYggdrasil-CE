@@ -60,6 +60,7 @@ public class UserPermGroupDao {
             }
         } catch (SQLException e) {
             log.error("UserPermGroupDao.findAll failed: {}", e.getMessage(), e);
+            throw new RuntimeException("UserPermGroupDao.findAll failed", e);
         }
         return list;
     }
@@ -105,6 +106,7 @@ public class UserPermGroupDao {
             }
         } catch (SQLException e) {
             log.error("UserPermGroupDao query failed: {}", e.getMessage(), e);
+            throw new RuntimeException("UserPermGroupDao query failed", e);
         }
         return null;
     }

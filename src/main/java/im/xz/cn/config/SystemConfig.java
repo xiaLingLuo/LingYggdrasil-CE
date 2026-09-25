@@ -19,6 +19,7 @@ package im.xz.cn.config;
 
 import im.xz.cn.database.DatabaseManager;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import im.xz.cn.logging.logApi;
@@ -26,6 +27,68 @@ import im.xz.cn.logging.logApi;
 public class SystemConfig {
     private static final logApi log = logApi.getLogger(SystemConfig.class);
     private static SystemConfig instance;
+
+    public static final String DEFAULT_CORS_ORIGINS =
+            "http://localhost:35565\nhttp://localhost:35577\nhttp://localhost:35599\nhttp://localhost:35598";
+    public static final String DEFAULT_HEADER_CSP =
+            "default-src 'self'; script-src 'self' 'nonce-{nonce}'; style-src 'self' 'unsafe-inline'; "
+                    + "img-src 'self' data: https: http:; font-src 'self' data:; connect-src 'self'; "
+                    + "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';";
+    public static final String DEFAULT_HEADER_HSTS = "max-age=31536000; includeSubDomains; preload";
+    public static final String DEFAULT_HEADER_CONTENT_TYPE_OPTIONS = "nosniff";
+    public static final String DEFAULT_HEADER_FRAME_OPTIONS = "DENY";
+    public static final String DEFAULT_HEADER_XSS_PROTECTION = "0";
+    public static final String DEFAULT_HEADER_REFERRER_POLICY = "strict-origin-when-cross-origin";
+    public static final String DEFAULT_HEADER_PERMISSIONS_POLICY =
+            "geolocation=(), microphone=(), camera=(), payment=(), usb=()";
+    public static final String DEFAULT_HEADER_CACHE_CONTROL = "no-store";
+    public static final String DEFAULT_REQUEST_INTERVALS = """
+            /api/register 300000
+            /api/skins/upload 60000
+            /api/capes/upload 60000
+            /api/skins/delete 60000
+            /api/capes/delete 60000
+            /api/settings/email 5000
+            /api/settings/password 5000
+            /api/verify-my-email 5000
+            /api/profiles/update 5000
+            /api/profiles/create 5000
+            /api/profiles/delete 5000
+            /api/profiles/regenerate-token 5000
+            /api/friends/block 1000
+            /api/friends/unblock 1000
+            /api/friends/blocked/clear 1000
+            /api/friends/add 1000
+            /api/friends/delete 1000
+            /api/friends/request/accept 1000
+            /api/friends/request/cancel 1000
+            /api/settings/nickname 1000
+            /api/world/like 500
+            /api/world/favorite 500
+            /api/world/favorite/alias 500
+            /api/textures/visibility 500
+            /api/friends/share-texture 500
+            /api/friends/unshare-texture 500
+            /api/friends/display-profile 500
+            /api/skins/alias 500
+            /api/capes/alias 500""";
+    public static final String DEFAULT_REQUEST_RATES = """
+            /api/world/textures* 30
+            /api/friends 60
+            /api/friends/my-info 60
+            /api/friends/blocked 60
+            */shared-textures 60
+            */my-shared 60
+            /api/skins 30
+            /api/capes 30
+            /api/profiles 30
+            /api/textures/my 30
+            /api/shared/my 30
+            /api/skins/download 30
+            /api/capes/download 30
+            /api/textures/visibility 60
+            /api/announcement 60
+            /api/footer-info 60""";
 
     private String siteName = "泠 Yggdrasil";
     private String siteDescription = "Minecraft Authentication System";
@@ -78,6 +141,37 @@ public class SystemConfig {
     private boolean allowDownloadCape = true;
 
     private int encryptionLevel = 1;
+    private boolean pngValidationEnabled = true;
+    private int pngMaxWidth = 4096;
+    private int pngMaxHeight = 4096;
+    private int pngMaxPixels = 1_048_576;
+    private int pngMaxChunkSizeKib = 1024;
+    private boolean pngStrictChunkMode = true;
+    private int pngMaxConcurrent = 4;
+
+    private int minProfileNameLength = 1;
+    private int maxProfileNameLength = 16;
+
+    private String corsOrigins = DEFAULT_CORS_ORIGINS;
+    private String headerCsp = DEFAULT_HEADER_CSP;
+    private String headerHsts = DEFAULT_HEADER_HSTS;
+    private String headerContentTypeOptions = DEFAULT_HEADER_CONTENT_TYPE_OPTIONS;
+    private String headerFrameOptions = DEFAULT_HEADER_FRAME_OPTIONS;
+    private String headerXssProtection = DEFAULT_HEADER_XSS_PROTECTION;
+    private String headerReferrerPolicy = DEFAULT_HEADER_REFERRER_POLICY;
+    private String headerPermissionsPolicy = DEFAULT_HEADER_PERMISSIONS_POLICY;
+    private String headerCacheControl = DEFAULT_HEADER_CACHE_CONTROL;
+
+    private int userSessionTimeoutSeconds = 2592000;
+    private int adminSessionTimeoutSeconds = 900;
+    private int loginMaxAttemptsPerIp = 20;
+    private int loginMaxAttemptsPerAccount = 5;
+    private int loginLockoutSeconds = 900;
+    private int loginRateWindowSeconds = 60;
+    private String requestIntervals = DEFAULT_REQUEST_INTERVALS;
+    private String requestRates = DEFAULT_REQUEST_RATES;
+    private volatile Map<String, Integer> requestIntervalMap = parseRequestMap(DEFAULT_REQUEST_INTERVALS);
+    private volatile Map<String, Integer> requestRateMap = parseRequestMap(DEFAULT_REQUEST_RATES);
 
     private int tokenTempExpiry = 4320;
     private int tokenPermanentExpiry = 10080;
@@ -114,6 +208,7 @@ public class SystemConfig {
             }
         } catch (Exception e) {
             log.error("Failed to load system config from database: {}", e.getMessage(), e);
+            throw new IllegalStateException("Failed to load system config from database", e);
         }
     }
 
@@ -165,6 +260,32 @@ public class SystemConfig {
             upsertSetting(db, "allow_download_skin", String.valueOf(allowDownloadSkin));
             upsertSetting(db, "allow_download_cape", String.valueOf(allowDownloadCape));
             upsertSetting(db, "encryption_level", String.valueOf(encryptionLevel));
+            upsertSetting(db, "png_validation_enabled", String.valueOf(pngValidationEnabled));
+            upsertSetting(db, "png_max_width", String.valueOf(pngMaxWidth));
+            upsertSetting(db, "png_max_height", String.valueOf(pngMaxHeight));
+            upsertSetting(db, "png_max_pixels", String.valueOf(pngMaxPixels));
+            upsertSetting(db, "png_max_chunk_size_kib", String.valueOf(pngMaxChunkSizeKib));
+            upsertSetting(db, "png_strict_chunk_mode", String.valueOf(pngStrictChunkMode));
+            upsertSetting(db, "png_max_concurrent", String.valueOf(pngMaxConcurrent));
+            upsertSetting(db, "min_profile_name_length", String.valueOf(minProfileNameLength));
+            upsertSetting(db, "max_profile_name_length", String.valueOf(maxProfileNameLength));
+            upsertSetting(db, "cors_origins", corsOrigins);
+            upsertSetting(db, "header_csp", headerCsp);
+            upsertSetting(db, "header_hsts", headerHsts);
+            upsertSetting(db, "header_content_type_options", headerContentTypeOptions);
+            upsertSetting(db, "header_frame_options", headerFrameOptions);
+            upsertSetting(db, "header_xss_protection", headerXssProtection);
+            upsertSetting(db, "header_referrer_policy", headerReferrerPolicy);
+            upsertSetting(db, "header_permissions_policy", headerPermissionsPolicy);
+            upsertSetting(db, "header_cache_control", headerCacheControl);
+            upsertSetting(db, "user_session_timeout_seconds", String.valueOf(userSessionTimeoutSeconds));
+            upsertSetting(db, "admin_session_timeout_seconds", String.valueOf(adminSessionTimeoutSeconds));
+            upsertSetting(db, "login_max_attempts_per_ip", String.valueOf(loginMaxAttemptsPerIp));
+            upsertSetting(db, "login_max_attempts_per_account", String.valueOf(loginMaxAttemptsPerAccount));
+            upsertSetting(db, "login_lockout_seconds", String.valueOf(loginLockoutSeconds));
+            upsertSetting(db, "login_rate_window_seconds", String.valueOf(loginRateWindowSeconds));
+            upsertSetting(db, "request_intervals", requestIntervals);
+            upsertSetting(db, "request_rates", requestRates);
             upsertSetting(db, "token_temp_expiry", String.valueOf(tokenTempExpiry));
             upsertSetting(db, "token_permanent_expiry", String.valueOf(tokenPermanentExpiry));
             upsertSetting(db, "max_tokens_per_profile", String.valueOf(maxTokensPerProfile));
@@ -185,6 +306,7 @@ public class SystemConfig {
             }
         } catch (Exception e) {
             log.error("Failed to save system config to database: {}", e.getMessage(), e);
+            throw new IllegalStateException("Failed to save system config to database", e);
         }
     }
 
@@ -241,6 +363,32 @@ public class SystemConfig {
             case "allow_download_skin" -> allowDownloadSkin = Boolean.parseBoolean(value);
             case "allow_download_cape" -> allowDownloadCape = Boolean.parseBoolean(value);
             case "encryption_level" -> encryptionLevel = parseInt(value, 1);
+            case "png_validation_enabled" -> pngValidationEnabled = parseBoolean(value, true);
+            case "png_max_width" -> setPngMaxWidth(parseInt(value, 4096));
+            case "png_max_height" -> setPngMaxHeight(parseInt(value, 4096));
+            case "png_max_pixels" -> setPngMaxPixels(parseInt(value, 1_048_576));
+            case "png_max_chunk_size_kib" -> setPngMaxChunkSizeKib(parseInt(value, 1024));
+            case "png_strict_chunk_mode" -> pngStrictChunkMode = parseBoolean(value, true);
+            case "png_max_concurrent" -> setPngMaxConcurrent(parseInt(value, 4));
+            case "min_profile_name_length" -> setMinProfileNameLength(parseInt(value, 1));
+            case "max_profile_name_length" -> setMaxProfileNameLength(parseInt(value, 16));
+            case "cors_origins" -> corsOrigins = value;
+            case "header_csp" -> headerCsp = value;
+            case "header_hsts" -> headerHsts = value;
+            case "header_content_type_options" -> headerContentTypeOptions = value;
+            case "header_frame_options" -> headerFrameOptions = value;
+            case "header_xss_protection" -> headerXssProtection = value;
+            case "header_referrer_policy" -> headerReferrerPolicy = value;
+            case "header_permissions_policy" -> headerPermissionsPolicy = value;
+            case "header_cache_control" -> headerCacheControl = value;
+            case "user_session_timeout_seconds" -> userSessionTimeoutSeconds = parseInt(value, 2592000);
+            case "admin_session_timeout_seconds" -> adminSessionTimeoutSeconds = parseInt(value, 900);
+            case "login_max_attempts_per_ip" -> loginMaxAttemptsPerIp = parseInt(value, 20);
+            case "login_max_attempts_per_account" -> loginMaxAttemptsPerAccount = parseInt(value, 5);
+            case "login_lockout_seconds" -> loginLockoutSeconds = parseInt(value, 900);
+            case "login_rate_window_seconds" -> loginRateWindowSeconds = parseInt(value, 60);
+            case "request_intervals" -> setRequestIntervals(value);
+            case "request_rates" -> setRequestRates(value);
             case "token_temp_expiry" -> tokenTempExpiry = parseInt(value, 4320);
             case "token_permanent_expiry" -> tokenPermanentExpiry = parseInt(value, 10080);
             case "max_tokens_per_profile" -> maxTokensPerProfile = parseInt(value, 12);
@@ -265,6 +413,67 @@ public class SystemConfig {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
+    }
+
+    private static boolean parseBoolean(String value, boolean defaultValue) {
+        if ("true".equalsIgnoreCase(value)) return true;
+        if ("false".equalsIgnoreCase(value)) return false;
+        return defaultValue;
+    }
+
+    public static boolean isValidCorsOrigin(String origin) {
+        if (origin == null) return false;
+        String value = origin.trim();
+        if (value.isEmpty() || value.contains("*") || value.matches(".*\\s.*") || value.equalsIgnoreCase("null")) {
+            return false;
+        }
+        try {
+            java.net.URI uri = java.net.URI.create(value);
+            String scheme = uri.getScheme();
+            if (scheme == null || !(scheme.equalsIgnoreCase("http") || scheme.equalsIgnoreCase("https"))) {
+                return false;
+            }
+            if (uri.getHost() == null || uri.getHost().isBlank()) return false;
+            String path = uri.getPath();
+            return path == null || path.isEmpty() || "/".equals(path);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static boolean isValidRequestMap(String raw) {
+        if (raw == null || raw.isBlank()) return true;
+        for (String line : raw.split("\\r?\\n")) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
+            int idx = trimmed.lastIndexOf(' ');
+            if (idx <= 0) return false;
+            if (trimmed.substring(0, idx).trim().isEmpty()) return false;
+            try {
+                if (Integer.parseInt(trimmed.substring(idx + 1).trim()) <= 0) return false;
+            } catch (NumberFormatException e) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Map<String, Integer> parseRequestMap(String raw) {
+        Map<String, Integer> map = new LinkedHashMap<>();
+        if (raw == null) return map;
+        for (String line : raw.split("\\r?\\n")) {
+            String trimmed = line.trim();
+            if (trimmed.isEmpty() || trimmed.startsWith("#")) continue;
+            int idx = trimmed.lastIndexOf(' ');
+            if (idx <= 0) continue;
+            String key = trimmed.substring(0, idx).trim();
+            if (key.isEmpty()) continue;
+            try {
+                map.put(key, Integer.parseInt(trimmed.substring(idx + 1).trim()));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        return map;
     }
 
     private void upsertSetting(DatabaseManager db, String key, String value) {
@@ -477,6 +686,80 @@ public class SystemConfig {
 
     public int getEncryptionLevel() { return encryptionLevel; }
     public void setEncryptionLevel(int encryptionLevel) { this.encryptionLevel = encryptionLevel; }
+
+    public boolean isPngValidationEnabled() { return pngValidationEnabled; }
+    public void setPngValidationEnabled(boolean pngValidationEnabled) { this.pngValidationEnabled = pngValidationEnabled; }
+
+    public int getPngMaxWidth() { return pngMaxWidth; }
+    public void setPngMaxWidth(int pngMaxWidth) { this.pngMaxWidth = Math.clamp(pngMaxWidth, 1, 4096); }
+
+    public int getPngMaxHeight() { return pngMaxHeight; }
+    public void setPngMaxHeight(int pngMaxHeight) { this.pngMaxHeight = Math.clamp(pngMaxHeight, 1, 4096); }
+
+    public int getPngMaxPixels() { return pngMaxPixels; }
+    public void setPngMaxPixels(int pngMaxPixels) { this.pngMaxPixels = Math.clamp(pngMaxPixels, 1, 1_048_576); }
+
+    public int getPngMaxChunkSizeKib() { return pngMaxChunkSizeKib; }
+    public void setPngMaxChunkSizeKib(int pngMaxChunkSizeKib) { this.pngMaxChunkSizeKib = Math.clamp(pngMaxChunkSizeKib, 1, 16_384); }
+
+    public boolean isPngStrictChunkMode() { return pngStrictChunkMode; }
+    public void setPngStrictChunkMode(boolean pngStrictChunkMode) { this.pngStrictChunkMode = pngStrictChunkMode; }
+
+    public int getPngMaxConcurrent() { return pngMaxConcurrent; }
+    public void setPngMaxConcurrent(int pngMaxConcurrent) { this.pngMaxConcurrent = Math.clamp(pngMaxConcurrent, 1, 99999); }
+
+    public int getMinProfileNameLength() { return minProfileNameLength; }
+    public void setMinProfileNameLength(int minProfileNameLength) { this.minProfileNameLength = Math.clamp(minProfileNameLength, 1, 64); }
+
+    public int getMaxProfileNameLength() { return maxProfileNameLength; }
+    public void setMaxProfileNameLength(int maxProfileNameLength) { this.maxProfileNameLength = Math.clamp(maxProfileNameLength, 1, 64); }
+
+    public String getCorsOrigins() { return corsOrigins; }
+    public void setCorsOrigins(String corsOrigins) { this.corsOrigins = corsOrigins == null ? "" : corsOrigins; }
+
+    public String getHeaderCsp() { return headerCsp; }
+    public void setHeaderCsp(String headerCsp) { this.headerCsp = headerCsp == null ? "" : headerCsp; }
+    public String getHeaderHsts() { return headerHsts; }
+    public void setHeaderHsts(String headerHsts) { this.headerHsts = headerHsts == null ? "" : headerHsts; }
+    public String getHeaderContentTypeOptions() { return headerContentTypeOptions; }
+    public void setHeaderContentTypeOptions(String v) { this.headerContentTypeOptions = v == null ? "" : v; }
+    public String getHeaderFrameOptions() { return headerFrameOptions; }
+    public void setHeaderFrameOptions(String v) { this.headerFrameOptions = v == null ? "" : v; }
+    public String getHeaderXssProtection() { return headerXssProtection; }
+    public void setHeaderXssProtection(String v) { this.headerXssProtection = v == null ? "" : v; }
+    public String getHeaderReferrerPolicy() { return headerReferrerPolicy; }
+    public void setHeaderReferrerPolicy(String v) { this.headerReferrerPolicy = v == null ? "" : v; }
+    public String getHeaderPermissionsPolicy() { return headerPermissionsPolicy; }
+    public void setHeaderPermissionsPolicy(String v) { this.headerPermissionsPolicy = v == null ? "" : v; }
+    public String getHeaderCacheControl() { return headerCacheControl; }
+    public void setHeaderCacheControl(String v) { this.headerCacheControl = v == null ? "" : v; }
+
+    public int getUserSessionTimeoutSeconds() { return userSessionTimeoutSeconds; }
+    public void setUserSessionTimeoutSeconds(int v) { this.userSessionTimeoutSeconds = Math.max(1, v); }
+    public int getAdminSessionTimeoutSeconds() { return adminSessionTimeoutSeconds; }
+    public void setAdminSessionTimeoutSeconds(int v) { this.adminSessionTimeoutSeconds = Math.max(1, v); }
+
+    public int getLoginMaxAttemptsPerIp() { return loginMaxAttemptsPerIp; }
+    public void setLoginMaxAttemptsPerIp(int v) { this.loginMaxAttemptsPerIp = Math.max(1, v); }
+    public int getLoginMaxAttemptsPerAccount() { return loginMaxAttemptsPerAccount; }
+    public void setLoginMaxAttemptsPerAccount(int v) { this.loginMaxAttemptsPerAccount = Math.max(1, v); }
+    public int getLoginLockoutSeconds() { return loginLockoutSeconds; }
+    public void setLoginLockoutSeconds(int v) { this.loginLockoutSeconds = Math.max(1, v); }
+    public int getLoginRateWindowSeconds() { return loginRateWindowSeconds; }
+    public void setLoginRateWindowSeconds(int v) { this.loginRateWindowSeconds = Math.max(1, v); }
+
+    public String getRequestIntervals() { return requestIntervals; }
+    public void setRequestIntervals(String requestIntervals) {
+        this.requestIntervals = requestIntervals == null ? "" : requestIntervals;
+        this.requestIntervalMap = parseRequestMap(this.requestIntervals);
+    }
+    public String getRequestRates() { return requestRates; }
+    public void setRequestRates(String requestRates) {
+        this.requestRates = requestRates == null ? "" : requestRates;
+        this.requestRateMap = parseRequestMap(this.requestRates);
+    }
+    public Map<String, Integer> getRequestIntervalMap() { return requestIntervalMap; }
+    public Map<String, Integer> getRequestRateMap() { return requestRateMap; }
 
     public int getTokenTempExpiry() { return tokenTempExpiry; }
     public void setTokenTempExpiry(int tokenTempExpiry) { this.tokenTempExpiry = tokenTempExpiry; }

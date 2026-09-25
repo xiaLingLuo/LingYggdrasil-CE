@@ -292,6 +292,10 @@ public class UserFriendHandler {
                 return;
             }
             friendDao.deleteFriend(user.getId(), friendId);
+            friendSharedDao.deleteBetween(user.getId(), friendId);
+            for (Texture ref : textureDao.findFriendRefsBetween(user.getId(), friendId)) {
+                profileDao.clearTextureRefByHash(ref.getUserId(), ref.getType(), ref.getHash());
+            }
             textureDao.deleteFriendRefs(user.getId(), friendId);
             im.xz.cn.logging.UserActionLogger.log(user.getId(), im.xz.cn.common.IpUtil.getClientIp(ctx), "friend");
             ctx.json(Map.of("success", true, "message", I18n.t("msg.friendDeleted")));
@@ -324,6 +328,10 @@ public class UserFriendHandler {
                 return;
             }
             blockDao.block(user.getId(), targetId);
+            friendSharedDao.deleteBetween(user.getId(), targetId);
+            for (Texture ref : textureDao.findFriendRefsBetween(user.getId(), targetId)) {
+                profileDao.clearTextureRefByHash(ref.getUserId(), ref.getType(), ref.getHash());
+            }
             textureDao.deleteAllRefsBetweenUsers(user.getId(), targetId);
             var pending = confirmingDao.findByUser(user.getId());
             for (var p : pending) {

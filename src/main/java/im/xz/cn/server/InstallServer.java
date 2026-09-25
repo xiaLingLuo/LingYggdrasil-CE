@@ -23,25 +23,17 @@ import im.xz.cn.i18n.LocaleContext;
 import im.xz.cn.i18n.LocaleResolver;
 import im.xz.cn.server.handler.install.InstallHandler;
 
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.SecureRandom;
-import java.util.Base64;
-
 import im.xz.cn.logging.logApi;
 
 public class InstallServer {
     private static final logApi logger = logApi.getLogger(InstallServer.class);
 
-    private static final String TOKEN_FILE = ".INSTALL_TOKEN";
-    private static final String BIND_HOST = "127.0.0.1";
+    private static final String BIND_HOST = "0.0.0.0";
     private static final int PORT = 35598;
 
     private Javalin app;
 
     public void start() {
-        String token = generateOrLoadToken();
-        InstallHandler.setInstallToken(token);
         InstallHandler.setInstallServer(this);
 
         app = Javalin.create(config -> {
@@ -56,6 +48,7 @@ public class InstallServer {
             config.routes.after(ctx -> LocaleContext.clear());
 
             config.routes.get("/", InstallHandler::renderInstallPage);
+            config.routes.get("/icons/{name}", InstallHandler::serveIcon);
             config.routes.get("/api/status", InstallHandler::getStatus);
             config.routes.post("/api/install", InstallHandler::doInstall);
         });
@@ -68,31 +61,6 @@ public class InstallServer {
         if (app != null) {
             app.stop();
             logger.info("[InstallServer] 安装向导已停止");
-        }
-    }
-
-    private String generateOrLoadToken() {
-        try {
-            Path path = Path.of(TOKEN_FILE);
-            if (Files.exists(path)) {
-                return Files.readString(path).trim();
-            }
-            SecureRandom random = new SecureRandom();
-            byte[] bytes = new byte[32];
-            random.nextBytes(bytes);
-            String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
-            Files.writeString(path, token);
-            return token;
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to generate install token", e);
-        }
-    }
-
-    public static void deleteTokenFile() {
-        try {
-            Files.deleteIfExists(Path.of(TOKEN_FILE));
-        } catch (Exception e) {
-            logger.error("Failed to delete install token file: {}", e.getMessage(), e);
         }
     }
 }

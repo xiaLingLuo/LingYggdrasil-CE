@@ -18,6 +18,11 @@
 package im.xz.cn.database.dao;
 
 import im.xz.cn.database.DatabaseManager;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 public class TextureMetaDao {
     private final DatabaseManager db;
 
@@ -31,6 +36,25 @@ public class TextureMetaDao {
             return (String) result.get("admin_alias");
         }
         return null;
+    }
+
+    public Map<String, String> getAdminAliases(List<String> hashes) {
+        Map<String, String> aliases = new LinkedHashMap<>();
+        if (hashes == null || hashes.isEmpty()) return aliases;
+        int batchSize = 500;
+        for (int offset = 0; offset < hashes.size(); offset += batchSize) {
+            List<String> batch = hashes.subList(offset, Math.min(offset + batchSize, hashes.size()));
+            String placeholders = String.join(",", java.util.Collections.nCopies(batch.size(), "?"));
+            List<Object> params = new ArrayList<>(batch);
+            for (Map<String, Object> row : db.executeQuery(
+                    "SELECT hash, admin_alias FROM texture_meta WHERE hash IN (" + placeholders + ")",
+                    params.toArray())) {
+                String hash = String.valueOf(row.get("hash"));
+                Object alias = row.get("admin_alias");
+                aliases.put(hash, alias == null ? null : String.valueOf(alias));
+            }
+        }
+        return aliases;
     }
 
     public void setAdminAlias(String hash, String alias) {

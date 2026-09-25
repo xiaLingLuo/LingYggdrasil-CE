@@ -23,6 +23,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import im.xz.cn.auth.SessionManager;
 import im.xz.cn.config.SystemConfig;
+import im.xz.cn.database.DatabaseManager;
+import im.xz.cn.database.dao.ProfileDao;
 import im.xz.cn.database.dao.TextureDao;
 import im.xz.cn.database.dao.TextureVisibilityDao;
 import im.xz.cn.database.dao.UserDao;
@@ -48,13 +50,15 @@ public class UserCapeHandler {
     private final UserDao userDao;
     private final TextureVisibilityDao visibilityDao;
     private final SystemConfig systemConfig;
+    private final ProfileDao profileDao;
 
-    public UserCapeHandler(TextureDao textureDao, TextureService textureService, UserDao userDao, TextureVisibilityDao visibilityDao, SystemConfig systemConfig) {
+    public UserCapeHandler(TextureDao textureDao, TextureService textureService, UserDao userDao, TextureVisibilityDao visibilityDao, SystemConfig systemConfig, ProfileDao profileDao) {
         this.textureDao = textureDao;
         this.textureService = textureService;
         this.userDao = userDao;
         this.visibilityDao = visibilityDao;
         this.systemConfig = systemConfig;
+        this.profileDao = profileDao;
     }
 
     public void capesPage(Context ctx) {
@@ -69,6 +73,8 @@ public class UserCapeHandler {
         User user = checkAuth(ctx);
         if (user == null) return;
         List<Texture> capes = textureDao.findSelfUploaded(user.getId(), "CAPE");
+        Map<String, Boolean> visibility = visibilityDao.batchGetVisibility(
+                user.getId(), capes.stream().map(Texture::getId).toList());
         ctx.json(Map.of("success", true, "capes", capes.stream().map(t -> {
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", t.getId());
@@ -77,7 +83,7 @@ public class UserCapeHandler {
             map.put("hash", t.getHash());
             map.put("size", t.getSize());
             map.put("createdAt", t.getCreatedAt());
-            map.put("isPublic", visibilityDao.isPublic(user.getId(), t.getId()));
+            map.put("isPublic", visibility.getOrDefault(t.getId(), false));
             return map;
         }).toList()));
     }
@@ -100,28 +106,67 @@ public class UserCapeHandler {
             return;
         }
 
-        byte[] data;
+        long maxBytes = textureService.getMaxUploadBytes("CAPE");
+        int maxSize = (int) (maxBytes / 1024L);
+        if (file.size() > maxBytes) {
+            ctx.json(Map.of("success", false, "message", I18n.t("msg.fileTooLargeParam", maxSize)));
+            return;
+        }
+
+        TextureService.PngUploadResult uploadResult;
         try (var in = file.content()) {
-            data = in.readAllBytes();
+            uploadResult = textureService.readAndNormalizePng(in, "CAPE");
         } catch (Exception e) {
             ctx.json(Map.of("success", false, "message", I18n.t("msg.readFailed")));
             return;
         }
 
-        if (!TextureService.isPng(data)) {
-            ctx.json(Map.of("success", false, "message", I18n.t("msg.fileNotPng")));
-            return;
+        try (uploadResult) {
+            processCapeUpload(ctx, user, file, uploadResult, maxSize);
         }
+    }
 
-        long size = data.length;
-        int maxSize = textureService.getMaxSize("CAPE");
-        if (size > maxSize * 1024L) {
+    private void processCapeUpload(Context ctx, User user, UploadedFile file,
+                                  TextureService.PngUploadResult uploadResult, int maxSize) {
+        if (uploadResult.status() == TextureService.PngUploadStatus.TOO_LARGE) {
             ctx.json(Map.of("success", false, "message", I18n.t("msg.fileTooLargeParam", maxSize)));
             return;
         }
-
-        if (!textureService.checkRateLimit(user.getId(), "CAPE")) {
-            ctx.json(Map.of("success", false, "message", I18n.t("msg.uploadRateLimited")));
+        if (uploadResult.status() == TextureService.PngUploadStatus.BUSY) {
+            ctx.status(429).json(Map.of("success", false, "message", I18n.t("msg.uploadRateLimited")));
+            return;
+        }
+        String sourceHash = uploadResult.sourceHash();
+        Texture sameUserExisting = sourceHash == null ? null
+                : textureDao.findByUserAndHash(user.getId(), "CAPE", sourceHash);
+        if (sameUserExisting != null) {
+            ctx.json(Map.of("success", false,
+                    "message", I18n.t("msg.capeExists", existingTextureName(sameUserExisting))));
+            return;
+        }
+        if (uploadResult.status() != TextureService.PngUploadStatus.VALID) {
+            if (Boolean.TRUE.equals(ctx.attribute("uploadRateLimited"))) {
+                ctx.status(429).json(Map.of("success", false, "message", I18n.t("msg.tooFrequent")));
+                return;
+            }
+            ctx.json(Map.of("success", false, "message", I18n.t("msg.fileNotPng")));
+            return;
+        }
+        byte[] data = uploadResult.data();
+        long size = data.length;
+        String hash = textureService.computeHash(data);
+        if (!hash.equals(sourceHash)) {
+            sameUserExisting = textureDao.findByUserAndHash(user.getId(), "CAPE", hash);
+        } else {
+            sameUserExisting = null;
+        }
+        if (sameUserExisting != null) {
+            ctx.json(Map.of("success", false,
+                    "message", I18n.t("msg.capeExists", existingTextureName(sameUserExisting))));
+            return;
+        }
+        if (Boolean.TRUE.equals(ctx.attribute("uploadRateLimited"))) {
+            ctx.status(429).json(Map.of("success", false, "message", I18n.t("msg.tooFrequent")));
             return;
         }
 
@@ -144,21 +189,15 @@ public class UserCapeHandler {
             return;
         }
 
-        String hash = textureService.computeHash(data);
-
-        Texture sameUserExisting = textureDao.findByUserAndHash(user.getId(), "CAPE", hash);
-        if (sameUserExisting != null) {
-            ctx.json(Map.of("success", false, "message", I18n.t("msg.capeExists")));
-            return;
-        }
-
         try {
             Texture globalExisting = textureDao.findByHash("CAPE", hash);
+            if (!textureService.tryRecordUpload(user.getId(), "CAPE")) {
+                ctx.json(Map.of("success", false, "message", I18n.t("msg.uploadRateLimited")));
+                return;
+            }
             if (globalExisting == null) {
                 textureService.saveFile("CAPE", hash, data);
             }
-
-            textureService.recordUpload(user.getId(), "CAPE");
 
             String sanitizedOriginal = systemConfig.sanitizeTextureFileName(file.filename(), false);
             String alias = explicitAlias;
@@ -181,9 +220,23 @@ public class UserCapeHandler {
             im.xz.cn.logging.UserActionLogger.log(user.getId(), im.xz.cn.common.IpUtil.getClientIp(ctx), "texture");
             ctx.json(Map.of("success", true, "message", I18n.t("msg.uploadSuccess")));
         } catch (Exception e) {
+            if (DatabaseManager.isDuplicateKeyViolation(e)) {
+                Texture duplicate = textureDao.findByUserAndHash(user.getId(), "CAPE", hash);
+                if (duplicate != null) {
+                    ctx.json(Map.of("success", false,
+                            "message", I18n.t("msg.capeExists", existingTextureName(duplicate))));
+                    return;
+                }
+            }
             log.error("[UserCapeHandler] upload failed: {}", e.getMessage(), e);
             ctx.json(Map.of("success", false, "message", I18n.t("msg.uploadFailed")));
         }
+    }
+
+    private static String existingTextureName(Texture texture) {
+        if (texture.getAlias() != null && !texture.getAlias().isBlank()) return texture.getAlias();
+        if (texture.getOriginalName() != null && !texture.getOriginalName().isBlank()) return texture.getOriginalName();
+        return texture.getHash() == null ? "" : texture.getHash();
     }
 
     public void deleteCape(Context ctx) {
@@ -200,19 +253,29 @@ public class UserCapeHandler {
                 return;
             }
             Texture texture = textureDao.findById(id);
-            if (texture == null || !texture.getUserId().equals(user.getId())) {
+            if (texture == null || !texture.getUserId().equals(user.getId()) || !isSelfReference(texture)) {
                 ctx.json(Map.of("success", false, "message", I18n.t("msg.textureNotFound")));
                 return;
             }
             textureDao.delete(id);
-            if (textureDao.countByHash("CAPE", texture.getHash()) == 0) {
-                textureService.deleteFile("CAPE", texture.getHash());
-            }
+            revokeSharedRefs("CAPE", texture.getHash(), user.getId());
             im.xz.cn.logging.UserActionLogger.log(user.getId(), im.xz.cn.common.IpUtil.getClientIp(ctx), "texture");
             ctx.json(Map.of("success", true, "message", I18n.t("msg.textureDeleted")));
         } catch (Exception e) {
             ctx.json(Map.of("success", false, "message", I18n.t("msg.requestError")));
         }
+    }
+
+    private static boolean isSelfReference(Texture texture) {
+        String referenceType = texture.getReferenceType();
+        return referenceType == null || referenceType.isBlank() || "self".equalsIgnoreCase(referenceType);
+    }
+
+    private void revokeSharedRefs(String type, String hash, String ownerId) {
+        for (Texture ref : textureDao.findRefsByOwner(type, hash, ownerId)) {
+            profileDao.clearTextureRefByHash(ref.getUserId(), type, hash);
+        }
+        textureDao.deleteRefsByOwner(type, hash, ownerId);
     }
 
     public void updateAlias(Context ctx) {

@@ -10,7 +10,7 @@
 
 ```text
 运行目录/
-├── LingYggdrasil-2.2.7.jar
+├── LingYggdrasil-2.3.5.jar
 ├── plugins/
 │   ├── plugins-state.json   # 启停状态（自动生成，只增不减）
 │   ├── HelloWorld.jar       # 你的插件
@@ -66,7 +66,7 @@ yggdrasil, yggdrasil-main, yggdrasil-api, ling
 name: HelloWorld
 ver: '1.0.0'
 main: com.example.helloworld.HelloWorld
-apiVer: '2.2.7'
+apiVer: '2.3.5'
 hotReloadable: true
 friendlyName: 你好世界
 authors: [ LingYggdrasilTeam ]
@@ -87,10 +87,10 @@ perms:
 
 ## 3. apiVer 兼容规则
 
-插件 API 版本与主程序版本**同步发布**，当前为 `2.2.7`（取自 `pom.xml`）。
+插件 API 版本与主程序版本**同步发布**，当前为 `2.3.5`（取自 `pom.xml`）。
 
-- 单值 `2.2.7` → 必须**精确等于**服务端 API 版本才兼容。
-- 区间 `2.2.0to2.2.7` → 服务端版本落在闭区间 `[2.2.0, 2.2.7]` 内即兼容。
+- 单值 `2.3.5` → 必须**精确等于**服务端 API 版本才兼容。
+- 区间 `2.2.0to2.3.5` → 服务端版本落在闭区间 `[2.2.0, 2.3.5]` 内即兼容。
 
 不兼容的插件会显示为「版本不兼容」，只展示元信息，不加载代码。
 
@@ -103,7 +103,7 @@ perms:
 构建主程序时会同步生成插件开发 API jar：
 
 ```text
-target/LingYggdrasil-plugin-api-2.2.7.jar
+target/LingYggdrasil-plugin-api-2.3.5.jar
 ```
 
 该 jar **自包含**（含 `im.xz.cn.plugin.api` 及公开签名引用的服务端类型），插件只需依赖它即可编译。
@@ -145,7 +145,7 @@ public class HelloWorld extends LingPlugin {
 将编译后的类与 `plugin.yml`（位于 jar 根）一起打包：
 
 ```bash
-javac -cp LingYggdrasil-plugin-api-2.2.7.jar -d out src/**/*.java
+javac -cp LingYggdrasil-plugin-api-2.3.5.jar -d out src/**/*.java
 jar cf HelloWorld.jar -C out . -C resources plugin.yml
 ```
 
@@ -218,18 +218,18 @@ context.registerYggdrasilRoute("GET", "/hello/hello", (request, response) ->
 
 ### 6.4 PluginContext 能力
 
-| 方法 | 说明 |
-|------|------|
-| `getName()` / `getFriendlyName()` / `getVersion()` | 元信息 |
-| `getDataFolder()` | 插件私有目录 `plugins/<name>/`（按需创建） |
-| `getLogger()` | 统一日志（写入 `plugins/<name>/logs/<name>-<日期>.log`） |
-| `getDatabaseManager()` | 数据库访问 |
-| `getSystemConfig()` | 系统配置 |
-| `getServerDirectory()` | 服务器运行目录 |
-| `registerMenu(PluginMenu)` | 注册二级菜单 |
-| `registerApiRoute(path, handler)` | 注册管理后台命名空间 API |
-| `registerUserRoute(method, path, handler)` | 注册用户端路由 |
-| `registerYggdrasilRoute(method, path, handler)` | 注册世界树 API 路由 |
+| 方法                                               | 说明                                                     |
+|----------------------------------------------------|----------------------------------------------------------|
+| `getName()` / `getFriendlyName()` / `getVersion()` | 元信息                                                   |
+| `getDataFolder()`                                  | 插件私有目录 `plugins/<name>/`（按需创建）               |
+| `getLogger()`                                      | 统一日志（写入 `plugins/<name>/logs/<name>-<日期>.log`） |
+| `getDatabaseManager()`                             | 数据库访问                                               |
+| `getSystemConfig()`                                | 系统配置                                                 |
+| `getServerDirectory()`                             | 服务器运行目录                                           |
+| `registerMenu(PluginMenu)`                         | 注册二级菜单                                             |
+| `registerApiRoute(path, handler)`                  | 注册管理后台命名空间 API                                 |
+| `registerUserRoute(method, path, handler)`         | 注册用户端路由                                           |
+| `registerYggdrasilRoute(method, path, handler)`    | 注册世界树 API 路由                                      |
 
 ---
 

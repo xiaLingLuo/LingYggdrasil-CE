@@ -58,6 +58,7 @@ public class TokenDao {
             }
         } catch (SQLException e) {
             log.error("TokenDao.findByUserId failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TokenDao.findByUserId failed", e);
         }
         return tokens;
     }
@@ -105,6 +106,7 @@ public class TokenDao {
             }
         } catch (SQLException e) {
             log.error("TokenDao query failed: {}", e.getMessage(), e);
+            throw new RuntimeException("TokenDao query failed", e);
         }
         return null;
     }

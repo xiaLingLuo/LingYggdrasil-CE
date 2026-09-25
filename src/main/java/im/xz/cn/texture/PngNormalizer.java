@@ -153,6 +153,9 @@ public class PngNormalizer {
         public Builder strictChunkMode(boolean strict) { this.strictChunkMode = strict; return this; }
 
         public PngNormalizer build() {
+            if (maxFileSize < 1 || maxChunkSize < 1 || maxWidth < 1 || maxHeight < 1 || maxPixels < 1) {
+                throw new IllegalArgumentException("PNG limits must be positive");
+            }
             return new PngNormalizer(maxFileSize, maxChunkSize, maxWidth, maxHeight, maxPixels,
                     allowedAuxChunks, strictChunkMode);
         }
@@ -168,7 +171,21 @@ public class PngNormalizer {
             if (fileData == null) {
                 return new Result(false, null, "File too large (exceeds " + maxFileSize + " bytes)");
             }
+            return normalize(fileData);
+        } catch (IOException e) {
+            LOGGER.warn("IO error during PNG processing", e);
+            return new Result(false, null, "IO error: " + e.getMessage());
+        }
+    }
 
+    public Result normalize(byte[] fileData) {
+        try {
+            if (fileData == null || fileData.length == 0) {
+                return new Result(false, null, "Empty PNG data");
+            }
+            if (fileData.length > maxFileSize) {
+                return new Result(false, null, "File too large (exceeds " + maxFileSize + " bytes)");
+            }
             CriticalChunks critical;
             try (InputStream in = new ByteArrayInputStream(fileData)) {
                 critical = parseAndCollectCriticalChunks(in, fileData.length);
@@ -192,17 +209,20 @@ public class PngNormalizer {
             }
 
             byte[] finalPng = generatePurePng(image);
+            if (finalPng.length > maxFileSize) {
+                return new Result(false, null, "Normalized PNG exceeds the configured size limit");
+            }
             return new Result(true, finalPng, "Success");
 
         } catch (InvalidPngException e) {
             LOGGER.warn("PNG validation failed: {}", e.getMessage(), e);
             return new Result(false, null, e.getMessage());
-        } catch (IOException e) {
-            LOGGER.warn("IO error during PNG processing", e);
-            return new Result(false, null, "IO error: " + e.getMessage());
         } catch (OutOfMemoryError e) {
             LOGGER.error("OOM while processing PNG", e);
             return new Result(false, null, "Out of memory");
+        } catch (IOException e) {
+            LOGGER.warn("IO error during PNG processing", e);
+            return new Result(false, null, "IO error: " + e.getMessage());
         }
     }
 
@@ -299,7 +319,8 @@ public class PngNormalizer {
             } else {
                 if (!ihdrFound) throw new InvalidPngException("Aux chunk before IHDR");
                 if (!allowedAuxChunks.contains(chunkType)) {
-                    if (strictChunkMode) {
+                    boolean criticalChunk = (typeBytes[0] & 0x20) == 0;
+                    if (strictChunkMode || criticalChunk) {
                         throw new InvalidPngException("Disallowed auxiliary chunk: " + str(typeBytes));
                     } else {
                         LOGGER.debug("Ignored non-critical auxiliary chunk: {}", str(typeBytes));

@@ -495,7 +495,7 @@
         apiPost(settingsBase() + '/api/settings/theme', { theme: next }).catch(function () {  });
     }
 
-    function t(key, args) {
+    function t(key) {
         var node = global.__I18N__;
         if (!node) return key;
         var parts = String(key).split('.');
@@ -504,11 +504,10 @@
             node = node[parts[i]];
         }
         if (typeof node !== 'string') return key;
-        if (args !== null && args !== undefined) {
-            var list = Array.isArray(args) ? args : [args];
-            for (var j = 0; j < list.length; j++) {
-                node = node.replace('{' + j + '}', list[j] === null || list[j] === undefined ? '' : String(list[j]));
-            }
+        var list = Array.prototype.slice.call(arguments, 1);
+        if (list.length === 1 && Array.isArray(list[0])) list = list[0];
+        for (var j = 0; j < list.length; j++) {
+            node = node.replace('{' + j + '}', list[j] === null || list[j] === undefined ? '' : String(list[j]));
         }
         return node;
     }

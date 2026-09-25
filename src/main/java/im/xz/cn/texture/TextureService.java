@@ -24,21 +24,56 @@ import im.xz.cn.logging.logApi;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.security.MessageDigest;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class TextureService {
+    public static final long MAX_UPLOAD_BYTES = 16L * 1024L * 1024L;
+
     private static final logApi log = logApi.getLogger(TextureService.class);
+    private static final AtomicInteger PNG_ACTIVE = new AtomicInteger();
     private static final byte[] PNG_MAGIC = {
         (byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A
     };
 
     private final SystemConfig systemConfig;
     private final CacheDao cacheDao;
+
+    public enum PngUploadStatus {
+        VALID,
+        INVALID,
+        TOO_LARGE,
+        BUSY
+    }
+
+    public static final class PngUploadResult implements AutoCloseable {
+        private final byte[] data;
+        private final String sourceHash;
+        private final PngUploadStatus status;
+        private boolean permitHeld;
+
+        private PngUploadResult(byte[] data, String sourceHash, PngUploadStatus status, boolean permitHeld) {
+            this.data = data;
+            this.sourceHash = sourceHash;
+            this.status = status;
+            this.permitHeld = permitHeld;
+        }
+
+        public byte[] data() { return data; }
+        public String sourceHash() { return sourceHash; }
+        public PngUploadStatus status() { return status; }
+
+        @Override
+        public synchronized void close() {
+            if (!permitHeld) return;
+            permitHeld = false;
+            PNG_ACTIVE.decrementAndGet();
+        }
+    }
 
     public TextureService(SystemConfig systemConfig, CacheDao cacheDao) {
         this.systemConfig = systemConfig;
@@ -152,36 +187,69 @@ public class TextureService {
         return false;
     }
 
-    public boolean checkRateLimit(String userId, String type) {
+    public boolean tryRecordUpload(String userId, String type) {
         int rateLimit = getRateLimit(type);
         if (rateLimit < 0) return true;
-        String date = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
+        String date = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE);
         String key = "texture_limit:" + userId + ":" + type + ":" + date;
-        String current = cacheDao.get(key);
-        if (current == null) {
-            return true;
+        return cacheDao.incrementAndGet(key, "texture_limit", 86400) <= rateLimit;
+    }
+
+    public long getMaxUploadBytes(String type) {
+        long configuredBytes = Math.max(0L, getMaxSize(type)) * 1024L;
+        return Math.min(configuredBytes, MAX_UPLOAD_BYTES);
+    }
+
+    public PngUploadResult readAndNormalizePng(InputStream input, String type) throws IOException {
+        if (!tryAcquirePngSlot()) {
+            return new PngUploadResult(null, null, PngUploadStatus.BUSY, false);
         }
+        boolean permitTransferred = false;
         try {
-            int count = Integer.parseInt(current);
-            return count < rateLimit;
-        } catch (NumberFormatException e) {
-            return true;
+            int maxBytes = (int) getMaxUploadBytes(type);
+            byte[] data = input.readNBytes(maxBytes + 1);
+            if (data.length > maxBytes) {
+                return new PngUploadResult(null, null, PngUploadStatus.TOO_LARGE, false);
+            }
+            if (maxBytes == 0) {
+                return new PngUploadResult(null, null, PngUploadStatus.TOO_LARGE, false);
+            }
+            if (!isPng(data)) {
+                return new PngUploadResult(null, null, PngUploadStatus.INVALID, false);
+            }
+            String sourceHash = computeHash(data);
+            if (!systemConfig.isPngValidationEnabled()) {
+                PngUploadResult result = new PngUploadResult(data, sourceHash, PngUploadStatus.VALID, true);
+                permitTransferred = true;
+                return result;
+            }
+            PngNormalizer.Result normalized = new PngNormalizer.Builder()
+                    .maxFileSize(maxBytes)
+                    .maxChunkSize((long) systemConfig.getPngMaxChunkSizeKib() * 1024L)
+                    .maxWidth(systemConfig.getPngMaxWidth())
+                    .maxHeight(systemConfig.getPngMaxHeight())
+                    .maxPixels(systemConfig.getPngMaxPixels())
+                    .strictChunkMode(systemConfig.isPngStrictChunkMode())
+                    .build()
+                    .normalize(data);
+            if (!normalized.isSuccess()) {
+                return new PngUploadResult(null, sourceHash, PngUploadStatus.INVALID, false);
+            }
+            PngUploadResult result = new PngUploadResult(normalized.getPngData(), sourceHash, PngUploadStatus.VALID, true);
+            permitTransferred = true;
+            return result;
+        } finally {
+            if (!permitTransferred) PNG_ACTIVE.decrementAndGet();
         }
     }
 
-    public void recordUpload(String userId, String type) {
-        int rateLimit = getRateLimit(type);
-        if (rateLimit < 0) return;
-        String date = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE);
-        String key = "texture_limit:" + userId + ":" + type + ":" + date;
-        String current = cacheDao.get(key);
-        int count = 1;
-        if (current != null) {
-            try {
-                count = Integer.parseInt(current) + 1;
-            } catch (NumberFormatException ignored) {}
+    private static boolean tryAcquirePngSlot() {
+        int max = Math.max(1, SystemConfig.getInstance().getPngMaxConcurrent());
+        if (PNG_ACTIVE.incrementAndGet() > max) {
+            PNG_ACTIVE.decrementAndGet();
+            return false;
         }
-        cacheDao.put(key, String.valueOf(count), "texture_limit", 86400);
+        return true;
     }
 
     public boolean checkCountLimit(String userId, String type, int currentCount, int maxCount) {

@@ -248,24 +248,8 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: 0.2px; }
 }
 
 .install-header { text-align: center; margin-bottom: var(--space-8); }
-.install-logo {
-    width: 76px;
-    height: 76px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-xl);
-    color: #fff;
-    background: linear-gradient(135deg, var(--color-primary), var(--color-accent-purple));
-    box-shadow: var(--shadow-glow);
-    margin-bottom: var(--space-4);
-    animation: logoFloat 3s ease-in-out infinite;
-}
-.install-logo svg { width: 40px; height: 40px; }
-@keyframes logoFloat {
-    0%, 100% { transform: translateY(0); }
-    50%       { transform: translateY(-8px); }
-}
+.install-logo { display: inline-flex; margin-bottom: var(--space-4); }
+.install-logo img { width: 76px; height: 76px; object-fit: contain; }
 .install-title {
     font-family: var(--font-display);
     font-size: var(--text-xl);

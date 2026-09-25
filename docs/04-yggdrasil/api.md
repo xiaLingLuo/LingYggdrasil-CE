@@ -37,7 +37,7 @@
   "meta": {
     "serverName": "LingYggdrasil",
     "implementationName": "LingYggdrasil",
-    "implementationVersion": "2.2.7"
+    "implementationVersion": "2.3.5"
   },
   "skinDomains": ["example.com", "api.example.com"],
   "signaturePublickey": "-----BEGIN PUBLIC KEY-----\n..."

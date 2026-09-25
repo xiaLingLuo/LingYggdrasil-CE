@@ -26,17 +26,17 @@ mvn -DskipTests package
 构建产物：
 
 ```text
-target/LingYggdrasil-2.2.7.jar              # 主程序（含依赖，可执行）
-target/LingYggdrasil-plugin-api-2.2.7.jar   # 插件开发 API（自包含）
+target/LingYggdrasil-2.3.5.jar              # 主程序（含依赖，可执行）
+target/LingYggdrasil-plugin-api-2.3.5.jar   # 插件开发 API（自包含）
 ```
 
-`LingYggdrasil-2.2.7.jar` 通过 `maven-assembly-plugin` 打包为**含依赖的可执行 JAR**，可直接运行：
+`LingYggdrasil-2.3.5.jar` 通过 `maven-assembly-plugin` 打包为**含依赖的可执行 JAR**，可直接运行：
 
 ```bash
-java -jar target/LingYggdrasil-2.2.7.jar
+java -jar target/LingYggdrasil-2.3.5.jar
 ```
 
-`LingYggdrasil-plugin-api-2.2.7.jar` 由 `maven-antrun-plugin` 在 `package` 阶段生成，仅包含插件开发所需的 API 类型及其公开签名引用的服务端类型，供插件开发者编译使用。版本号统一取自 `pom.xml` 的 `${project.version}`，无需单独维护。
+`LingYggdrasil-plugin-api-2.3.5.jar` 由 `maven-antrun-plugin` 在 `package` 阶段生成，仅包含插件开发所需的 API 类型及其公开签名引用的服务端类型，供插件开发者编译使用。版本号统一取自 `pom.xml` 的 `${project.version}`，无需单独维护。
 
 ## 主要依赖
 

@@ -68,6 +68,7 @@ public class FriendDao {
             }
         } catch (SQLException e) {
             log.error("FriendDao.findByUserId failed: {}", e.getMessage(), e);
+            throw new RuntimeException("FriendDao.findByUserId failed", e);
         }
         return friends;
     }

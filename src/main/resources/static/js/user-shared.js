@@ -19,57 +19,62 @@
 var shared = (function() {
     async function loadShared() {
         try {
-            var resp = await fetch('/api/shared/my');
-            if (resp.status === 401) { window.location.href = '/login'; return; }
-            var data = await resp.json();
-            if (!data.success) { showToast(t('shared.loadFailed'), 'error'); return; }
+            var results = await Promise.all([
+                fetch('/api/shared/outgoing'),
+                fetch('/api/shared/incoming'),
+                fetch('/api/shared/my')
+            ]);
+            if (results.some(function(r) { return r.status === 401; })) {
+                window.location.href = '/login';
+                return;
+            }
+            var outgoing = await results[0].json();
+            var incoming = await results[1].json();
+            var mine = await results[2].json();
 
-            var friendTex = (data.friendShared || []).map(function(t) { t.source = 'friend'; return t; });
-            var favTex = (data.favorites || []).map(function(t) { t.source = 'favorite'; return t; });
-            var seen = {};
-            var all = [];
-            friendTex.concat(favTex).forEach(function(t) {
-                if (!seen[t.id]) { seen[t.id] = true; all.push(t); }
-            });
-            renderAll(all);
+            renderGrid('outgoingGrid', outgoing.success ? (outgoing.textures || []) : [], 'outgoing',
+                t('shared.emptyOutgoing'));
+            renderGrid('incomingGrid', incoming.success ? (incoming.textures || []) : [], 'incoming',
+                t('shared.emptyIncoming'));
+            renderGrid('favoritesGrid', mine.success ? (mine.favorites || []) : [], 'favorite',
+                t('shared.empty'));
         } catch (err) {
             showToast(t('common.networkError'), 'error');
         }
     }
 
-    function renderAll(textures) {
-        var grid = document.getElementById('sharedGrid');
+    function renderGrid(gridId, textures, mode, emptyText) {
+        var grid = document.getElementById(gridId);
         if (!grid) return;
-
         if (!textures || textures.length === 0) {
-            grid.innerHTML = '<p class="text-muted" style="grid-column:1/-1">' + t('shared.empty') + '</p>';
+            grid.innerHTML = '<p class="text-muted" style="grid-column:1/-1">' + escapeHtml(emptyText) + '</p>';
             return;
         }
-
         grid.innerHTML = '';
         textures.forEach(function(t) {
             var displayName = t.favoriteAlias || t.alias || t.originalName || t.hash;
-            var isFriend = t.source === 'friend';
-            var badgeColor = isFriend ? '#5897fb' : '#0bda51';
-            var badgeLabel = isFriend ? window.t('shared.friendBadge') : window.t('shared.favBadge');
+            var typeLabel = t.type === 'CAPE' ? window.t('texture.cape') : window.t('texture.skin');
+            var subtitle;
+            if (mode === 'outgoing') {
+                subtitle = window.t('shared.shareTo', t.friendName || '');
+            } else if (mode === 'incoming') {
+                subtitle = window.t('shared.fromFriend', t.ownerName || window.t('shared.friend'));
+            } else {
+                subtitle = t.ownerName ? window.t('shared.fromLibrary', t.ownerName) : typeLabel;
+            }
             var card = document.createElement('div');
             card.className = 'texture-item card-animate texture-card-clickable';
-            card.setAttribute('data-id', t.id);
-            card.setAttribute('data-type', t.type);
-            card.setAttribute('data-hash', t.hash);
-            card.setAttribute('data-alias', t.favoriteAlias || t.alias || '');
-            card.setAttribute('data-original-name', t.originalName || '');
             card.innerHTML =
                 '<div class="texture-thumb"><canvas></canvas></div>' +
                 '<div class="texture-item-body">' +
                 '<div class="texture-name">' + escapeHtml(displayName) + '</div>' +
-                '<div class="texture-meta">' + (t.ownerName ? escapeHtml(t.ownerName) + ' &middot; ' : '') + (t.type === 'CAPE' ? window.t('texture.cape') : window.t('texture.skin')) + '</div>' +
+                '<div class="texture-meta">' + escapeHtml(subtitle) + ' &middot; ' + typeLabel + '</div>' +
                 '</div>' +
-                '<span style="position:absolute;top:8px;right:8px;font-size:10px;padding:1px 6px;border-radius:8px;border:1px solid ' + badgeColor + ';color:' + badgeColor + '">' + badgeLabel + '</span>';
+                '<span class="shared-badge shared-badge-' + mode + '">' +
+                escapeHtml(window.t(mode === 'outgoing' ? 'shared.badgeOutgoing'
+                    : (mode === 'incoming' ? 'shared.badgeIncoming' : 'shared.favBadge'))) + '</span>';
 
-            card.addEventListener('click', function() {
-                showSharedDetail(t);
-            });
+            card.addEventListener('click', function() { showDetail(t, mode); });
             grid.appendChild(card);
             var canvas = card.querySelector('canvas');
             if (t.type === 'CAPE') {
@@ -80,15 +85,28 @@ var shared = (function() {
         });
     }
 
-    function showSharedDetail(t) {
+    function showDetail(t, mode) {
         var existing = document.getElementById('detailModal');
         if (existing) existing.remove();
 
         var displayName = t.favoriteAlias || t.alias || t.originalName || t.hash;
-        var isFriend = t.source === 'friend';
-        var sourceLabel = isFriend
-            ? window.t('shared.fromFriend', t.ownerName || window.t('shared.friend'))
-            : window.t('shared.fromLibrary', t.ownerName || window.t('shared.library'));
+        var typeLabel = t.type === 'CAPE' ? window.t('texture.cape') : window.t('texture.skin');
+        var sourceLabel;
+        if (mode === 'outgoing') {
+            sourceLabel = window.t('shared.shareTo', t.friendName || '');
+        } else if (mode === 'incoming') {
+            sourceLabel = window.t('shared.fromFriend', t.ownerName || window.t('shared.friend'));
+        } else {
+            sourceLabel = t.ownerName ? window.t('shared.fromLibrary', t.ownerName) : typeLabel;
+        }
+
+        var aliasBlock = '';
+        if (mode !== 'outgoing') {
+            aliasBlock =
+                '<div class="form-group" style="text-align:left"><label class="form-label">' + window.t('shared.alias') + '</label>' +
+                '<input type="text" class="form-input" id="sharedAliasInput" value="' + escapeHtml(t.favoriteAlias || t.alias || '') + '">' +
+                '</div>';
+        }
 
         var overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -99,11 +117,9 @@ var shared = (function() {
         box.innerHTML =
             '<button class="modal-close-btn">&times;</button>' +
             '<div class="detail-alias">' + escapeHtml(displayName) + '</div>' +
-            '<div class="detail-meta">' + escapeHtml(sourceLabel) + ' &middot; ' + (t.type === 'CAPE' ? window.t('texture.cape') : window.t('texture.skin')) + '</div>' +
+            '<div class="detail-meta">' + escapeHtml(sourceLabel) + ' &middot; ' + typeLabel + '</div>' +
             '<div class="detail-preview"><canvas id="shared3dCanvas"></canvas></div>' +
-            '<div class="form-group" style="text-align:left"><label class="form-label">' + window.t('shared.alias') + '</label>' +
-            '<input type="text" class="form-input" id="sharedAliasInput" value="' + escapeHtml(t.favoriteAlias || t.alias || '') + '">' +
-            '</div>' +
+            aliasBlock +
             '<div id="aliasMsg" class="msg-area"></div>' +
             '<div class="detail-actions" id="sharedDetailActions"></div>';
 
@@ -133,31 +149,55 @@ var shared = (function() {
 
         var actionsDiv = box.querySelector('#sharedDetailActions');
 
-        if (!isFriend) {
+        if (mode === 'outgoing') {
+            var revokeBtn = document.createElement('button');
+            revokeBtn.className = 'btn btn-danger';
+            revokeBtn.textContent = window.t('shared.revokeShare');
+            revokeBtn.addEventListener('click', function() { revokeShare(t); });
+            actionsDiv.appendChild(revokeBtn);
+        } else if (mode === 'incoming') {
+            var applyBtn = document.createElement('button');
+            applyBtn.className = 'btn btn-primary';
+            applyBtn.textContent = window.t('texture.applyToProfile');
+            applyBtn.addEventListener('click', function() {
+                window.applyTextureToProfile(t.type, t.hash);
+            });
+            actionsDiv.appendChild(applyBtn);
+
             var saveAliasBtn = document.createElement('button');
-            saveAliasBtn.className = 'btn btn-primary';
+            saveAliasBtn.className = 'btn btn-secondary';
             saveAliasBtn.textContent = window.t('shared.saveAlias');
             saveAliasBtn.addEventListener('click', function() {
-                saveAlias(t.id, document.getElementById('sharedAliasInput').value.trim());
+                saveReceivedAlias(t.textureId, document.getElementById('sharedAliasInput').value.trim());
             });
             actionsDiv.appendChild(saveAliasBtn);
-        }
 
-        if (isFriend) {
-            var returnBtn = document.createElement('button');
-            returnBtn.className = 'btn btn-danger';
-            returnBtn.textContent = window.t('shared.return');
-            returnBtn.addEventListener('click', function() {
-                returnShared(t.id);
-            });
-            actionsDiv.appendChild(returnBtn);
+            var delBtn = document.createElement('button');
+            delBtn.className = 'btn btn-danger';
+            delBtn.textContent = window.t('common.delete');
+            delBtn.addEventListener('click', function() { deleteReceived(t); });
+            actionsDiv.appendChild(delBtn);
         } else {
+            var applyFavBtn = document.createElement('button');
+            applyFavBtn.className = 'btn btn-primary';
+            applyFavBtn.textContent = window.t('texture.applyToProfile');
+            applyFavBtn.addEventListener('click', function() {
+                window.applyTextureToProfile(t.type, t.hash);
+            });
+            actionsDiv.appendChild(applyFavBtn);
+
+            var saveFavAliasBtn = document.createElement('button');
+            saveFavAliasBtn.className = 'btn btn-secondary';
+            saveFavAliasBtn.textContent = window.t('shared.saveAlias');
+            saveFavAliasBtn.addEventListener('click', function() {
+                saveFavoriteAlias(t.id, document.getElementById('sharedAliasInput').value.trim());
+            });
+            actionsDiv.appendChild(saveFavAliasBtn);
+
             var unfavBtn = document.createElement('button');
             unfavBtn.className = 'btn btn-danger';
             unfavBtn.textContent = window.t('shared.unfavorite');
-            unfavBtn.addEventListener('click', function() {
-                removeFavorite(t.id);
-            });
+            unfavBtn.addEventListener('click', function() { removeFavorite(t.id); });
             actionsDiv.appendChild(unfavBtn);
         }
 
@@ -165,8 +205,7 @@ var shared = (function() {
         overlay.addEventListener('click', function(e) { if (e.target === overlay) closeDetail(); });
     }
 
-    async function saveAlias(textureId, alias) {
-        var msgDiv = document.getElementById('aliasMsg');
+    async function saveFavoriteAlias(textureId, alias) {
         try {
             var resp = await fetch('/api/world/favorite/alias', {
                 method: 'POST',
@@ -179,8 +218,69 @@ var shared = (function() {
                 closeDetail();
                 loadShared();
             } else {
-                msgDiv.innerHTML = '<i class="fas fa-times"></i> ' + window.esc(data.message || t('shared.failed'));
-                msgDiv.className = 'msg-area error';
+                var msgDiv = document.getElementById('aliasMsg');
+                if (msgDiv) { msgDiv.textContent = data.message || t('shared.failed'); msgDiv.className = 'msg-area error'; }
+            }
+        } catch (err) {
+            showToast(t('common.networkError'), 'error');
+        }
+    }
+
+    async function saveReceivedAlias(textureId, alias) {
+        try {
+            var resp = await fetch('/api/friends/received-texture/alias', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
+                body: JSON.stringify({ textureId: textureId, alias: alias })
+            });
+            var data = await resp.json();
+            if (data.success) {
+                showToast(t('shared.aliasUpdated'), 'success');
+                closeDetail();
+                loadShared();
+            } else {
+                var msgDiv = document.getElementById('aliasMsg');
+                if (msgDiv) { msgDiv.textContent = data.message || t('shared.failed'); msgDiv.className = 'msg-area error'; }
+            }
+        } catch (err) {
+            showToast(t('common.networkError'), 'error');
+        }
+    }
+
+    async function revokeShare(t) {
+        try {
+            var resp = await fetch('/api/friends/unshare-texture', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
+                body: JSON.stringify({ friendId: t.friendId, textureId: t.textureId })
+            });
+            var data = await resp.json();
+            if (data.success) {
+                showToast(data.message || t('shared.shareRevoked'), 'success');
+                closeDetail();
+                loadShared();
+            } else {
+                showToast(data.message || t('texture.operationFailed'), 'error');
+            }
+        } catch (err) {
+            showToast(t('common.networkError'), 'error');
+        }
+    }
+
+    async function deleteReceived(t) {
+        try {
+            var resp = await fetch('/api/friends/received-texture/delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
+                body: JSON.stringify({ textureId: t.textureId })
+            });
+            var data = await resp.json();
+            if (data.success) {
+                showToast(data.message || t('shared.receivedDeleted'), 'success');
+                closeDetail();
+                loadShared();
+            } else {
+                showToast(data.message || t('texture.operationFailed'), 'error');
             }
         } catch (err) {
             showToast(t('common.networkError'), 'error');
@@ -197,26 +297,6 @@ var shared = (function() {
             var data = await resp.json();
             if (data.success) {
                 showToast(t('shared.favRemoved'), 'success');
-                closeDetail();
-                loadShared();
-            } else {
-                showToast(data.message || t('texture.operationFailed'), 'error');
-            }
-        } catch (err) {
-            showToast(t('common.networkError'), 'error');
-        }
-    }
-
-    async function returnShared(textureId) {
-        try {
-            var resp = await fetch('/api/friends/return-texture', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': (window.CSRF_TOKEN || '') },
-                body: JSON.stringify({ textureId: textureId })
-            });
-            var data = await resp.json();
-            if (data.success) {
-                showToast(t('shared.returned'), 'success');
                 closeDetail();
                 loadShared();
             } else {

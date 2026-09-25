@@ -99,7 +99,11 @@ public class AdminProfilesHandler {
             return;
         }
 
-        if (name.length() > 24) {
+        if (name.length() < systemConfig.getMinProfileNameLength()) {
+            ctx.status(400).json(Map.of("success", false, "message", I18n.t("admin.profiles.nameTooShort")));
+            return;
+        }
+        if (name.length() > systemConfig.getMaxProfileNameLength()) {
             ctx.status(400).json(Map.of("success", false, "message", I18n.t("admin.profiles.nameTooLong")));
             return;
         }
@@ -189,7 +193,11 @@ public class AdminProfilesHandler {
         }
 
         if (name != null && !name.isEmpty()) {
-            if (name.length() > 24) {
+            if (name.length() < systemConfig.getMinProfileNameLength()) {
+                ctx.status(400).json(Map.of("success", false, "message", I18n.t("admin.profiles.nameTooShort")));
+                return;
+            }
+            if (name.length() > systemConfig.getMaxProfileNameLength()) {
                 ctx.status(400).json(Map.of("success", false, "message", I18n.t("admin.profiles.nameTooLong")));
                 return;
             }

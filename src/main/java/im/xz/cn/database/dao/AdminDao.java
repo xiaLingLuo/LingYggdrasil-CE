@@ -60,6 +60,7 @@ public class AdminDao {
             }
         } catch (SQLException e) {
             log.error("AdminDao.findAll failed: {}", e.getMessage(), e);
+            throw new RuntimeException("AdminDao.findAll failed", e);
         }
         return admins;
     }
@@ -124,6 +125,7 @@ public class AdminDao {
             }
         } catch (SQLException e) {
             log.error("AdminDao query failed: {}", e.getMessage(), e);
+            throw new RuntimeException("AdminDao query failed", e);
         }
         return null;
     }

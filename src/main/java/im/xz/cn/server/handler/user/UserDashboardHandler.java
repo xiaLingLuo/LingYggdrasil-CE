@@ -464,7 +464,11 @@ public class UserDashboardHandler {
                 jsonResponse(ctx, Map.of("success", false, "message", I18n.t("msg.profileNameEmpty")));
                 return;
             }
-            if (name.length() > 16) {
+            if (name.length() < sysConfig.getMinProfileNameLength()) {
+                jsonResponse(ctx, Map.of("success", false, "message", I18n.t("msg.profileNameTooShort")));
+                return;
+            }
+            if (name.length() > sysConfig.getMaxProfileNameLength()) {
                 jsonResponse(ctx, Map.of("success", false, "message", I18n.t("msg.profileNameTooLong")));
                 return;
             }
@@ -547,7 +551,11 @@ public class UserDashboardHandler {
             String skinHash = (String) body.get("skinHash");
             String capeHash = (String) body.get("capeHash");
             if (newName != null && !newName.isBlank()) {
-                if (newName.length() > 16) {
+                if (newName.length() < sysConfig.getMinProfileNameLength()) {
+                    jsonResponse(ctx, Map.of("success", false, "message", I18n.t("msg.profileNameTooShort")));
+                    return;
+                }
+                if (newName.length() > sysConfig.getMaxProfileNameLength()) {
                     jsonResponse(ctx, Map.of("success", false, "message", I18n.t("msg.profileNameTooLong")));
                     return;
                 }

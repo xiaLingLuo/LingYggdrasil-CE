@@ -44,8 +44,9 @@ public class FriendSharedTextureDao {
             String id = UUID.randomUUID().toString();
             String now = TimeUtil.now();
             db.executeUpdate("INSERT INTO friend_shared_textures (id, owner_id, friend_id, texture_id, created_at) VALUES (?, ?, ?, ?, ?)", id, ownerId, friendId, textureId, now);
-        } catch (Exception ignored) {
-            log.warn("[FriendSharedTextureDao] share failed (likely duplicate): {}", ignored.getMessage(), ignored);
+        } catch (RuntimeException e) {
+            if (!DatabaseManager.isDuplicateKeyViolation(e)) throw e;
+            log.warn("[FriendSharedTextureDao] share failed (likely duplicate): {}", e.getMessage(), e);
         }
     }
 
@@ -78,5 +79,41 @@ public class FriendSharedTextureDao {
             ids.add(String.valueOf(row.get("texture_id")));
         }
         return ids;
+    }
+
+    public List<Map<String, Object>> findOutgoing(String ownerId) {
+        return db.executeQuery(
+            "SELECT fst.texture_id, fst.friend_id, fst.created_at, t.user_id AS owner_user_id, t.type, t.hash, t.alias AS texture_alias, t.original_name, t.size, " +
+            "u.nickname AS friend_nickname, u.username AS friend_username, u.friend_code AS friend_code " +
+            "FROM friend_shared_textures fst " +
+            "JOIN textures t ON fst.texture_id = t.id " +
+            "LEFT JOIN users u ON fst.friend_id = u.id " +
+            "WHERE fst.owner_id = ? ORDER BY fst.created_at DESC", ownerId);
+    }
+
+    public List<Map<String, Object>> findIncoming(String friendId) {
+        return db.executeQuery(
+            "SELECT fst.texture_id, fst.created_at, t.type, t.hash, t.alias AS texture_alias, t.original_name, t.size, " +
+            "rt.alias AS receiver_alias, " +
+            "u.nickname AS owner_nickname, u.username AS owner_username, u.friend_code AS owner_friend_code " +
+            "FROM friend_shared_textures fst " +
+            "JOIN textures t ON fst.texture_id = t.id " +
+            "LEFT JOIN textures rt ON rt.user_id = fst.friend_id AND rt.type = t.type AND rt.hash = t.hash " +
+            "LEFT JOIN users u ON fst.owner_id = u.id " +
+            "WHERE fst.friend_id = ? ORDER BY fst.created_at DESC", friendId);
+    }
+
+    public void deleteBetween(String userA, String userB) {
+        db.executeUpdate(
+            "DELETE FROM friend_shared_textures WHERE (owner_id = ? AND friend_id = ?) OR (owner_id = ? AND friend_id = ?)",
+            userA, userB, userB, userA);
+    }
+
+    public void deleteByOwnerAndTexture(String ownerId, String textureId) {
+        db.executeUpdate("DELETE FROM friend_shared_textures WHERE owner_id = ? AND texture_id = ?", ownerId, textureId);
+    }
+
+    public void deleteByFriendAndTexture(String friendId, String textureId) {
+        db.executeUpdate("DELETE FROM friend_shared_textures WHERE friend_id = ? AND texture_id = ?", friendId, textureId);
     }
 }

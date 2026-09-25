@@ -44,8 +44,9 @@ public class TextureFavoriteDao {
             String id = UUID.randomUUID().toString();
             String now = TimeUtil.now();
             db.executeUpdate("INSERT INTO texture_favorites (id, user_id, texture_id, alias, created_at) VALUES (?, ?, ?, ?, ?)", id, userId, textureId, alias, now);
-        } catch (Exception ignored) {
-            log.warn("[TextureFavoriteDao] favorite failed (likely duplicate): {}", ignored.getMessage(), ignored);
+        } catch (RuntimeException e) {
+            if (!DatabaseManager.isDuplicateKeyViolation(e)) throw e;
+            log.warn("[TextureFavoriteDao] favorite failed (likely duplicate): {}", e.getMessage(), e);
         }
     }
 

@@ -44,8 +44,9 @@ public class TextureLikeDao {
             String id = UUID.randomUUID().toString();
             String now = TimeUtil.now();
             db.executeUpdate("INSERT INTO texture_likes (id, user_id, texture_id, created_at) VALUES (?, ?, ?, ?)", id, userId, textureId, now);
-        } catch (Exception ignored) {
-            log.warn("[TextureLikeDao] like failed (likely duplicate): {}", ignored.getMessage(), ignored);
+        } catch (RuntimeException e) {
+            if (!DatabaseManager.isDuplicateKeyViolation(e)) throw e;
+            log.warn("[TextureLikeDao] like failed (likely duplicate): {}", e.getMessage(), e);
         }
     }
 

@@ -45,9 +45,11 @@ public class DatabaseSchema {
         migrateFriendCode(db);
         migrateTextureLikes(db);
         migrateTextureFavorites(db);
+        migrateTextureInteractionIndexes(db);
         migrateTextureVisibility(db);
         migrateFriendSharedTextures(db);
         migrateTextureReferenceType(db);
+        migrateFriendReferenceType(db);
         migrateUserTheme(db);
         migrateUserLanguage(db);
         migrateAdminColumns(db);
@@ -492,6 +494,21 @@ public class DatabaseSchema {
         } catch (Exception ignored) {}
     }
 
+    private static void migrateTextureInteractionIndexes(DatabaseManager db) {
+        String prefix = "mysql".equals(db.getDbType()) ? "CREATE INDEX " : "CREATE INDEX IF NOT EXISTS ";
+        for (String sql : new String[]{
+                prefix + "idx_texture_likes_texture ON texture_likes (texture_id)",
+                prefix + "idx_texture_favorites_texture ON texture_favorites (texture_id)"}) {
+            try {
+                db.executeUpdate(sql);
+            } catch (Exception e) {
+                if (!DatabaseManager.isDuplicateIndexName(e)) {
+                    log.warn("[DB Migration] Failed to create texture interaction index: {}", e.getMessage());
+                }
+            }
+        }
+    }
+
     private static void migrateTextureVisibility(DatabaseManager db) {
         try {
             String sql = switch (db.getDbType()) {
@@ -521,7 +538,7 @@ public class DatabaseSchema {
     private static void migrateTextureReferenceType(DatabaseManager db) {
         try {
             String sql = switch (db.getDbType()) {
-                case "mysql" -> "ALTER TABLE textures ADD COLUMN reference_type VARCHAR(10) DEFAULT 'self'";
+                case "mysql" -> "ALTER TABLE textures ADD COLUMN reference_type VARCHAR(32) DEFAULT 'self'";
                 case "pgsql" -> "ALTER TABLE textures ADD COLUMN reference_type TEXT DEFAULT 'self'";
                 default -> "ALTER TABLE textures ADD COLUMN reference_type TEXT DEFAULT 'self'";
             };
@@ -549,6 +566,33 @@ public class DatabaseSchema {
                 stmt.execute(sql);
             }
         } catch (Exception ignored) {}
+    }
+
+    private static void migrateFriendReferenceType(DatabaseManager db) {
+        if ("mysql".equals(db.getDbType())) {
+            try {
+                db.executeUpdate("ALTER TABLE textures MODIFY COLUMN reference_type VARCHAR(32) DEFAULT 'self'");
+                log.info("[DB Migration] Widened textures.reference_type for friend references (MySQL)");
+            } catch (Exception ignored) {}
+        }
+        try {
+            String sql = switch (db.getDbType()) {
+                case "mysql" -> "UPDATE textures t JOIN users u ON t.ref_owner_id = u.id "
+                        + "SET t.reference_type = CONCAT('friend:', COALESCE(u.friend_code, '')) "
+                        + "WHERE t.reference_type = 'friend'";
+                case "pgsql" -> "UPDATE textures SET reference_type = 'friend:' || COALESCE(u.friend_code, '') "
+                        + "FROM users u WHERE textures.ref_owner_id = u.id AND textures.reference_type = 'friend'";
+                default -> "UPDATE textures SET reference_type = 'friend:' || "
+                        + "COALESCE((SELECT friend_code FROM users WHERE users.id = textures.ref_owner_id), '') "
+                        + "WHERE reference_type = 'friend'";
+            };
+            int updated = db.executeUpdate(sql);
+            if (updated > 0) {
+                log.info("[DB Migration] Migrated {} friend reference(s) to friend:<code> format", updated);
+            }
+        } catch (Exception e) {
+            log.warn("[DB Migration] migrateFriendReferenceType failed: {}", e.getMessage());
+        }
     }
 
     private static void initializeSQLite(DatabaseManager db) {
@@ -875,7 +919,7 @@ public class DatabaseSchema {
                 size BIGINT,
                 content_type VARCHAR(100),
                 created_at DATETIME NOT NULL,
-                reference_type VARCHAR(10) DEFAULT 'self',
+                reference_type VARCHAR(32) DEFAULT 'self',
                 ref_owner_id VARCHAR(36),
                 ref_created_at DATETIME,
                 FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

@@ -29,10 +29,13 @@ function permItemHtml(p, isAll, perms, editable) {
         ? ' <i class="fas fa-triangle-exclamation perm-risk-icon" title="' + esc(t('admin.permRisk.title')) +
           '" data-action="showPermRisk" data-args="' + esc(JSON.stringify([p.key])) + '" data-prevent data-stop></i>'
         : '';
+    var securityWarning = (p.key && p.key.indexOf('admin.security') === 0)
+        ? ' <i class="fas fa-triangle-exclamation perm-risk-icon" title="' + esc(t('admin.permRisk.securityWarning')) + '"></i>'
+        : '';
     var desc = p.description ? ' title="' + esc(p.description) + '"' : '';
     return '<label class="perm-item"' + desc + '><input type="checkbox" data-perm="' + esc(p.key) + '"' +
         (checked ? ' checked' : '') + (editable ? '' : ' disabled') + '> <span>' + esc(p.key) + '</span>' +
-        riskIcon + '</label>';
+        riskIcon + securityWarning + '</label>';
 }
 
 async function loadPermGroups() {

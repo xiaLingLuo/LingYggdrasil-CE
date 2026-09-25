@@ -93,8 +93,8 @@ public class UserServer {
         TextureVisibilityDao visibilityDao = new TextureVisibilityDao(db);
         TextureFavoriteDao favoriteDao = new TextureFavoriteDao(db);
         FriendSharedTextureDao friendSharedDao = new FriendSharedTextureDao(db);
-            UserSkinHandler skinHandler = new UserSkinHandler(textureDao, textureService, userDao, visibilityDao, sysConfig);
-            UserCapeHandler capeHandler = new UserCapeHandler(textureDao, textureService, userDao, visibilityDao, sysConfig);
+            UserSkinHandler skinHandler = new UserSkinHandler(textureDao, textureService, userDao, visibilityDao, sysConfig, profileDao);
+            UserCapeHandler capeHandler = new UserCapeHandler(textureDao, textureService, userDao, visibilityDao, sysConfig, profileDao);
         FriendDao friendDao = new FriendDao(db);
         UserDashboardHandler dashHandler = new UserDashboardHandler(authService, userDao, profileDao, textureDao, textureService, cacheDao, mailService, sysConfig, favoriteDao, friendSharedDao, visibilityDao, friendDao);
         ConfirmingFriendDao confirmingDao = new im.xz.cn.database.dao.ConfirmingFriendDao(db);
@@ -106,20 +106,14 @@ public class UserServer {
 
         app = Javalin.create(config -> {
             config.http.defaultContentType = "text/html; charset=utf-8";
+            config.http.maxRequestSize = Math.max(config.http.maxRequestSize,
+                    TextureService.MAX_UPLOAD_BYTES + 1024L * 1024L);
 
             ServerFactory.configureSessionCookie(config, "LING_USER_SESSION");
             ServerFactory.configureThreadLocalCleanup(config);
             ServerFactory.configureSecurityHeaders(config);
 
-            config.bundledPlugins.enableCors(cors -> cors.addRule(rule -> {
-                rule.allowHost(
-                        "http://localhost:35565",
-                        "http://localhost:35577",
-                        "http://localhost:35599",
-                        "http://localhost:35598"
-                );
-                rule.allowCredentials = true;
-            }));
+            ServerFactory.configureCors(config);
 
             ServerFactory.registerStaticRoutes(config.routes);
             ServerFactory.registerIconRoutes(config.routes);
@@ -132,7 +126,7 @@ public class UserServer {
             config.routes.before(ctx -> {
                 var session = ctx.req().getSession(false);
                 if (session != null) {
-                    session.setMaxInactiveInterval(30 * 24 * 60 * 60);
+                    session.setMaxInactiveInterval(sysConfig.getUserSessionTimeoutSeconds());
                 }
             });
 
@@ -219,9 +213,11 @@ public class UserServer {
 
             config.routes.before(ctx -> {
                 String path = ctx.path();
+                String ratePath = path.length() > 1 && path.endsWith("/")
+                        ? path.substring(0, path.length() - 1) : path;
                 String method = ctx.method().name();
                 String userId = SessionManager.getUserId(ctx);
-                String key = (userId != null ? userId : IpUtil.getClientIp(ctx)) + ":" + method + ":" + path;
+                String key = (userId != null ? userId : IpUtil.getClientIp(ctx)) + ":" + method + ":" + ratePath;
 
                 if (method.equals("GET")) {
                     Integer maxReq = RateLimiter.getRateLimit(path);
@@ -233,6 +229,12 @@ public class UserServer {
                 } else if (method.equals("POST")) {
                     Integer interval = RateLimiter.getInterval(method, path);
                     if (interval != null && !rateLimiter.check(key, interval)) {
+                        boolean textureUpload = ratePath.equals("/api/skins/upload")
+                                || ratePath.equals("/api/capes/upload");
+                        if (textureUpload && userId != null) {
+                            ctx.attribute("uploadRateLimited", true);
+                            return;
+                        }
                         ctx.status(429);
                         ctx.json(Map.of("success", false, "message", I18n.t("msg.tooFrequent")));
                         ctx.skipRemainingHandlers();
@@ -326,7 +328,10 @@ public class UserServer {
             config.routes.get("/api/friends/{friendId}/my-shared", worldHandler::getMySharedToFriend);
             config.routes.post("/api/friends/share-texture", worldHandler::shareToFriend);
             config.routes.post("/api/friends/unshare-texture", worldHandler::unshareFromFriend);
-            config.routes.post("/api/friends/return-texture", worldHandler::returnSharedTexture);
+            config.routes.post("/api/friends/received-texture/delete", worldHandler::deleteReceivedTexture);
+            config.routes.post("/api/friends/received-texture/alias", worldHandler::updateReceivedAlias);
+            config.routes.get("/api/shared/outgoing", worldHandler::getOutgoingShared);
+            config.routes.get("/api/shared/incoming", worldHandler::getIncomingShared);
 
             config.routes.post("/api/login", authHandler::handleLogin);
             config.routes.post("/api/register", authHandler::handleRegister);
@@ -423,7 +428,7 @@ public class UserServer {
         if (p.startsWith("/api/capes")) return new String[]{"user.capes"};
         if (p.startsWith("/api/friends/share-texture")
                 || p.startsWith("/api/friends/unshare-texture")
-                || p.startsWith("/api/friends/return-texture")
+                || p.startsWith("/api/friends/received-texture")
                 || p.contains("/shared-textures")
                 || p.contains("/my-shared")) {
             return new String[]{"user.friends", "user.world"};
