@@ -160,6 +160,7 @@ public class AdminSystemHandler {
         Map<String, Object> settings = new LinkedHashMap<>();
         settings.put("siteName", systemConfig.getSiteName());
         settings.put("siteDescription", systemConfig.getSiteDescription());
+        settings.put("siteKeywords", systemConfig.getSiteKeywords());
         settings.put("registrationEnabled", systemConfig.isRegistrationEnabled());
         settings.put("emailVerificationEnabled", systemConfig.isEmailVerificationEnabled());
         settings.put("treasureEnabled", systemConfig.isTreasureEnabled());
@@ -251,6 +252,9 @@ public class AdminSystemHandler {
                 break;
             case "site_description":
                 systemConfig.setSiteDescription(value);
+                break;
+            case "site_keywords":
+                systemConfig.setSiteKeywords(value);
                 break;
             case "registration_enabled":
                 systemConfig.setRegistrationEnabled(Boolean.parseBoolean(value));

@@ -1761,6 +1761,13 @@ public class AdminPage {
                     </div>
                     <div class="setting-item">
                         <div class="setting-info">
+                            <div class="setting-label">{{admin.system.siteKeywords}}</div>
+                            <div class="setting-desc">{{admin.system.siteKeywordsDesc}}</div>
+                        </div>
+                        <input type="text" id="siteKeywords" class="form-input setting-input" data-setting-key="site_keywords" placeholder="{{admin.system.siteKeywordsPlaceholder}}">
+                    </div>
+                    <div class="setting-item">
+                        <div class="setting-info">
                             <div class="setting-label">{{admin.system.announcementMode}}</div>
                             <div class="setting-desc">{{admin.system.announcementModeDesc}}</div>
                         </div>

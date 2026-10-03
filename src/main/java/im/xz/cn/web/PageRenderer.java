@@ -57,6 +57,16 @@ public class PageRenderer {
     }
 
     public static String renderPage(String title, String bodyContent, String pageType, String... extraCss) {
+        return renderPageInternal(title, null, null, bodyContent, pageType, extraCss);
+    }
+
+    public static String renderPageWithMeta(String title, String description, String keywords,
+                                            String bodyContent, String pageType, String... extraCss) {
+        return renderPageInternal(title, description, keywords, bodyContent, pageType, extraCss);
+    }
+
+    private static String renderPageInternal(String title, String description, String keywords,
+                                             String bodyContent, String pageType, String... extraCss) {
         StringBuilder linkTags = new StringBuilder();
         StringBuilder inlineCss = new StringBuilder();
         for (String c : extraCss) {
@@ -88,6 +98,19 @@ public class PageRenderer {
 
         String footerHtml = "admin".equals(pageType) ? "" : renderFooter();
 
+        String descriptionMeta = (description != null && !description.isBlank())
+                ? "<meta name=\"description\" content=\"" + escapeHtml(description) + "\">"
+                : "";
+        String keywordsMeta = (keywords != null && !keywords.isBlank())
+                ? "<meta name=\"keywords\" content=\"" + escapeHtml(keywords) + "\">"
+                : "";
+
+        String siteName = SystemConfig.getInstance().getSiteName();
+        String safeTitle = escapeHtml(title);
+        String safeSiteName = escapeHtml(siteName);
+        boolean titleIsSiteName = title != null && title.equals(siteName);
+        String titleSuffix = titleIsSiteName ? "" : " - " + safeSiteName;
+
         String html = """
             <!DOCTYPE html>
             <html lang="%s">
@@ -95,7 +118,9 @@ public class PageRenderer {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <link rel="icon" type="image/x-icon" href="/icons/app.ico">
-                <title>%s - %s</title>
+                <title>%s%s</title>
+                %s
+                %s
                 <script>(function(){try{var t=localStorage.getItem('ling-theme');if(!t&&window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches)t='dark';document.documentElement.setAttribute('data-theme',t==='dark'?'dark':'light');}catch(e){}})();</script>
                 %s
                 <link rel="stylesheet" href="/css/tokens.css">
@@ -116,8 +141,10 @@ public class PageRenderer {
             </html>
             """.formatted(
                 locale,
-                escapeHtml(title),
-                "LingYggdrasil",
+                safeTitle,
+                titleSuffix,
+                descriptionMeta,
+                keywordsMeta,
                 i18nScript,
                 linkTags.toString(),
                 getBaseCss(),

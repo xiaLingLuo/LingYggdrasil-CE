@@ -90,7 +90,8 @@ public class HomePage {
             body = Shared.csrfInject(csrfToken) + body;
         }
 
-        return PageRenderer.renderPage(siteName, body, "user",
+        return PageRenderer.renderPageWithMeta(siteName,
+                sysConfig.getSiteDescription(), sysConfig.getSiteKeywords(), body, "user",
                 Css.getUserCssLink(), Css.getHomeCss());
     }
 }

@@ -92,6 +92,7 @@ public class SystemConfig {
 
     private String siteName = "泠 Yggdrasil";
     private String siteDescription = "Minecraft Authentication System";
+    private String siteKeywords = "Minecraft,Authentication,LingYggdrasil";
     private boolean registrationEnabled = true;
     private boolean emailVerificationEnabled = false;
     private boolean treasureEnabled = false;
@@ -216,6 +217,7 @@ public class SystemConfig {
         try {
             upsertSetting(db, "site_name", siteName);
             upsertSetting(db, "site_description", siteDescription);
+            upsertSetting(db, "site_keywords", siteKeywords);
             upsertSetting(db, "registration_enabled", String.valueOf(registrationEnabled));
             upsertSetting(db, "email_verification_enabled", String.valueOf(emailVerificationEnabled));
             upsertSetting(db, "treasure_enabled", String.valueOf(treasureEnabled));
@@ -318,6 +320,7 @@ public class SystemConfig {
         switch (key) {
             case "site_name" -> siteName = value;
             case "site_description" -> siteDescription = value;
+            case "site_keywords" -> siteKeywords = value;
             case "registration_enabled" -> registrationEnabled = Boolean.parseBoolean(value);
             case "email_verification_enabled" -> emailVerificationEnabled = Boolean.parseBoolean(value);
             case "treasure_enabled" -> treasureEnabled = Boolean.parseBoolean(value);
@@ -503,6 +506,9 @@ public class SystemConfig {
 
     public String getSiteDescription() { return siteDescription; }
     public void setSiteDescription(String siteDescription) { this.siteDescription = siteDescription; }
+
+    public String getSiteKeywords() { return siteKeywords; }
+    public void setSiteKeywords(String siteKeywords) { this.siteKeywords = siteKeywords; }
 
     public boolean isRegistrationEnabled() { return registrationEnabled; }
     public void setRegistrationEnabled(boolean registrationEnabled) { this.registrationEnabled = registrationEnabled; }

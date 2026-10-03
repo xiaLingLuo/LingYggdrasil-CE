@@ -14,7 +14,7 @@
 
 ```text
 运行目录/
-├── LingYggdrasil-2.3.5.jar
+├── LingYggdrasil-2.3.6.jar
 └── plugins/
     ├── plugins-state.json   # 启停状态（自动生成，只增不减）
     ├── HelloWorld.jar

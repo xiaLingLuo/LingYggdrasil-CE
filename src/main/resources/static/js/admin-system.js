@@ -33,6 +33,7 @@ function setElValue(el, value) {
     fetch('/admin/api/system/settings').then(function(r) { return r.json(); }).then(function(s) {
         setElValue(document.getElementById('siteName'), s.siteName);
         setElValue(document.getElementById('siteDescription'), s.siteDescription);
+        setElValue(document.getElementById('siteKeywords'), s.siteKeywords);
         setElValue(document.getElementById('registrationEnabled'), s.registrationEnabled);
         setElValue(document.getElementById('emailVerificationEnabled'), s.emailVerificationEnabled);
         setElValue(document.getElementById('treasureEnabled'), s.treasureEnabled);

@@ -447,7 +447,8 @@ public class UserPage {
             <div id="toast" class="toast" style="display:none"></div>
             """);
 
-        String siteName = im.xz.cn.config.SystemConfig.getInstance().getSiteName();
+        im.xz.cn.config.SystemConfig sysConfig = im.xz.cn.config.SystemConfig.getInstance();
+        String siteName = sysConfig.getSiteName();
         String navbar = """
             <nav class="navbar">
                 <div class="navbar-inner">
@@ -473,7 +474,8 @@ public class UserPage {
 
         String csrf = Shared.csrfInject(csrfToken)
                 + "<script src=\"/js/skinview3d.bundle.js\"></script>";
-        return PageRenderer.renderPage(I18n.t("user.world.title"), csrf + body, "user",
+        return PageRenderer.renderPageWithMeta(I18n.t("user.world.title"),
+                sysConfig.getSiteDescription(), sysConfig.getSiteKeywords(), csrf + body, "user",
                 Css.getUserCssLink(), Css.getTextureCss(), Css.getWorldCss());
     }
 
