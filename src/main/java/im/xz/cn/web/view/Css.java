@@ -660,26 +660,6 @@ public class Css {
             .msg-area.error { color: #B91C1C; }
             .empty-hint { color: var(--color-text-faint); text-align: center; padding: var(--space-8) var(--space-4); }
             .empty-hint a { color: var(--color-primary-strong); }
-            .modal-overlay {
-                position: fixed;
-                inset: 0;
-                background: rgba(43, 35, 51, 0.45);
-                backdrop-filter: blur(3px);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 200;
-            }
-            .modal-box {
-                background: var(--color-surface);
-                border-radius: var(--radius-xl);
-                padding: var(--space-8);
-                min-width: 360px;
-                box-shadow: var(--shadow-lg);
-                animation: fadeIn var(--duration-normal) var(--ease-emphasized);
-            }
-            .modal-box h3 { color: var(--color-text); margin-bottom: var(--space-4); font-family: var(--font-display); }
-            .modal-actions { display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-5); }
             .btn-danger { background: linear-gradient(135deg, var(--color-danger), #DC2626); color: #fff; border: none; }
             .btn-danger:hover { filter: brightness(1.05); }
             .toast {
@@ -740,26 +720,6 @@ public class Css {
             .msg-area.error { color: #B91C1C; }
             .empty-hint { color: var(--color-text-faint); text-align: center; padding: var(--space-8) var(--space-4); }
             .empty-hint a { color: var(--color-primary-strong); }
-            .modal-overlay {
-                position: fixed;
-                inset: 0;
-                background: rgba(43, 35, 51, 0.45);
-                backdrop-filter: blur(3px);
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                z-index: 200;
-            }
-            .modal-box {
-                background: var(--color-surface);
-                border-radius: var(--radius-xl);
-                padding: var(--space-8);
-                min-width: 360px;
-                box-shadow: var(--shadow-lg);
-                animation: fadeIn var(--duration-normal) var(--ease-emphasized);
-            }
-            .modal-box h3 { color: var(--color-text); margin-bottom: var(--space-4); font-family: var(--font-display); }
-            .modal-actions { display: flex; gap: var(--space-3); justify-content: flex-end; margin-top: var(--space-5); }
             .btn-danger { background: linear-gradient(135deg, var(--color-danger), #DC2626); color: #fff; border: none; }
             .btn-danger:hover { filter: brightness(1.05); }
             .shared-section { margin-bottom: var(--space-8); }

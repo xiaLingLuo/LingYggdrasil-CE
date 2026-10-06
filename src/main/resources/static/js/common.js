@@ -88,6 +88,63 @@
         }
     }
 
+    function createAdminModal(id, title, bodyContent, footerContent, onClose, maxWidth) {
+        var existing = document.getElementById(id);
+        if (existing) existing.remove();
+
+        var modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = id;
+        modal.style.zIndex = '1100';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+
+        var backdrop = document.createElement('div');
+        backdrop.className = 'modal-overlay';
+
+        var card = document.createElement('div');
+        card.className = 'modal-card';
+        if (maxWidth) card.style.maxWidth = maxWidth;
+
+        var header = document.createElement('div');
+        header.className = 'modal-header';
+        var heading = title && title.nodeType === 1 ? title : document.createElement('h3');
+        if (!(title && title.nodeType === 1)) heading.textContent = title === null || title === undefined ? '' : String(title);
+
+        var closeBtn = document.createElement('button');
+        closeBtn.type = 'button';
+        closeBtn.className = 'modal-close';
+        closeBtn.textContent = '×';
+        closeBtn.title = t('common.close');
+        closeBtn.setAttribute('aria-label', closeBtn.title);
+        header.appendChild(heading);
+        header.appendChild(closeBtn);
+
+        var body = document.createElement('div');
+        body.className = 'modal-body';
+        if (bodyContent) body.appendChild(bodyContent);
+        card.appendChild(header);
+        card.appendChild(body);
+        if (footerContent) {
+            var footer = document.createElement('div');
+            footer.className = 'modal-footer';
+            footer.appendChild(footerContent);
+            card.appendChild(footer);
+        }
+
+        modal.appendChild(backdrop);
+        modal.appendChild(card);
+        document.body.appendChild(modal);
+
+        var close = function() {
+            if (onClose) onClose();
+            if (modal.parentNode) modal.remove();
+        };
+        closeBtn.addEventListener('click', close);
+        backdrop.addEventListener('click', close);
+        return { modal: modal, close: close };
+    }
+
     function showConfirmDialog(message, onConfirm) {
         var existing = document.getElementById('confirmDialog');
         if (existing) existing.remove();
@@ -95,25 +152,9 @@
         previousFocus = document.activeElement;
         activeConfirm = onConfirm;
 
-        var overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
-        overlay.id = 'confirmDialog';
-        overlay.style.zIndex = '1100';
-        overlay.setAttribute('role', 'dialog');
-        overlay.setAttribute('aria-modal', 'true');
-
-        var box = document.createElement('div');
-        box.className = 'modal-box';
-
-        var title = document.createElement('h3');
-        title.textContent = t('common.confirmAction');
-
         var text = document.createElement('p');
+        text.className = 'admin-dialog-message';
         text.textContent = message === null || message === undefined ? '' : String(message);
-
-        var actions = document.createElement('div');
-        actions.className = 'modal-actions';
-        actions.id = 'confirmDialogActions';
 
         var cancelBtn = document.createElement('button');
         cancelBtn.type = 'button';
@@ -127,17 +168,40 @@
         confirmBtn.textContent = t('common.confirm');
         confirmBtn.addEventListener('click', function () { closeConfirmDialog(true); });
 
-        actions.appendChild(cancelBtn);
-        actions.appendChild(confirmBtn);
-        box.appendChild(title);
-        box.appendChild(text);
-        box.appendChild(actions);
-        overlay.appendChild(box);
-        document.body.appendChild(overlay);
+        if (Array.isArray(global.__ADMIN_PERMS__)) {
+            var actions = document.createElement('div');
+            actions.className = 'admin-dialog-actions';
+            actions.id = 'confirmDialogActions';
+            actions.appendChild(cancelBtn);
+            actions.appendChild(confirmBtn);
+            createAdminModal('confirmDialog', t('common.confirmAction'), text, actions,
+                function() { closeConfirmDialog(false); });
+        } else {
+            var overlay = document.createElement('div');
+            overlay.className = 'modal-overlay';
+            overlay.id = 'confirmDialog';
+            overlay.style.zIndex = '1100';
+            overlay.setAttribute('role', 'dialog');
+            overlay.setAttribute('aria-modal', 'true');
 
-        overlay.addEventListener('click', function (event) {
-            if (event.target === overlay) closeConfirmDialog(false);
-        });
+            var box = document.createElement('div');
+            box.className = 'modal-box';
+            var title = document.createElement('h3');
+            title.textContent = t('common.confirmAction');
+            var actions = document.createElement('div');
+            actions.className = 'modal-actions';
+            actions.id = 'confirmDialogActions';
+            actions.appendChild(cancelBtn);
+            actions.appendChild(confirmBtn);
+            box.appendChild(title);
+            box.appendChild(text);
+            box.appendChild(actions);
+            overlay.appendChild(box);
+            document.body.appendChild(overlay);
+            overlay.addEventListener('click', function (event) {
+                if (event.target === overlay) closeConfirmDialog(false);
+            });
+        }
         document.addEventListener('keydown', onConfirmKeydown);
         confirmBtn.focus();
     }
@@ -512,6 +576,68 @@
         return node;
     }
 
+    function renderAdminPagination(containerId, total, currentPage, pageSize, onPageChange, onPageSizeChange) {
+        var container = document.getElementById(containerId);
+        if (!container) return;
+
+        var pageCount = Math.max(1, Math.ceil(total / pageSize));
+        currentPage = Math.min(Math.max(1, currentPage), pageCount);
+        var start = total ? (currentPage - 1) * pageSize + 1 : 0;
+        var end = Math.min(total, currentPage * pageSize);
+        var summary = document.createElement('div');
+        summary.className = 'pagination-summary';
+        summary.textContent = t('admin.common.paginationSummary', start, end, total);
+
+        var controls = document.createElement('div');
+        controls.className = 'pagination-controls';
+
+        var sizeLabel = document.createElement('label');
+        sizeLabel.className = 'pagination-size-label';
+        sizeLabel.appendChild(document.createTextNode(t('admin.common.itemsPerPage')));
+
+        var sizeSelect = document.createElement('select');
+        sizeSelect.className = 'form-input pagination-size-select';
+        [50, 100, 200, 500, 1000].forEach(function(size) {
+            var option = document.createElement('option');
+            option.value = String(size);
+            option.textContent = String(size);
+            sizeSelect.appendChild(option);
+        });
+        sizeSelect.value = String(pageSize);
+        sizeSelect.addEventListener('change', function() {
+            onPageSizeChange(Number(sizeSelect.value));
+        });
+        sizeLabel.appendChild(sizeSelect);
+
+        var previous = document.createElement('button');
+        previous.type = 'button';
+        previous.className = 'pagination-btn';
+        previous.textContent = '‹';
+        previous.title = t('admin.common.previousPage');
+        previous.setAttribute('aria-label', previous.title);
+        previous.disabled = currentPage <= 1;
+        previous.addEventListener('click', function() { onPageChange(currentPage - 1); });
+
+        var pageLabel = document.createElement('span');
+        pageLabel.className = 'pagination-page';
+        pageLabel.textContent = t('admin.common.pageSummary', currentPage, pageCount);
+
+        var next = document.createElement('button');
+        next.type = 'button';
+        next.className = 'pagination-btn';
+        next.textContent = '›';
+        next.title = t('admin.common.nextPage');
+        next.setAttribute('aria-label', next.title);
+        next.disabled = currentPage >= pageCount;
+        next.addEventListener('click', function() { onPageChange(currentPage + 1); });
+
+        controls.appendChild(sizeLabel);
+        controls.appendChild(previous);
+        controls.appendChild(pageLabel);
+        controls.appendChild(next);
+        container.replaceChildren(summary, controls);
+    }
+
     function setLanguage(code) {
         if (!code) return;
         if (code === global.__LOCALE__) {
@@ -569,42 +695,45 @@
     }
 
     function showPermRisk(key) {
-        var existing = document.getElementById('permRiskModal');
-        if (existing) existing.remove();
-        var overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
-        overlay.id = 'permRiskModal';
-        overlay.innerHTML =
-            '<div class="modal-box" style="max-width:460px">' +
-            '<h3><i class="fas fa-triangle-exclamation" style="color:#DC2626"></i> ' +
-            escapeHtml(t('admin.permRisk.title')) + '</h3>' +
-            '<p style="margin:12px 0;line-height:1.7;color:var(--color-text-muted)">' +
-            escapeHtml(t('admin.permRisk.body')) + '</p>' +
-            '<p style="margin:0;font-family:Consolas,monospace;font-size:12px;color:var(--color-text-faint)">' +
-            escapeHtml(key) + '</p>' +
-            '<div class="modal-actions"><button class="btn btn-secondary" id="permRiskCloseBtn">' +
-            escapeHtml(t('common.close')) + '</button></div></div>';
-        document.body.appendChild(overlay);
-        document.getElementById('permRiskCloseBtn').addEventListener('click', function () { overlay.remove(); });
-        overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+        var title = document.createElement('h3');
+        var icon = document.createElement('i');
+        icon.className = 'fas fa-triangle-exclamation admin-dialog-warning-icon';
+        title.appendChild(icon);
+        title.appendChild(document.createTextNode(' ' + t('admin.permRisk.title')));
+
+        var body = document.createElement('div');
+        var description = document.createElement('p');
+        description.className = 'admin-dialog-message';
+        description.textContent = t('admin.permRisk.body');
+        var keyText = document.createElement('p');
+        keyText.className = 'admin-dialog-key';
+        keyText.textContent = key;
+        body.appendChild(description);
+        body.appendChild(keyText);
+
+        var footerButton = document.createElement('button');
+        footerButton.type = 'button';
+        footerButton.className = 'btn btn-secondary';
+        footerButton.textContent = t('common.close');
+        var footer = document.createElement('div');
+        footer.appendChild(footerButton);
+
+        var dialog = createAdminModal('permRiskModal', title, body, footer, null, '460px');
+        footerButton.addEventListener('click', dialog.close);
     }
 
     function showInfoDialog(title, message) {
-        var existing = document.getElementById('infoDialogModal');
-        if (existing) existing.remove();
-        var overlay = document.createElement('div');
-        overlay.className = 'modal-overlay';
-        overlay.id = 'infoDialogModal';
-        overlay.innerHTML =
-            '<div class="modal-box" style="max-width:460px">' +
-            '<h3>' + escapeHtml(title || '') + '</h3>' +
-            '<p style="margin:12px 0;line-height:1.7;color:var(--color-text-muted);white-space:pre-wrap">' +
-            escapeHtml(message || '') + '</p>' +
-            '<div class="modal-actions"><button class="btn btn-secondary" id="infoDialogCloseBtn">' +
-            escapeHtml(t('common.close')) + '</button></div></div>';
-        document.body.appendChild(overlay);
-        document.getElementById('infoDialogCloseBtn').addEventListener('click', function () { overlay.remove(); });
-        overlay.addEventListener('click', function (e) { if (e.target === overlay) overlay.remove(); });
+        var body = document.createElement('p');
+        body.className = 'admin-dialog-message admin-dialog-prewrap';
+        body.textContent = message || '';
+        var footerButton = document.createElement('button');
+        footerButton.type = 'button';
+        footerButton.className = 'btn btn-secondary';
+        footerButton.textContent = t('common.close');
+        var footer = document.createElement('div');
+        footer.appendChild(footerButton);
+        var dialog = createAdminModal('infoDialogModal', title || '', body, footer, null, '460px');
+        footerButton.addEventListener('click', dialog.close);
     }
 
     function resolveAction(name) {
@@ -721,6 +850,7 @@
     global.toggleLangMenu = toggleLangMenu;
     global.toggleSidebar = toggleSidebar;
     global.showInfoDialog = showInfoDialog;
+    global.renderAdminPagination = renderAdminPagination;
     global.closeSidebar = closeSidebar;
     global.showPermRisk = showPermRisk;
     global.startBtnLoading = startBtnLoading;

@@ -65,6 +65,22 @@ public class AdminDao {
         return admins;
     }
 
+    public List<Admin> findPage(int limit, long offset) {
+        List<Admin> admins = new ArrayList<>();
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM admins ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?")) {
+            ps.setInt(1, limit);
+            ps.setLong(2, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) admins.add(Admin.fromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            log.error("AdminDao.findPage failed: {}", e.getMessage(), e);
+            throw new RuntimeException("AdminDao.findPage failed", e);
+        }
+        return admins;
+    }
+
     public void update(Admin admin) {
         db.executeUpdate(
             "UPDATE admins SET username = ?, email = ?, password_hash = ? WHERE id = ?",

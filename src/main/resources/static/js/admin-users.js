@@ -17,6 +17,12 @@
  */
 let allUsers = [];
 let userGroupAliases = {};
+let currentUsersPage = 1;
+let usersPageSize = 100;
+let usersTotal = 0;
+let currentUsersQuery = '';
+let userSearchTimer = null;
+let userRequestSequence = 0;
 
 function can(key) {
     const perms = window.__ADMIN_PERMS__ || [];
@@ -47,10 +53,8 @@ function groupLabel(name) {
 (async function loadUsers() {
     try {
         await loadUserGroupsForSelect();
-        const res = await fetch('/admin/api/users');
-        if (res.status === 401) { window.location.href = '/admin/login'; return; }
-        allUsers = await res.json();
-        renderUsers(allUsers);
+        const search = document.getElementById('searchInput').value.trim();
+        await fetchUsersPage(1, usersPageSize, search);
     } catch (err) {
         console.error('加载用户列表失败:', err);
     }
@@ -59,46 +63,65 @@ function groupLabel(name) {
 function renderUsers(users) {
     const tbody = document.getElementById('userTableBody');
     if (!users || users.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" class="text-center">' + t('common.empty') + '</td></tr>';
-        return;
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center">' + t('common.empty') + '</td></tr>';
+    } else {
+        tbody.innerHTML = users.map(u => `
+            <tr>
+                <td><strong>${esc(u.username)}</strong>
+                    <button class="pencil-btn act-username" title="${t('admin.users.editUsernameTitle')}" data-id="${esc(u.id)}" data-name="${esc(u.username)}"><i class="fas fa-pencil"></i></button>
+                </td>
+                <td><button class="pencil-btn act-uuid" type="button" title="UUID" aria-label="UUID" data-name="${esc(u.username)}" data-uuid="${esc(u.id)}"><i class="fas fa-magnifying-glass"></i></button></td>
+                <td>${esc(u.email)}
+                    <button class="pencil-btn act-email" title="${t('admin.users.editEmailTitle')}" data-id="${esc(u.id)}" data-email="${esc(u.email)}"><i class="fas fa-pencil"></i></button>
+                </td>
+                <td>${esc(u.nickname || '-')}
+                    <button class="pencil-btn act-nickname" title="${t('admin.users.editNicknameTitle')}" data-id="${esc(u.id)}" data-nickname="${esc(u.nickname || '')}"><i class="fas fa-pencil"></i></button>
+                </td>
+                <td><span class="role-badge role-badge-default">${esc(groupLabel(u.permGroup))}</span>
+                    ${can('admin.users.edit') ? `<button class="pencil-btn act-group" title="${t('admin.admins.permGroup')}" data-id="${esc(u.id)}" data-group="${esc(u.permGroup || 'default')}"><i class="fas fa-pencil"></i></button>` : ''}
+                </td>
+                <td>
+                    <button class="verified-badge act-verify ${u.emailVerified ? 'verified-yes' : 'verified-no'}" title="${t('admin.users.toggleVerifyTitle')}" data-id="${esc(u.id)}" data-verified="${u.emailVerified}">${u.emailVerified ? t('admin.users.verified') : t('admin.users.unverified')}</button>
+                </td>
+                <td>${formatDate(u.createdAt)}</td>
+                <td>${formatDate(u.lastLogin)}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-action btn-delete act-delete" data-id="${esc(u.id)}" data-name="${esc(u.username)}">${t('common.delete')}</button>
+                    </div>
+                </td>
+            </tr>
+        `).join('');
     }
-    tbody.innerHTML = users.map(u => `
-        <tr>
-            <td><strong>${esc(u.username)}</strong>
-                <button class="pencil-btn act-username" title="${t('admin.users.editUsernameTitle')}" data-id="${esc(u.id)}" data-name="${esc(u.username)}"><i class="fas fa-pencil"></i></button>
-            </td>
-            <td><code>${esc(u.id)}</code></td>
-            <td>${esc(u.email)}
-                <button class="pencil-btn act-email" title="${t('admin.users.editEmailTitle')}" data-id="${esc(u.id)}" data-email="${esc(u.email)}"><i class="fas fa-pencil"></i></button>
-            </td>
-            <td>${esc(u.nickname || '-')}
-                <button class="pencil-btn act-nickname" title="${t('admin.users.editNicknameTitle')}" data-id="${esc(u.id)}" data-nickname="${esc(u.nickname || '')}"><i class="fas fa-pencil"></i></button>
-            </td>
-            <td><span class="role-badge role-badge-default">${esc(groupLabel(u.permGroup))}</span>
-                ${can('admin.users.edit') ? `<button class="pencil-btn act-group" title="${t('admin.admins.permGroup')}" data-id="${esc(u.id)}" data-group="${esc(u.permGroup || 'default')}"><i class="fas fa-pencil"></i></button>` : ''}
-            </td>
-            <td>
-                <button class="verified-badge act-verify ${u.emailVerified ? 'verified-yes' : 'verified-no'}" title="${t('admin.users.toggleVerifyTitle')}" data-id="${esc(u.id)}" data-verified="${u.emailVerified}">${u.emailVerified ? t('admin.users.verified') : t('admin.users.unverified')}</button>
-            </td>
-            <td>${formatDate(u.createdAt)}</td>
-            <td>
-                <div class="action-btns">
-                    <button class="btn-action btn-delete act-delete" data-id="${esc(u.id)}" data-name="${esc(u.username)}">${t('common.delete')}</button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
+    renderAdminPagination('userPagination', usersTotal, currentUsersPage, usersPageSize,
+        function(page) { fetchUsersPage(page, usersPageSize, currentUsersQuery); },
+        function(size) { fetchUsersPage(1, size, currentUsersQuery); });
 }
 
 function filterUsers() {
-    const q = document.getElementById('searchInput').value.toLowerCase();
-    if (!q) { renderUsers(allUsers); return; }
-    const filtered = allUsers.filter(u =>
-        (u.username && u.username.toLowerCase().includes(q)) ||
-        (u.email && u.email.toLowerCase().includes(q)) ||
-        (u.nickname && u.nickname.toLowerCase().includes(q))
-    );
-    renderUsers(filtered);
+    const q = document.getElementById('searchInput').value.trim();
+    if (userSearchTimer) clearTimeout(userSearchTimer);
+    userSearchTimer = setTimeout(function() { fetchUsersPage(1, usersPageSize, q); }, 250);
+}
+
+async function fetchUsersPage(page, pageSize, search) {
+    const sequence = ++userRequestSequence;
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (search) params.set('q', search);
+    try {
+        const res = await fetch('/admin/api/users?' + params.toString());
+        if (res.status === 401) { window.location.href = '/admin/login'; return; }
+        const data = await res.json();
+        if (sequence !== userRequestSequence) return;
+        allUsers = data.items || [];
+        usersTotal = Number(data.total) || 0;
+        currentUsersPage = Number(data.page) || 1;
+        usersPageSize = Number(data.pageSize) || pageSize;
+        currentUsersQuery = search || '';
+        renderUsers(allUsers);
+    } catch (err) {
+        if (sequence === userRequestSequence) console.error('加载用户列表失败:', err);
+    }
 }
 
 function openSetGroupModal(id, group) {
@@ -134,6 +157,11 @@ function openUsernameModal(id, currentUsername) {
     document.getElementById('editUserId').value = id;
     document.getElementById('newUsername').value = currentUsername;
     document.getElementById('usernameModal').style.display = 'flex';
+}
+
+function openUserUuidModal(username, uuid) {
+    document.getElementById('userUuidText').textContent = username + '的UUID是\n' + uuid;
+    document.getElementById('userUuidModal').style.display = 'flex';
 }
 
 function openEmailModal(id, currentEmail) {
@@ -211,13 +239,7 @@ async function submitNickname() {
 }
 
 async function reloadUsers() {
-    try {
-        const res = await fetch('/admin/api/users');
-        allUsers = await res.json();
-        renderUsers(allUsers);
-    } catch (err) {
-        console.error('刷新用户列表失败:', err);
-    }
+    await fetchUsersPage(currentUsersPage, usersPageSize, currentUsersQuery);
 }
 
 async function apiPost(url, body) {
@@ -245,6 +267,7 @@ async function apiPost(url, body) {
             if (btn.classList.contains('act-group')) openSetGroupModal(btn.dataset.id, btn.dataset.group);
             else if (btn.classList.contains('act-delete')) deleteUser(btn.dataset.id, btn.dataset.name);
             else if (btn.classList.contains('act-username')) openUsernameModal(btn.dataset.id, btn.dataset.name);
+            else if (btn.classList.contains('act-uuid')) openUserUuidModal(btn.dataset.name, btn.dataset.uuid);
             else if (btn.classList.contains('act-email')) openEmailModal(btn.dataset.id, btn.dataset.email);
             else if (btn.classList.contains('act-nickname')) openNicknameModal(btn.dataset.id, btn.dataset.nickname);
             else if (btn.classList.contains('act-verify')) toggleEmailVerified(btn.dataset.id, btn.dataset.verified === 'true');

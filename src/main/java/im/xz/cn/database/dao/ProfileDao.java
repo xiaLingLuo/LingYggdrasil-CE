@@ -18,6 +18,7 @@
 package im.xz.cn.database.dao;
 
 import im.xz.cn.database.DatabaseManager;
+import im.xz.cn.database.SqlLike;
 import im.xz.cn.logging.logApi;
 import im.xz.cn.model.PlayerProfile;
 
@@ -28,6 +29,8 @@ import java.util.List;
 public class ProfileDao {
     private static final logApi log = logApi.getLogger(ProfileDao.class);
     private final DatabaseManager db;
+
+    public record AdminProfileRow(PlayerProfile profile, String ownerUsername) {}
 
     public ProfileDao(DatabaseManager db) {
         this.db = db;
@@ -126,6 +129,52 @@ public class ProfileDao {
             throw new RuntimeException("ProfileDao.findAll failed", e);
         }
         return profiles;
+    }
+
+    public List<AdminProfileRow> findAdminPage(String search, int limit, long offset) {
+        List<AdminProfileRow> profiles = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+                "SELECT p.*, u.username AS owner_username FROM player_profiles p " +
+                "LEFT JOIN users u ON u.id = p.user_id WHERE 1 = 1 ");
+        if (search != null && !search.isBlank()) {
+            sql.append("AND (LOWER(p.name) LIKE ? ESCAPE '!' OR LOWER(p.id) LIKE ? ESCAPE '!') ");
+        }
+        sql.append("ORDER BY p.created_at ASC, p.id ASC LIMIT ? OFFSET ?");
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (search != null && !search.isBlank()) {
+                String pattern = SqlLike.contains(search);
+                ps.setString(index++, pattern);
+                ps.setString(index++, pattern);
+            }
+            ps.setInt(index++, limit);
+            ps.setLong(index, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    profiles.add(new AdminProfileRow(PlayerProfile.fromResultSet(rs), rs.getString("owner_username")));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("ProfileDao.findAdminPage failed: {}", e.getMessage(), e);
+            throw new RuntimeException("ProfileDao.findAdminPage failed", e);
+        }
+        return profiles;
+    }
+
+    public int countAdminProfiles(String search) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS cnt FROM player_profiles p WHERE 1 = 1 ");
+        if (search != null && !search.isBlank()) {
+            sql.append("AND (LOWER(p.name) LIKE ? ESCAPE '!' OR LOWER(p.id) LIKE ? ESCAPE '!')");
+        }
+        java.util.Map<String, Object> result;
+        if (search == null || search.isBlank()) {
+            result = db.executeQuerySingle(sql.toString());
+        } else {
+            String pattern = SqlLike.contains(search);
+            result = db.executeQuerySingle(sql.toString(), pattern, pattern);
+        }
+        return result == null || result.get("cnt") == null ? 0 : ((Number) result.get("cnt")).intValue();
     }
 
     public void updateName(String id, String newName) {

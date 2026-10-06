@@ -63,9 +63,14 @@ public class AdminProfilesHandler {
 
     public void getProfiles(Context ctx) {
         if (!im.xz.cn.security.AdminPermissions.require(ctx, "admin.profiles.view")) return;
-        List<PlayerProfile> profiles = profileDao.findAll();
+        AdminPageQuery query = AdminPageQuery.from(ctx);
+        int total = profileDao.countAdminProfiles(query.search());
+        int page = query.pageForTotal(total);
+        List<ProfileDao.AdminProfileRow> profiles = profileDao.findAdminPage(
+                query.search(), query.pageSize(), query.offsetForPage(page));
         List<Map<String, Object>> result = new ArrayList<>();
-        for (PlayerProfile p : profiles) {
+        for (ProfileDao.AdminProfileRow row : profiles) {
+            PlayerProfile p = row.profile();
             Map<String, Object> map = new LinkedHashMap<>();
             map.put("id", p.getId());
             map.put("name", p.getName());
@@ -73,14 +78,13 @@ public class AdminProfilesHandler {
             if (DatabaseSchema.UNASSIGNED_USER_ID.equals(p.getUserId())) {
                 map.put("username", I18n.t("msg.unassigned"));
             } else {
-                User user = userDao.findById(p.getUserId());
-                map.put("username", user != null ? user.getUsername() : I18n.t("msg.unknownUser"));
+                map.put("username", row.ownerUsername() != null ? row.ownerUsername() : I18n.t("msg.unknownUser"));
             }
             map.put("skinModel", p.getSkinModel());
             map.put("createdAt", p.getCreatedAt());
             result.add(map);
         }
-        ctx.json(result);
+        ctx.json(Map.of("items", result, "total", total, "page", page, "pageSize", query.pageSize()));
     }
 
     @SuppressWarnings("unchecked")

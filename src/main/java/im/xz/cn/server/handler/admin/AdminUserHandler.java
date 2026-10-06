@@ -62,7 +62,10 @@ public class AdminUserHandler {
 
     public void getUsers(Context ctx) {
         if (!im.xz.cn.security.AdminPermissions.require(ctx, "admin.users.view")) return;
-        List<User> users = userDao.findAll();
+        AdminPageQuery query = AdminPageQuery.from(ctx);
+        int total = userDao.countMatching(query.search());
+        int page = query.pageForTotal(total);
+        List<User> users = userDao.findPage(query.search(), query.pageSize(), query.offsetForPage(page));
         List<Map<String, Object>> result = new ArrayList<>();
         for (User u : users) {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -73,9 +76,10 @@ public class AdminUserHandler {
             map.put("permGroup", u.getPermGroup());
             map.put("emailVerified", u.isEmailVerified());
             map.put("createdAt", u.getCreatedAt());
+            map.put("lastLogin", u.getLastLogin());
             result.add(map);
         }
-        ctx.json(result);
+        ctx.json(Map.of("items", result, "total", total, "page", page, "pageSize", query.pageSize()));
     }
 
     @SuppressWarnings("unchecked")

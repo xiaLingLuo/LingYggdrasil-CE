@@ -22,10 +22,9 @@ import im.xz.cn.auth.SessionManager;
 import im.xz.cn.config.SystemConfig;
 import im.xz.cn.database.DatabaseManager;
 import im.xz.cn.database.dao.TextureDao;
-import im.xz.cn.database.dao.TextureMetaDao;
+import im.xz.cn.database.dao.TextureFileMetaDao;
 import im.xz.cn.database.dao.UserDao;
 import im.xz.cn.model.Admin;
-import im.xz.cn.model.Texture;
 import im.xz.cn.model.User;
 import im.xz.cn.web.view.AdminPage;
 import im.xz.cn.logging.AuditLogger;
@@ -40,7 +39,7 @@ public class AdminSkinHandler {
     private final TextureDao textureDao;
     private final TextureService textureService;
     private final UserDao userDao;
-    private final TextureMetaDao metaDao;
+    private final TextureFileMetaDao fileMetaDao;
     private final DatabaseManager db;
     private final SystemConfig systemConfig;
 
@@ -48,7 +47,7 @@ public class AdminSkinHandler {
         this.textureDao = textureDao;
         this.textureService = textureService;
         this.userDao = userDao;
-        this.metaDao = new TextureMetaDao(db);
+        this.fileMetaDao = new TextureFileMetaDao(db);
         this.db = db;
         this.systemConfig = systemConfig;
     }
@@ -66,33 +65,24 @@ public class AdminSkinHandler {
             ctx.json(Map.of("success", false, "message", I18n.t("msg.rootOnly")));
             return;
         }
-        String sql = """
-            SELECT t.hash, t.size,
-                   MIN(t.created_at) AS created_at,
-                   MIN(t.original_name) AS original_name,
-                   COUNT(*) AS ref_count
-            FROM textures t
-            WHERE t.type = 'SKIN'
-            GROUP BY t.hash
-            ORDER BY created_at DESC
-            """;
-        var rows = db.executeQuery(sql);
+        AdminPageQuery query = AdminPageQuery.from(ctx);
+        int total = fileMetaDao.countAdminFiles("SKIN", query.search());
+        int page = query.pageForTotal(total);
+        var rows = fileMetaDao.findAdminPage("SKIN", query.search(), query.pageSize(), query.offsetForPage(page));
         List<Map<String, Object>> result = new ArrayList<>();
-        List<String> hashes = rows.stream().map(row -> String.valueOf(row.get("hash"))).toList();
-        Map<String, String> aliases = metaDao.getAdminAliases(hashes);
         for (var row : rows) {
             Map<String, Object> map = new LinkedHashMap<>();
             String hash = String.valueOf(row.get("hash"));
             map.put("hash", hash);
-            String adminAlias = aliases.get(hash);
-            map.put("adminAlias", adminAlias != null ? adminAlias : "");
+            map.put("fileName", row.get("file_name"));
             map.put("originalName", row.get("original_name"));
             map.put("size", row.get("size"));
             map.put("refCount", ((Number) row.get("ref_count")).intValue());
             map.put("createdAt", String.valueOf(row.get("created_at")));
             result.add(map);
         }
-        ctx.json(Map.of("success", true, "textures", result));
+        ctx.json(Map.of("success", true, "textures", result, "total", total,
+                "page", page, "pageSize", query.pageSize()));
     }
 
     public void uploadSkin(Context ctx) {
@@ -116,16 +106,9 @@ public class AdminSkinHandler {
             ctx.json(Map.of("success", false, "message", I18n.t("msg.paramsMissing")));
             return;
         }
-        List<Texture> all = textureDao.findAll("SKIN");
-        int deleted = 0;
-        for (Texture t : all) {
-            if (t.getHash().equals(hash)) {
-                textureDao.delete(t.getId());
-                deleted++;
-            }
-        }
+        int deleted = textureDao.deleteByHash("SKIN", hash);
         textureService.deleteFile("SKIN", hash);
-        metaDao.setAdminAlias(hash, null);
+        fileMetaDao.delete("SKIN", hash);
         AuditLogger.logSensitiveOperation(getAdminName(ctx), "DELETE_SKIN_HASH:" + hash, IpUtil.getClientIp(ctx));
         ctx.json(Map.of("success", true, "message", I18n.t("msg.deletedSkinRecords", deleted)));
     }
@@ -152,13 +135,13 @@ public class AdminSkinHandler {
             String hash = String.valueOf(row.get("hash"));
             db.executeUpdate("DELETE FROM textures WHERE type = ? AND hash = ?", type, hash);
             textureService.deleteFile(type, hash);
-            metaDao.setAdminAlias(hash, null);
+            fileMetaDao.delete(type, hash);
             count++;
         }
         for (String hash : textureService.listStoredHashes(type)) {
             if (textureDao.countByHash(type, hash) == 0) {
                 textureService.deleteFile(type, hash);
-                metaDao.setAdminAlias(hash, null);
+                fileMetaDao.delete(type, hash);
                 count++;
             }
         }
@@ -174,17 +157,32 @@ public class AdminSkinHandler {
         }
         Map<String, String> body = ctx.bodyAsClass(Map.class);
         String hash = body.get("hash");
-        String alias = body.get("alias");
+        String fileName = body.containsKey("fileName") ? body.get("fileName") : body.get("alias");
         if (hash == null || hash.isBlank()) {
             ctx.json(Map.of("success", false, "message", I18n.t("msg.paramsMissing")));
             return;
         }
-        if (alias != null && !alias.isBlank() && systemConfig.isSkinNameBlacklisted(alias.trim())) {
+        String normalizedName = fileName == null ? "" : fileName.trim();
+        if (normalizedName.length() > 255) {
+            ctx.status(400).json(Map.of("success", false, "message", I18n.t("admin.common.fileNameTooLong")));
+            return;
+        }
+        String blacklistName = textureNameWithoutExtension(normalizedName);
+        if (!blacklistName.isBlank() && systemConfig.isSkinNameBlacklisted(blacklistName)) {
             ctx.json(Map.of("success", false, "message", I18n.t("msg.nameTaken")));
             return;
         }
-        metaDao.setAdminAlias(hash, alias != null && !alias.isBlank() ? alias.trim() : null);
-        ctx.json(Map.of("success", true, "message", I18n.t("msg.aliasUpdated")));
+        int updated = fileMetaDao.updateAdminFileName("SKIN", hash, normalizedName.isBlank() ? null : normalizedName);
+        if (updated == 0) {
+            ctx.status(404).json(Map.of("success", false, "message", I18n.t("msg.fileMissing")));
+            return;
+        }
+        ctx.json(Map.of("success", true, "message", I18n.t("msg.saveSuccess")));
+    }
+
+    private static String textureNameWithoutExtension(String fileName) {
+        int dot = fileName.lastIndexOf('.');
+        return dot > 0 ? fileName.substring(0, dot) : fileName;
     }
 
     public void downloadSkin(Context ctx) {

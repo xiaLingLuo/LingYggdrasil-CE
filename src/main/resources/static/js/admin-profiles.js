@@ -15,14 +15,17 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-let allProfiles = [];
+let currentProfilesPage = 1;
+let profilesPageSize = 100;
+let profilesTotal = 0;
+let currentProfilesQuery = '';
+let profilesSearchTimer = null;
+let profilesRequestSequence = 0;
 
 (async function loadProfiles() {
     try {
-        const res = await fetch('/admin/api/profiles');
-        if (res.status === 401) { window.location.href = '/admin/login'; return; }
-        allProfiles = await res.json();
-        renderProfiles(allProfiles);
+        const search = document.getElementById('profileSearchInput').value.trim();
+        await fetchProfilesPage(1, profilesPageSize, search);
     } catch (err) {
         console.error('加载角色列表失败:', err);
     }
@@ -31,45 +34,64 @@ let allProfiles = [];
 function renderProfiles(profiles) {
     const tbody = document.getElementById('profileTableBody');
     if (!profiles || profiles.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">' + t('admin.profiles.empty') + '</td></tr>';
-        return;
+        const emptyMessage = currentProfilesQuery ? t('admin.common.searchNoResults') : t('admin.profiles.empty');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">' + emptyMessage + '</td></tr>';
+    } else {
+        tbody.innerHTML = profiles.map(p => {
+            const modelLabel = p.skinModel === 'slim' ? t('admin.profiles.modelSlim') : t('admin.profiles.modelDefault');
+            return `
+            <tr>
+                <td><strong>${esc(p.name)}</strong>
+                    <button class="pencil-btn act-update" title="${t('admin.profiles.updateTitle')}" data-id="${esc(p.id)}" data-name="${esc(p.name)}"><i class="fas fa-pencil"></i></button>
+                </td>
+                <td>${esc(p.username)}
+                    <button class="pencil-btn act-transfer" title="${t('admin.profiles.transferTitle')}" data-id="${esc(p.id)}"><i class="fas fa-pencil"></i></button>
+                </td>
+                <td><code>${esc(p.id)}</code></td>
+                <td>
+                    <button class="model-badge act-model ${p.skinModel === 'slim' ? 'model-slim' : 'model-default'}" title="${t('admin.profiles.toggleModelTitle')}" data-id="${esc(p.id)}" data-model="${p.skinModel === 'slim' ? 'slim' : 'default'}">${modelLabel}</button>
+                </td>
+                <td>${formatDate(p.createdAt)}</td>
+                <td>
+                    <div class="action-btns">
+                        <button class="btn-action btn-edit act-clear" data-id="${esc(p.id)}" data-name="${esc(p.name)}">${t('admin.profiles.resetTextures')}</button>
+                        <button class="btn-action btn-delete act-delete" data-id="${esc(p.id)}" data-name="${esc(p.name)}">${t('common.delete')}</button>
+                    </div>
+                </td>
+            </tr>
+        `;
+        }).join('');
     }
-    tbody.innerHTML = profiles.map(p => {
-        const modelLabel = p.skinModel === 'slim' ? t('admin.profiles.modelSlim') : t('admin.profiles.modelDefault');
-        return `
-        <tr>
-            <td><strong>${esc(p.name)}</strong>
-                <button class="pencil-btn act-update" title="${t('admin.profiles.updateTitle')}" data-id="${esc(p.id)}" data-name="${esc(p.name)}"><i class="fas fa-pencil"></i></button>
-            </td>
-            <td>${esc(p.username)}
-                <button class="pencil-btn act-transfer" title="${t('admin.profiles.transferTitle')}" data-id="${esc(p.id)}"><i class="fas fa-pencil"></i></button>
-            </td>
-            <td><code>${esc(p.id)}</code></td>
-            <td>
-                <button class="model-badge act-model ${p.skinModel === 'slim' ? 'model-slim' : 'model-default'}" title="${t('admin.profiles.toggleModelTitle')}" data-id="${esc(p.id)}" data-model="${p.skinModel === 'slim' ? 'slim' : 'default'}">${modelLabel}</button>
-            </td>
-            <td>${formatDate(p.createdAt)}</td>
-            <td>
-                <div class="action-btns">
-                    <button class="btn-action btn-edit act-clear" data-id="${esc(p.id)}" data-name="${esc(p.name)}">${t('admin.profiles.resetTextures')}</button>
-                    <button class="btn-action btn-delete act-delete" data-id="${esc(p.id)}" data-name="${esc(p.name)}">${t('common.delete')}</button>
-                </div>
-            </td>
-        </tr>
-    `;
-    }).join('');
+    renderAdminPagination('profilePagination', profilesTotal, currentProfilesPage, profilesPageSize,
+        function(page) { fetchProfilesPage(page, profilesPageSize, currentProfilesQuery); },
+        function(size) { fetchProfilesPage(1, size, currentProfilesQuery); });
 }
 
 function filterProfiles() {
     const input = document.getElementById('profileSearchInput');
     if (!input) return;
-    const q = input.value.toLowerCase().trim();
-    if (!q) { renderProfiles(allProfiles); return; }
-    const filtered = allProfiles.filter(p =>
-        (p.name && p.name.toLowerCase().includes(q)) ||
-        (p.id && p.id.toLowerCase().includes(q))
-    );
-    renderProfiles(filtered);
+    const query = input.value.trim();
+    if (profilesSearchTimer) clearTimeout(profilesSearchTimer);
+    profilesSearchTimer = setTimeout(function() { fetchProfilesPage(1, profilesPageSize, query); }, 250);
+}
+
+async function fetchProfilesPage(page, pageSize, search) {
+    const sequence = ++profilesRequestSequence;
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (search) params.set('q', search);
+    try {
+        const res = await fetch('/admin/api/profiles?' + params.toString());
+        if (res.status === 401) { window.location.href = '/admin/login'; return; }
+        const data = await res.json();
+        if (sequence !== profilesRequestSequence) return;
+        profilesTotal = Number(data.total) || 0;
+        currentProfilesPage = Number(data.page) || 1;
+        profilesPageSize = Number(data.pageSize) || pageSize;
+        currentProfilesQuery = search || '';
+        renderProfiles(data.items || []);
+    } catch (err) {
+        if (sequence === profilesRequestSequence) console.error('加载角色列表失败:', err);
+    }
 }
 
 function openCreateModal() {
@@ -166,13 +188,7 @@ async function clearProfileTextures(id, name) {
 }
 
 async function reloadProfiles() {
-    try {
-        const res = await fetch('/admin/api/profiles');
-        allProfiles = await res.json();
-        renderProfiles(allProfiles);
-    } catch (err) {
-        console.error('刷新角色列表失败:', err);
-    }
+    await fetchProfilesPage(currentProfilesPage, profilesPageSize, currentProfilesQuery);
 }
 
 async function apiPost(url, body) {

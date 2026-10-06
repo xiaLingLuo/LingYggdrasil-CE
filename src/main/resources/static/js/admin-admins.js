@@ -18,6 +18,10 @@
 const PERMS = window.__ADMIN_PERMS__ || [];
 let allAdmins = [];
 let allGroups = [];
+let currentAdminsPage = 1;
+let adminsPageSize = 100;
+let adminsTotal = 0;
+let adminsRequestSequence = 0;
 
 function can(key) {
     return PERMS.indexOf('*') !== -1 || PERMS.indexOf(key) !== -1;
@@ -44,10 +48,7 @@ async function loadGroups() {
 (async function loadAdmins() {
     try {
         await loadGroups();
-        const res = await fetch('/admin/api/admins');
-        if (res.status === 401) { window.location.href = '/admin/login'; return; }
-        allAdmins = await res.json();
-        renderAdmins(allAdmins);
+        await fetchAdminsPage(1, adminsPageSize);
     } catch (err) {
         console.error('Failed to load admin list:', err);
     }
@@ -57,27 +58,48 @@ function renderAdmins(admins) {
     const tbody = document.getElementById('adminTableBody');
     if (!admins || admins.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="text-center">' + t('admin.admins.empty') + '</td></tr>';
-        return;
-    }
-    tbody.innerHTML = admins.map(a => {
-        const editBtn = can('admin.admins.edit')
-            ? `<button class="btn-action btn-edit act-edit" data-id="${esc(a.id)}" data-username="${esc(a.username)}" data-email="${esc(a.email)}" data-group="${esc(a.permGroup || 'op')}">${t('common.edit')}</button>` : '';
-        const delBtn = can('admin.admins.delete')
-            ? `<button class="btn-action btn-delete act-delete" data-id="${esc(a.id)}" data-username="${esc(a.username)}">${t('common.delete')}</button>` : '';
-        const actions = (editBtn || delBtn)
-            ? '<div class="action-btns">' + editBtn + delBtn + '</div>'
-            : '<span class="btn-action btn-disabled">' + t('admin.admins.noPermission') + '</span>';
+    } else {
+        tbody.innerHTML = admins.map(a => {
+            const editBtn = can('admin.admins.edit')
+                ? `<button class="btn-action btn-edit act-edit" data-id="${esc(a.id)}" data-username="${esc(a.username)}" data-email="${esc(a.email)}" data-group="${esc(a.permGroup || 'op')}">${t('common.edit')}</button>` : '';
+            const delBtn = can('admin.admins.delete')
+                ? `<button class="btn-action btn-delete act-delete" data-id="${esc(a.id)}" data-username="${esc(a.username)}">${t('common.delete')}</button>` : '';
+            const actions = (editBtn || delBtn)
+                ? '<div class="action-btns">' + editBtn + delBtn + '</div>'
+                : '<span class="btn-action btn-disabled">' + t('admin.admins.noPermission') + '</span>';
 
-        return `
-            <tr>
-                <td><strong>${esc(a.username)}</strong></td>
-                <td>${esc(a.email)}</td>
-                <td>${esc(a.permGroup || 'op')}</td>
-                <td>${formatDate(a.createdAt)}</td>
-                <td>${actions}</td>
-            </tr>
-        `;
-    }).join('');
+            return `
+                <tr>
+                    <td><strong>${esc(a.username)}</strong></td>
+                    <td>${esc(a.email)}</td>
+                    <td>${esc(a.permGroup || 'op')}</td>
+                    <td>${formatDate(a.createdAt)}</td>
+                    <td>${actions}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+    renderAdminPagination('adminPagination', adminsTotal, currentAdminsPage, adminsPageSize,
+        function(page) { fetchAdminsPage(page, adminsPageSize); },
+        function(size) { fetchAdminsPage(1, size); });
+}
+
+async function fetchAdminsPage(page, pageSize) {
+    const sequence = ++adminsRequestSequence;
+    const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    try {
+        const res = await fetch('/admin/api/admins?' + params.toString());
+        if (res.status === 401) { window.location.href = '/admin/login'; return; }
+        const data = await res.json();
+        if (sequence !== adminsRequestSequence) return;
+        allAdmins = data.items || [];
+        adminsTotal = Number(data.total) || 0;
+        currentAdminsPage = Number(data.page) || 1;
+        adminsPageSize = Number(data.pageSize) || pageSize;
+        renderAdmins(allAdmins);
+    } catch (err) {
+        if (sequence === adminsRequestSequence) console.error('Failed to load admin list:', err);
+    }
 }
 
 function openCreateModal() {
@@ -158,13 +180,7 @@ async function deleteAdmin(id, username) {
 }
 
 async function reloadAdmins() {
-    try {
-        const res = await fetch('/admin/api/admins');
-        allAdmins = await res.json();
-        renderAdmins(allAdmins);
-    } catch (err) {
-        console.error('刷新管理员列表失败:', err);
-    }
+    await fetchAdminsPage(currentAdminsPage, adminsPageSize);
 }
 
 async function apiPost(url, body) {

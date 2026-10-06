@@ -30,6 +30,11 @@ public class DatabaseManager {
     private final HikariDataSource dataSource;
     private final String dbType;
 
+    @FunctionalInterface
+    public interface TransactionWork<T> {
+        T execute(Connection connection) throws Exception;
+    }
+
     public DatabaseManager(DatabaseConfig config) {
         this.dbType = config.getType().toLowerCase();
 
@@ -86,6 +91,35 @@ public class DatabaseManager {
 
     public Connection getConnection() throws SQLException {
         return dataSource.getConnection();
+    }
+
+    public <T> T inTransaction(TransactionWork<T> work) {
+        try (Connection conn = getConnection()) {
+            boolean autoCommit = conn.getAutoCommit();
+            conn.setAutoCommit(false);
+            try {
+                T result = work.execute(conn);
+                conn.commit();
+                return result;
+            } catch (Exception e) {
+                try {
+                    conn.rollback();
+                } catch (SQLException rollbackError) {
+                    e.addSuppressed(rollbackError);
+                }
+                if (e instanceof RuntimeException runtimeException) throw runtimeException;
+                throw new RuntimeException("Database transaction failed", e);
+            } finally {
+                try {
+                    conn.setAutoCommit(autoCommit);
+                } catch (SQLException e) {
+                    log.warn("Failed to restore transaction auto-commit state: {}", e.getMessage());
+                }
+            }
+        } catch (SQLException e) {
+            log.error("Database transaction failed: {}", e.getMessage(), e);
+            throw new RuntimeException("Database transaction failed", e);
+        }
     }
 
     public int executeUpdate(String sql, Object... params) {

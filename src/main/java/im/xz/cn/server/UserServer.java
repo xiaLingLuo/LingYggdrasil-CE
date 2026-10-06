@@ -93,8 +93,8 @@ public class UserServer {
         TextureVisibilityDao visibilityDao = new TextureVisibilityDao(db);
         TextureFavoriteDao favoriteDao = new TextureFavoriteDao(db);
         FriendSharedTextureDao friendSharedDao = new FriendSharedTextureDao(db);
-            UserSkinHandler skinHandler = new UserSkinHandler(textureDao, textureService, userDao, visibilityDao, sysConfig, profileDao);
-            UserCapeHandler capeHandler = new UserCapeHandler(textureDao, textureService, userDao, visibilityDao, sysConfig, profileDao);
+        UserSkinHandler skinHandler = new UserSkinHandler(textureDao, textureService, userDao, visibilityDao, sysConfig, profileDao, db);
+        UserCapeHandler capeHandler = new UserCapeHandler(textureDao, textureService, userDao, visibilityDao, sysConfig, profileDao, db);
         FriendDao friendDao = new FriendDao(db);
         UserDashboardHandler dashHandler = new UserDashboardHandler(authService, userDao, profileDao, textureDao, textureService, cacheDao, mailService, sysConfig, favoriteDao, friendSharedDao, visibilityDao, friendDao);
         ConfirmingFriendDao confirmingDao = new im.xz.cn.database.dao.ConfirmingFriendDao(db);

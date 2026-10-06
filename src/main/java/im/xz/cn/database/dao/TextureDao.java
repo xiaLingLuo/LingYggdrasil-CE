@@ -25,6 +25,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -53,12 +54,36 @@ public class TextureDao {
         );
     }
 
+    public void insert(Connection conn, Texture texture) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "INSERT INTO textures (id, user_id, type, hash, alias, original_name, size, content_type, created_at, reference_type, ref_owner_id, ref_created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)")) {
+            ps.setObject(1, texture.getId());
+            ps.setObject(2, texture.getUserId());
+            ps.setObject(3, texture.getType());
+            ps.setObject(4, texture.getHash());
+            ps.setObject(5, texture.getAlias());
+            ps.setObject(6, texture.getOriginalName());
+            ps.setObject(7, texture.getSize());
+            ps.setObject(8, texture.getContentType());
+            if ("pgsql".equals(db.getDbType())) ps.setTimestamp(9, Timestamp.valueOf(texture.getCreatedAt()));
+            else ps.setObject(9, texture.getCreatedAt());
+            ps.setObject(10, texture.getReferenceType());
+            ps.setObject(11, texture.getRefOwnerId());
+            ps.setObject(12, texture.getRefCreatedAt());
+            ps.executeUpdate();
+        }
+    }
+
     public Texture findById(String id) {
         return querySingle("SELECT * FROM textures WHERE id = ?", id);
     }
 
     public Texture findByHash(String type, String hash) {
         return querySingle("SELECT * FROM textures WHERE type = ? AND hash = ?", type, hash);
+    }
+
+    public Texture findFirstByHash(String type, String hash) {
+        return querySingle("SELECT * FROM textures WHERE type = ? AND hash = ? ORDER BY created_at ASC, id ASC LIMIT 1", type, hash);
     }
 
     public List<Texture> findAllByHash(String type, String hash) {
@@ -322,6 +347,10 @@ public class TextureDao {
 
     public void delete(String id) {
         db.executeUpdate("DELETE FROM textures WHERE id = ?", id);
+    }
+
+    public int deleteByHash(String type, String hash) {
+        return db.executeUpdate("DELETE FROM textures WHERE type = ? AND hash = ?", type, hash);
     }
 
     public int countByUserId(String userId, String type) {

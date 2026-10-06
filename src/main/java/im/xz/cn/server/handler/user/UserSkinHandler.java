@@ -26,6 +26,7 @@ import im.xz.cn.config.SystemConfig;
 import im.xz.cn.database.DatabaseManager;
 import im.xz.cn.database.dao.ProfileDao;
 import im.xz.cn.database.dao.TextureDao;
+import im.xz.cn.database.dao.TextureFileMetaDao;
 import im.xz.cn.database.dao.TextureVisibilityDao;
 import im.xz.cn.database.dao.UserDao;
 import im.xz.cn.model.Texture;
@@ -51,14 +52,18 @@ public class UserSkinHandler {
     private final TextureVisibilityDao visibilityDao;
     private final SystemConfig systemConfig;
     private final ProfileDao profileDao;
+    private final DatabaseManager db;
+    private final TextureFileMetaDao fileMetaDao;
 
-    public UserSkinHandler(TextureDao textureDao, TextureService textureService, UserDao userDao, TextureVisibilityDao visibilityDao, SystemConfig systemConfig, ProfileDao profileDao) {
+    public UserSkinHandler(TextureDao textureDao, TextureService textureService, UserDao userDao, TextureVisibilityDao visibilityDao, SystemConfig systemConfig, ProfileDao profileDao, DatabaseManager db) {
         this.textureDao = textureDao;
         this.textureService = textureService;
         this.userDao = userDao;
         this.visibilityDao = visibilityDao;
         this.systemConfig = systemConfig;
         this.profileDao = profileDao;
+        this.db = db;
+        this.fileMetaDao = new TextureFileMetaDao(db);
     }
 
     public void skinsPage(Context ctx) {
@@ -190,16 +195,15 @@ public class UserSkinHandler {
         }
 
         try {
-            Texture globalExisting = textureDao.findByHash("SKIN", hash);
+            Texture globalExisting = textureDao.findFirstByHash("SKIN", hash);
             if (!textureService.tryRecordUpload(user.getId(), "SKIN")) {
                 ctx.json(Map.of("success", false, "message", I18n.t("msg.uploadRateLimited")));
                 return;
             }
+            String sanitizedOriginal = systemConfig.sanitizeTextureFileName(file.filename(), true);
             if (globalExisting == null) {
                 textureService.saveFile("SKIN", hash, data);
             }
-
-            String sanitizedOriginal = systemConfig.sanitizeTextureFileName(file.filename(), true);
             String alias = explicitAlias;
             if (alias == null || alias.isBlank()) {
                 if (sanitizedOriginal.contains(".")) {
@@ -215,7 +219,16 @@ public class UserSkinHandler {
             String id = UUID.randomUUID().toString();
             String createdAt = TimeUtil.now();
             Texture texture = new Texture(id, user.getId(), "SKIN", hash, alias, sanitizedOriginal, size, "image/png", createdAt);
-            textureDao.insert(texture);
+            String firstUploadName = globalExisting == null
+                    ? sanitizedOriginal : globalExisting.getOriginalName();
+            String firstUploadedAt = globalExisting == null
+                    ? createdAt : globalExisting.getCreatedAt();
+            long firstUploadSize = globalExisting == null ? size : globalExisting.getSize();
+            db.inTransaction(conn -> {
+                fileMetaDao.insertFirstUpload(conn, "SKIN", hash, firstUploadName, firstUploadedAt, firstUploadSize);
+                textureDao.insert(conn, texture);
+                return null;
+            });
 
             im.xz.cn.logging.UserActionLogger.log(user.getId(), im.xz.cn.common.IpUtil.getClientIp(ctx), "texture");
             ctx.json(Map.of("success", true, "message", I18n.t("msg.uploadSuccess")));

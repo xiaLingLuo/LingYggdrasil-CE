@@ -18,12 +18,14 @@
 package im.xz.cn.database.dao;
 
 import im.xz.cn.database.DatabaseManager;
+import im.xz.cn.database.SqlLike;
 import im.xz.cn.logging.logApi;
 import im.xz.cn.model.User;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class UserDao {
     private static final logApi log = logApi.getLogger(UserDao.class);
@@ -73,6 +75,51 @@ public class UserDao {
             throw new RuntimeException("UserDao.findAll failed", e);
         }
         return users;
+    }
+
+    public List<User> findPage(String search, int limit, long offset) {
+        List<User> users = new ArrayList<>();
+        StringBuilder sql = new StringBuilder("SELECT * FROM users WHERE id != '-99' ");
+        if (search != null && !search.isBlank()) {
+            sql.append("AND (LOWER(username) LIKE ? ESCAPE '!' OR LOWER(email) LIKE ? ESCAPE '!' " +
+                    "OR LOWER(COALESCE(nickname, '')) LIKE ? ESCAPE '!') ");
+        }
+        sql.append("ORDER BY created_at ASC, id ASC LIMIT ? OFFSET ?");
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (search != null && !search.isBlank()) {
+                String pattern = SqlLike.contains(search);
+                ps.setString(index++, pattern);
+                ps.setString(index++, pattern);
+                ps.setString(index++, pattern);
+            }
+            ps.setInt(index++, limit);
+            ps.setLong(index, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) users.add(User.fromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            log.error("UserDao.findPage failed: {}", e.getMessage(), e);
+            throw new RuntimeException("UserDao.findPage failed", e);
+        }
+        return users;
+    }
+
+    public int countMatching(String search) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS cnt FROM users WHERE id != '-99' ");
+        if (search != null && !search.isBlank()) {
+            sql.append("AND (LOWER(username) LIKE ? ESCAPE '!' OR LOWER(email) LIKE ? ESCAPE '!' " +
+                    "OR LOWER(COALESCE(nickname, '')) LIKE ? ESCAPE '!')");
+        }
+        Map<String, Object> result;
+        if (search == null || search.isBlank()) {
+            result = db.executeQuerySingle(sql.toString());
+        } else {
+            String pattern = SqlLike.contains(search);
+            result = db.executeQuerySingle(sql.toString(), pattern, pattern, pattern);
+        }
+        return result == null || result.get("cnt") == null ? 0 : ((Number) result.get("cnt")).intValue();
     }
 
     public void update(User user) {

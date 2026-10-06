@@ -10,7 +10,7 @@
 
 ```text
 运行目录/
-├── LingYggdrasil-2.3.6.jar
+├── LingYggdrasil-2.3.16.jar
 ├── plugins/
 │   ├── plugins-state.json   # 启停状态（自动生成，只增不减）
 │   ├── HelloWorld.jar       # 你的插件
@@ -30,26 +30,26 @@
 
 ### 必填字段
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| `name` | string | 唯一内部标识，匹配 `^[A-Za-z0-9_.-]+$` |
-| `ver` | string | 插件版本 |
-| `main` | string | 主类全限定名，须继承 `im.xz.cn.plugin.api.LingPlugin` |
-| `apiVer` | string | 兼容的插件 API 版本（见下） |
-| `hotReloadable` | boolean | 是否支持在后台热启停 |
+| 字段            | 类型    | 说明                                                  |
+|-----------------|---------|-------------------------------------------------------|
+| `name`          | string  | 唯一内部标识，匹配 `^[A-Za-z0-9_.-]+$`                |
+| `ver`           | string  | 插件版本                                              |
+| `main`          | string  | 主类全限定名，须继承 `im.xz.cn.plugin.api.LingPlugin` |
+| `apiVer`        | string  | 兼容的插件 API 版本（见下）                           |
+| `hotReloadable` | boolean | 是否支持在后台热启停                                  |
 
 ### 选填字段
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
+| 字段           | 类型   | 说明                                                    |
+|----------------|--------|---------------------------------------------------------|
 | `friendlyName` | string | 人类可读名称（可含中文），优先展示；`name` 仍是唯一标识 |
-| `authors` | list | 作者列表 |
-| `website` | string | 网站 |
-| `description` | string | 介绍（总览展示） |
-| `icon` | string | jar 内图标路径，支持 png / jpg / svg / webp |
-| `depend` | list | 硬依赖插件名 |
-| `softdepend` | list | 软依赖插件名（仅影响加载顺序，缺失忽略） |
-| `perms` | map | 权限节点声明，见第 5 节 |
+| `authors`      | list   | 作者列表                                                |
+| `website`      | string | 网站                                                    |
+| `description`  | string | 介绍（总览展示）                                        |
+| `icon`         | string | jar 内图标路径，支持 png / jpg / svg / webp             |
+| `depend`       | list   | 硬依赖插件名                                            |
+| `softdepend`   | list   | 软依赖插件名（仅影响加载顺序，缺失忽略）                |
+| `perms`        | map    | 权限节点声明，见第 5 节                                 |
 
 ### 保留名称
 
@@ -66,7 +66,7 @@ yggdrasil, yggdrasil-main, yggdrasil-api, ling
 name: HelloWorld
 ver: '1.0.0'
 main: com.example.helloworld.HelloWorld
-apiVer: '2.3.6'
+apiVer: '2.3.16'
 hotReloadable: true
 friendlyName: 你好世界
 authors: [ LingYggdrasilTeam ]
@@ -87,10 +87,10 @@ perms:
 
 ## 3. apiVer 兼容规则
 
-插件 API 版本与主程序版本**同步发布**，当前为 `2.3.6`（取自 `pom.xml`）。
+插件 API 版本与主程序版本**同步发布**，当前为 `2.3.16`（取自 `pom.xml`）。
 
-- 单值 `2.3.6` → 必须**精确等于**服务端 API 版本才兼容。
-- 区间 `2.2.0to2.3.6` → 服务端版本落在闭区间 `[2.2.0, 2.3.6]` 内即兼容。
+- 单值 `2.3.16` → 必须**精确等于**服务端 API 版本才兼容。
+- 区间 `2.2.0to2.3.16` → 服务端版本落在闭区间 `[2.2.0, 2.3.16]` 内即兼容。
 
 不兼容的插件会显示为「版本不兼容」，只展示元信息，不加载代码。
 
@@ -103,7 +103,7 @@ perms:
 构建主程序时会同步生成插件开发 API jar：
 
 ```text
-target/LingYggdrasil-plugin-api-2.3.6.jar
+target/LingYggdrasil-plugin-api-2.3.16.jar
 ```
 
 该 jar **自包含**（含 `im.xz.cn.plugin.api` 及公开签名引用的服务端类型），插件只需依赖它即可编译。
@@ -145,7 +145,7 @@ public class HelloWorld extends LingPlugin {
 将编译后的类与 `plugin.yml`（位于 jar 根）一起打包：
 
 ```bash
-javac -cp LingYggdrasil-plugin-api-2.3.6.jar -d out src/**/*.java
+javac -cp LingYggdrasil-plugin-api-2.3.16.jar -d out src/**/*.java
 jar cf HelloWorld.jar -C out . -C resources plugin.yml
 ```
 

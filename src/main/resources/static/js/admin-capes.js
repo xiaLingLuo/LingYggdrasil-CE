@@ -15,45 +15,78 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-var allCapes = [];
+var currentCapesPage = 1;
+var capesPageSize = 100;
+var capesTotal = 0;
+var currentCapesQuery = '';
+var capesSearchTimer = null;
+var capesRequestSequence = 0;
 
 (async function loadCapes() {
-    var res = await fetch('/admin/api/capes');
-    if (res.status === 401) { window.location.href = '/admin/login'; return; }
-    var data = await res.json();
-    allCapes = (data.success && data.textures) ? data.textures : [];
-    renderCapes(allCapes);
+    await fetchCapesPage(1, capesPageSize, '');
 })();
 
 function renderCapes(capes) {
     var tbody = document.getElementById('capeTableBody');
     if (!capes || capes.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center">' + t('admin.capes.empty') + '</td></tr>';
-        return;
+        var emptyMessage = currentCapesQuery ? t('admin.common.searchNoResults') : t('admin.capes.empty');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">' + emptyMessage + '</td></tr>';
+    } else {
+        tbody.innerHTML = capes.map(function(s) {
+            var displayName = s.fileName || '-';
+            return '<tr>' +
+                '<td style="font-family:Consolas,monospace;font-size:12px">' + esc(s.hash ? s.hash.substring(0, 6) : '-') + ' <button class="pencil-btn act-hash" type="button" title="HASH" aria-label="HASH" data-hash="' + esc(s.hash) + '"><i class="fas fa-magnifying-glass"></i></button></td>' +
+                '<td>' + esc(displayName) + ' <button class="pencil-btn act-alias" type="button" title="' + esc(t('admin.capes.editFileNameTitle')) + '" aria-label="' + esc(t('admin.capes.editFileNameTitle')) + '" data-hash="' + esc(s.hash) + '" data-alias="' + esc(s.fileName || '') + '"><i class="fas fa-pencil"></i></button></td>' +
+                '<td>' + formatSize(s.size) + '</td>' +
+                '<td>' + esc(String(s.refCount)) + '</td>' +
+                '<td>' + formatDate(s.createdAt) + '</td>' +
+                '<td><div class="action-btns">' +
+                '<button class="btn-action btn-edit act-preview" data-hash="' + esc(s.hash) + '" data-name="' + esc(displayName) + '">' + t('admin.common.preview') + '</button>' +
+                '<button class="btn-action btn-edit act-download" data-hash="' + esc(s.hash) + '">' + t('texture.download') + '</button>' +
+                '<button class="btn-action btn-delete act-delete" data-hash="' + esc(s.hash) + '">' + t('common.delete') + '</button>' +
+                '</div></td></tr>';
+        }).join('');
     }
-    tbody.innerHTML = capes.map(function(s) {
-        var displayName = s.adminAlias || s.originalName || '-';
-        var hashShort = s.hash ? s.hash.substring(0, 12) + '...' : '-';
-        return '<tr>' +
-            '<td style="font-family:Consolas,monospace;font-size:12px" title="' + esc(s.hash) + '">' + esc(hashShort) + '</td>' +
-            '<td>' + esc(displayName) + '</td>' +
-            '<td>' + formatSize(s.size) + '</td>' +
-            '<td>' + esc(String(s.refCount)) + '</td>' +
-            '<td>' + formatDate(s.createdAt) + '</td>' +
-            '<td><div class="action-btns">' +
-            '<button class="btn-action btn-edit act-preview" data-hash="' + esc(s.hash) + '" data-name="' + esc(displayName) + '">' + t('admin.common.preview') + '</button>' +
-            '<button class="btn-action btn-edit act-download" data-hash="' + esc(s.hash) + '">' + t('texture.download') + '</button>' +
-            '<button class="btn-action btn-edit act-alias" data-hash="' + esc(s.hash) + '" data-alias="' + esc(s.adminAlias || '') + '">' + t('texture.editAlias') + '</button>' +
-            '<button class="btn-action btn-delete act-delete" data-hash="' + esc(s.hash) + '">' + t('common.delete') + '</button>' +
-            '</div></td></tr>';
-    }).join('');
+    renderAdminPagination('capePagination', capesTotal, currentCapesPage, capesPageSize,
+        function(page) { fetchCapesPage(page, capesPageSize, currentCapesQuery); },
+        function(size) { fetchCapesPage(1, size, currentCapesQuery); });
+}
+
+function filterCapes() {
+    var input = document.getElementById('capeSearchInput');
+    if (!input) return;
+    var query = input.value.trim();
+    if (capesSearchTimer) clearTimeout(capesSearchTimer);
+    capesSearchTimer = setTimeout(function() { fetchCapesPage(1, capesPageSize, query); }, 250);
+}
+
+async function fetchCapesPage(page, pageSize, search) {
+    var sequence = ++capesRequestSequence;
+    var params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+    if (search) params.set('q', search);
+    try {
+        var res = await fetch('/admin/api/capes?' + params.toString());
+        if (res.status === 401) { window.location.href = '/admin/login'; return; }
+        var data = await res.json();
+        if (sequence !== capesRequestSequence) return;
+        var capes = (data.success && data.textures) ? data.textures : [];
+        capesTotal = Number(data.total) || 0;
+        currentCapesPage = Number(data.page) || 1;
+        capesPageSize = Number(data.pageSize) || pageSize;
+        currentCapesQuery = search || '';
+        renderCapes(capes);
+    } catch (err) {
+        if (sequence === capesRequestSequence) console.error('加载披风列表失败:', err);
+    }
 }
 
 document.getElementById('capeTableBody').addEventListener('click', function(e) {
     var btn = e.target.closest('button');
     if (!btn) return;
     var hash = btn.dataset.hash;
-    if (btn.classList.contains('act-preview')) {
+    if (btn.classList.contains('act-hash')) {
+        showHashModal(hash);
+    } else if (btn.classList.contains('act-preview')) {
         showPreview(hash, btn.dataset.name || '');
     } else if (btn.classList.contains('act-download')) {
         window.open('/admin/api/capes/download?hash=' + encodeURIComponent(hash), '_blank');
@@ -64,33 +97,56 @@ document.getElementById('capeTableBody').addEventListener('click', function(e) {
     }
 });
 
-function showAliasModal(hash, currentAlias) {
-    var existing = document.getElementById('aliasModal');
+function createCapeModal(id, title, bodyHtml, footerHtml, maxWidth, onClose) {
+    var existing = document.getElementById(id);
     if (existing) existing.remove();
-    var overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'aliasModal';
-    overlay.innerHTML =
-        '<div class="modal-box">' +
-        '<button class="modal-close-btn" id="aliasCloseBtn">&times;</button>' +
-        '<h3>' + t('admin.capes.editAliasTitle') + '</h3>' +
-        '<div class="form-group"><label class="form-label">' + t('admin.capes.newAlias') + '</label>' +
-        '<input type="text" class="form-input" id="newAlias" value="' + esc(currentAlias) + '"></div>' +
-        '<div id="aliasMsg" class="msg-area"></div>' +
-        '<div class="modal-actions">' +
-        '<button class="btn btn-secondary" id="aliasCancelBtn">' + t('common.cancel') + '</button>' +
-        '<button class="btn btn-primary" id="aliasSaveBtn">' + t('common.save') + '</button></div></div>';
-    document.body.appendChild(overlay);
-    document.getElementById('aliasCloseBtn').addEventListener('click', function() { overlay.remove(); });
-    document.getElementById('aliasCancelBtn').addEventListener('click', function() { overlay.remove(); });
+    var modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = id;
+    modal.setAttribute('role', 'dialog');
+    modal.setAttribute('aria-modal', 'true');
+    var backdrop = document.createElement('div');
+    backdrop.className = 'modal-overlay';
+    var card = document.createElement('div');
+    card.className = 'modal-card';
+    if (maxWidth) card.style.maxWidth = maxWidth;
+    card.innerHTML =
+        '<div class="modal-header"><h3>' + esc(title) + '</h3>' +
+        '<button type="button" class="modal-close" aria-label="' + esc(t('common.close')) + '">&times;</button></div>' +
+        '<div class="modal-body">' + bodyHtml + '</div>' +
+        (footerHtml ? '<div class="modal-footer">' + footerHtml + '</div>' : '');
+    modal.appendChild(backdrop);
+    modal.appendChild(card);
+    document.body.appendChild(modal);
+    var close = function() {
+        if (onClose) onClose();
+        modal.remove();
+    };
+    card.querySelector('.modal-close').addEventListener('click', close);
+    backdrop.addEventListener('click', close);
+    return { modal: modal, close: close };
+}
+
+function showHashModal(hash) {
+    createCapeModal('hashModal', 'HASH', '<code id="fullHash" style="display:block;word-break:break-all"></code>');
+    document.getElementById('fullHash').textContent = hash || '';
+}
+
+function showAliasModal(hash, currentAlias) {
+    var footer = '<button type="button" class="btn btn-secondary" id="aliasCancelBtn">' + esc(t('common.cancel')) + '</button>' +
+        '<button type="button" class="btn btn-primary" id="aliasSaveBtn">' + esc(t('common.save')) + '</button>';
+    var body = '<div class="form-group"><label class="form-label">' + esc(t('admin.capes.fileName')) + '</label>' +
+        '<input type="text" class="form-input" id="newAlias" value="' + esc(currentAlias) + '" placeholder="' + esc(t('admin.capes.fileNamePlaceholder')) + '" maxlength="255"></div>' +
+        '<div id="aliasMsg" class="msg-area"></div>';
+    var dialog = createCapeModal('aliasModal', t('admin.capes.editFileNameTitle'), body, footer);
+    document.getElementById('aliasCancelBtn').addEventListener('click', dialog.close);
     document.getElementById('aliasSaveBtn').addEventListener('click', function() { submitAlias(hash); });
-    overlay.addEventListener('click', function(e) { if (e.target === overlay) overlay.remove(); });
 }
 
 async function submitAlias(hash) {
-    var alias = document.getElementById('newAlias').value.trim();
+    var fileName = document.getElementById('newAlias').value.trim();
     var msgDiv = document.getElementById('aliasMsg');
-    var result = await apiPost('/admin/api/capes/alias', { hash: hash, alias: alias });
+    var result = await apiPost('/admin/api/capes/alias', { hash: hash, fileName: fileName });
     if (result && result.success) {
         document.getElementById('aliasModal').remove();
         reloadCapes();
@@ -123,28 +179,15 @@ async function deleteOrphanCapes() {
 }
 
 async function reloadCapes() {
-    var res = await fetch('/admin/api/capes');
-    if (res.status === 401) { window.location.href = '/admin/login'; return; }
-    var data = await res.json();
-    allCapes = (data.success && data.textures) ? data.textures : [];
-    renderCapes(allCapes);
+    await fetchCapesPage(currentCapesPage, capesPageSize, currentCapesQuery);
 }
 
 function showPreview(hash, name) {
     closePreview();
-    var overlay = document.createElement('div');
-    overlay.className = 'modal-overlay';
-    overlay.id = 'previewModal';
-    overlay.innerHTML =
-        '<div class="modal-box" style="max-width:420px">' +
-        '<button class="modal-close-btn" id="previewCloseBtn">&times;</button>' +
-        '<h3 style="margin-bottom:12px;word-break:break-all">' + esc(name || hash) + '</h3>' +
-        '<div class="texture-preview-stage"><canvas id="adminPreviewCanvas"></canvas></div>' +
-        '</div>';
-    document.body.appendChild(overlay);
-    document.getElementById('previewCloseBtn').addEventListener('click', closePreview);
-    overlay.addEventListener('click', function(e) { if (e.target === overlay) closePreview(); });
-    var stage = overlay.querySelector('.texture-preview-stage');
+    var modal = createCapeModal('previewModal', name || hash,
+        '<div class="texture-preview-stage"><canvas id="adminPreviewCanvas"></canvas></div>', '', '420px', disposePreviewViewer).modal;
+    modal.querySelector('.modal-header h3').style.wordBreak = 'break-all';
+    var stage = modal.querySelector('.texture-preview-stage');
     if (typeof skinview3d !== 'undefined') {
         try {
             window._adminPreviewViewer = new skinview3d.SkinViewer({
@@ -159,11 +202,15 @@ function showPreview(hash, name) {
     }
 }
 
-function closePreview() {
+function disposePreviewViewer() {
     if (window._adminPreviewViewer) {
         try { window._adminPreviewViewer.dispose(); } catch (e) {  }
         window._adminPreviewViewer = null;
     }
+}
+
+function closePreview() {
+    disposePreviewViewer();
     var m = document.getElementById('previewModal');
     if (m) m.remove();
 }
@@ -179,5 +226,3 @@ async function apiPost(url, body) {
     }
     return null;
 }
-
-

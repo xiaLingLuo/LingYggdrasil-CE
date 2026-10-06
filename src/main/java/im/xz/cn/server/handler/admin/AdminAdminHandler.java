@@ -53,7 +53,10 @@ public class AdminAdminHandler {
 
     public void getAdmins(Context ctx) {
         if (!AdminPermissions.require(ctx, "admin.admins.view")) return;
-        List<Admin> admins = adminDao.findAll();
+        AdminPageQuery query = AdminPageQuery.from(ctx);
+        int total = adminDao.count();
+        int page = query.pageForTotal(total);
+        List<Admin> admins = adminDao.findPage(query.pageSize(), query.offsetForPage(page));
         List<Map<String, Object>> result = new ArrayList<>();
         for (Admin a : admins) {
             Map<String, Object> map = new LinkedHashMap<>();
@@ -64,7 +67,7 @@ public class AdminAdminHandler {
             map.put("createdAt", a.getCreatedAt());
             result.add(map);
         }
-        ctx.json(result);
+        ctx.json(Map.of("items", result, "total", total, "page", page, "pageSize", query.pageSize()));
     }
 
     @SuppressWarnings("unchecked")

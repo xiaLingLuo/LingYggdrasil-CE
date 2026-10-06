@@ -232,7 +232,10 @@ public class AdminPage {
                 <p class="page-desc">%s</p>
             </div>
             <div class="settings-card card">
-                <div class="card-header"><h3 class="card-title">%s</h3></div>
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <h3 class="card-title">%s</h3>
+                    <input type="text" id="skinSearchInput" class="form-input search-input" placeholder="%s" data-action="filterSkins">
+                </div>
                 <div class="card-body" style="padding:0;">
             <table class="table admin-table">
                 <thead>
@@ -245,17 +248,19 @@ public class AdminPage {
                         <th>%s</th>
                     </tr>
                 </thead>
-                <tbody id="skinTableBody">
+            <tbody id="skinTableBody">
                     <tr><td colspan="6" class="text-center">%s</td></tr>
                 </tbody>
             </table>
+            <div id="skinPagination" class="admin-table-pagination"></div>
                 </div>
             </div>
             """.formatted(
                 I18n.t("admin.skins.title"),
                 I18n.t("admin.skins.desc"),
                 I18n.t("admin.skins.roster"),
-                I18n.t("admin.skins.originalName"),
+                I18n.t("admin.common.searchTexturePlaceholder"),
+                I18n.t("admin.skins.fileName"),
                 I18n.t("admin.skins.size"),
                 I18n.t("admin.skins.refUsers"),
                 I18n.t("admin.skins.uploadedAt"),
@@ -263,16 +268,22 @@ public class AdminPage {
                 I18n.t("admin.common.loading"))
             + skinSettingsCard() + skinNameBlacklistCard() + moreOpsCard("SKIN") + """
             <div id="toast" class="toast" style="display:none;"></div>
-            <div id="aliasModal" class="modal-overlay" style="display:none;">
-                <div class="modal-box">
-                    <h3>%s</h3>
-                    <div class="form-group">
-                        <label class="form-label">%s</label>
-                        <input type="text" class="form-input" id="newAlias" placeholder="%s">
+            <div id="aliasModal" class="modal" style="display:none;">
+                <div class="modal-overlay" data-action="closeModal" data-args='["aliasModal"]'></div>
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3>%s</h3>
+                        <button class="modal-close" data-action="closeModal" data-args='["aliasModal"]'>&times;</button>
                     </div>
-                    <input type="hidden" id="editSkinId">
-                    <div id="aliasMsg" class="msg-area"></div>
-                    <div class="modal-actions">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">%s</label>
+                            <input type="text" class="form-input" id="newAlias" placeholder="%s" maxlength="255">
+                        </div>
+                        <input type="hidden" id="editSkinId">
+                        <div id="aliasMsg" class="msg-area"></div>
+                    </div>
+                    <div class="modal-footer">
                         <button class="btn btn-secondary" data-action="closeModal" data-args='["aliasModal"]'>%s</button>
                         <button class="btn btn-primary" data-action="submitAlias">%s</button>
                     </div>
@@ -282,9 +293,9 @@ public class AdminPage {
             <script src="/js/skinview3d.bundle.js"></script>
             <script src="/js/admin-skins.js"></script>
             """.formatted(
-                I18n.t("admin.skins.editAliasTitle"),
-                I18n.t("admin.skins.newAlias"),
-                I18n.t("admin.skins.newAliasPlaceholder"),
+                I18n.t("admin.skins.editFileNameTitle"),
+                I18n.t("admin.skins.fileName"),
+                I18n.t("admin.skins.fileNamePlaceholder"),
                 I18n.t("admin.common.cancel"),
                 I18n.t("admin.common.save"));
         String body = renderAdminLayout("skins", adminUsername, adminRole, content, csrfToken);
@@ -299,7 +310,10 @@ public class AdminPage {
                 <p class="page-desc">%s</p>
             </div>
             <div class="settings-card card">
-                <div class="card-header"><h3 class="card-title">%s</h3></div>
+                <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+                    <h3 class="card-title">%s</h3>
+                    <input type="text" id="capeSearchInput" class="form-input search-input" placeholder="%s" data-action="filterCapes">
+                </div>
                 <div class="card-body" style="padding:0;">
                     <table class="table admin-table">
                         <thead>
@@ -316,13 +330,15 @@ public class AdminPage {
                             <tr><td colspan="6" class="text-center">%s</td></tr>
                         </tbody>
                     </table>
+                    <div id="capePagination" class="admin-table-pagination"></div>
                 </div>
             </div>
             """.formatted(
                 I18n.t("admin.capes.title"),
                 I18n.t("admin.capes.desc"),
                 I18n.t("admin.capes.roster"),
-                I18n.t("admin.capes.originalName"),
+                I18n.t("admin.common.searchTexturePlaceholder"),
+                I18n.t("admin.capes.fileName"),
                 I18n.t("admin.capes.size"),
                 I18n.t("admin.capes.refUsers"),
                 I18n.t("admin.capes.uploadedAt"),
@@ -330,16 +346,22 @@ public class AdminPage {
                 I18n.t("admin.common.loading"))
             + capeSettingsCard() + capeNameBlacklistCard() + moreOpsCard("CAPE") + """
             <div id="toast" class="toast" style="display:none;"></div>
-            <div id="aliasModal" class="modal-overlay" style="display:none;">
-                <div class="modal-box">
-                    <h3>%s</h3>
-                    <div class="form-group">
-                        <label class="form-label">%s</label>
-                        <input type="text" class="form-input" id="newAlias" placeholder="%s">
+            <div id="aliasModal" class="modal" style="display:none;">
+                <div class="modal-overlay" data-action="closeModal" data-args='["aliasModal"]'></div>
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3>%s</h3>
+                        <button class="modal-close" data-action="closeModal" data-args='["aliasModal"]'>&times;</button>
                     </div>
-                    <input type="hidden" id="editSkinId">
-                    <div id="aliasMsg" class="msg-area"></div>
-                    <div class="modal-actions">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">%s</label>
+                            <input type="text" class="form-input" id="newAlias" placeholder="%s" maxlength="255">
+                        </div>
+                        <input type="hidden" id="editSkinId">
+                        <div id="aliasMsg" class="msg-area"></div>
+                    </div>
+                    <div class="modal-footer">
                         <button class="btn btn-secondary" data-action="closeModal" data-args='["aliasModal"]'>%s</button>
                         <button class="btn btn-primary" data-action="submitAlias">%s</button>
                     </div>
@@ -349,9 +371,9 @@ public class AdminPage {
             <script src="/js/skinview3d.bundle.js"></script>
             <script src="/js/admin-capes.js"></script>
             """.formatted(
-                I18n.t("admin.capes.editAliasTitle"),
-                I18n.t("admin.capes.newAlias"),
-                I18n.t("admin.capes.newAliasPlaceholder"),
+                I18n.t("admin.capes.editFileNameTitle"),
+                I18n.t("admin.capes.fileName"),
+                I18n.t("admin.capes.fileNamePlaceholder"),
                 I18n.t("admin.common.cancel"),
                 I18n.t("admin.common.save"));
         String body = renderAdminLayout("capes", adminUsername, adminRole, content, csrfToken);
@@ -614,8 +636,8 @@ public class AdminPage {
             <div class="settings-card card">
                 <div class="card-header"><h3 class="card-title">{{admin.security.encryptionLevel}}</h3></div>
                 <div class="card-body">
-                    <p style="margin-bottom:16px;color:#666;font-size:14px;">{{admin.security.intro1}}</p>
-                    <p style="margin-bottom:16px;color:#666;font-size:14px;">{{admin.security.intro2}}</p>
+                    <p class="setting-desc" style="margin-bottom:16px;">{{admin.security.intro1}}</p>
+                    <p class="setting-desc" style="margin-bottom:16px;">{{admin.security.intro2}}</p>
                     <div id="encryptionLevelList" class="encryption-level-list">
                     </div>
                     <input type="hidden" id="encryptionLevel" value="1">
@@ -795,12 +817,14 @@ public class AdminPage {
                                 <th>%s</th>
                                 <th>%s</th>
                                 <th>%s</th>
+                                <th>%s</th>
                             </tr>
                         </thead>
                         <tbody id="userTableBody">
-                            <tr><td colspan="8" class="text-center">%s</td></tr>
+                            <tr><td colspan="9" class="text-center">%s</td></tr>
                         </tbody>
                     </table>
+                    <div id="userPagination" class="admin-table-pagination"></div>
                 </div>
             </div>
             """.formatted(
@@ -815,6 +839,7 @@ public class AdminPage {
                 I18n.t("admin.admins.permGroup"),
                 I18n.t("admin.users.emailVerified"),
                 I18n.t("admin.users.registeredAt"),
+                I18n.t("admin.users.lastActive"),
                 I18n.t("admin.common.operation"),
                 I18n.t("admin.common.loading"))
             + usernameBlacklistCard() + userPermGroupsCard() + userLogsCard() + tr("""
@@ -928,6 +953,7 @@ public class AdminPage {
                         <div class="form-group">
                             <label class="form-label">{{admin.admins.groupName}}</label>
                             <input type="text" id="userGroupNameInput" class="form-input" placeholder="{{admin.admins.groupNamePlaceholder}}">
+                            <div class="setting-desc" style="margin-top:8px;">{{admin.admins.groupNameHint}}</div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -955,6 +981,17 @@ public class AdminPage {
                         <button class="btn btn-secondary" data-action="closeModal" data-args='["userSetGroupModal"]'>{{admin.common.cancel}}</button>
                         <button class="btn btn-primary" data-action="submitSetUserGroup">{{admin.common.confirmEdit}}</button>
                     </div>
+                </div>
+            </div>
+
+            <div id="userUuidModal" class="modal" style="display:none;">
+                <div class="modal-overlay" data-action="closeModal" data-args='["userUuidModal"]'></div>
+                <div class="modal-card">
+                    <div class="modal-header">
+                        <h3>UUID</h3>
+                        <button class="modal-close" data-action="closeModal" data-args='["userUuidModal"]'>&times;</button>
+                    </div>
+                    <div class="modal-body" id="userUuidText" style="white-space:pre-line;"></div>
                 </div>
             </div>
 
@@ -1024,6 +1061,7 @@ public class AdminPage {
                             <tr><td colspan="5" class="text-center">{{admin.common.loading}}</td></tr>
                         </tbody>
                     </table>
+                    <div id="adminPagination" class="admin-table-pagination"></div>
                 </div>
             </div>
 
@@ -1113,6 +1151,7 @@ public class AdminPage {
                         <div class="form-group">
                             <label class="form-label">{{admin.admins.groupName}}</label>
                             <input type="text" id="groupNameInput" class="form-input" placeholder="{{admin.admins.groupNamePlaceholder}}">
+                            <div class="setting-desc" style="margin-top:8px;">{{admin.admins.groupNameHint}}</div>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -1161,6 +1200,7 @@ public class AdminPage {
                             <tr><td colspan="6" class="text-center">%s</td></tr>
                         </tbody>
                     </table>
+                    <div id="profilePagination" class="admin-table-pagination"></div>
                 </div>
             </div>
             """.formatted(

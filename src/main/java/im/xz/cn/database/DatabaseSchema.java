@@ -41,6 +41,8 @@ public class DatabaseSchema {
         migrateRegisteredIp(db);
         migrateLastLoginIp(db);
         migrateTextureUniqueConstraint(db);
+        migrateTextureFileMeta(db);
+        migrateAdminPaginationIndexes(db);
         migrateDisplayProfileId(db);
         migrateFriendCode(db);
         migrateTextureLikes(db);
@@ -509,6 +511,79 @@ public class DatabaseSchema {
         }
     }
 
+    private static void migrateTextureFileMeta(DatabaseManager db) {
+        String prefix = "mysql".equals(db.getDbType()) ? "CREATE INDEX " : "CREATE INDEX IF NOT EXISTS ";
+        for (String indexSql : new String[]{
+                prefix + "idx_textures_type_hash_created ON textures (type, hash, created_at, id)",
+                prefix + "idx_texture_file_meta_page ON texture_file_meta (type, first_uploaded_at, hash)"}) {
+            try {
+                db.executeUpdate(indexSql);
+            } catch (Exception e) {
+                if (!DatabaseManager.isDuplicateIndexName(e)) {
+                    throw new RuntimeException("Failed to create texture filename index", e);
+                }
+            }
+        }
+
+        Map<String, Object> marker = db.executeQuerySingle(
+                "SELECT setting_value FROM system_settings WHERE setting_key = ?", "texture_file_meta_v1");
+        if (marker != null) return;
+
+        String migrateSql = switch (db.getDbType()) {
+            case "mysql" -> "INSERT IGNORE INTO texture_file_meta " +
+                    "(type, hash, first_upload_name, admin_file_name, first_uploaded_at, size) " +
+                    "SELECT t.type, t.hash, COALESCE((SELECT s.original_name FROM textures s " +
+                    "WHERE s.type = t.type AND s.hash = t.hash ORDER BY s.created_at ASC, s.id ASC LIMIT 1), ''), " +
+                    "m.admin_alias, MIN(t.created_at), MAX(t.size) FROM textures t " +
+                    "LEFT JOIN texture_meta m ON m.hash = t.hash WHERE 1 = 1 " +
+                    "GROUP BY t.type, t.hash, m.admin_alias";
+            case "pgsql" -> "INSERT INTO texture_file_meta " +
+                    "(type, hash, first_upload_name, admin_file_name, first_uploaded_at, size) " +
+                    "SELECT t.type, t.hash, COALESCE((SELECT s.original_name FROM textures s " +
+                    "WHERE s.type = t.type AND s.hash = t.hash ORDER BY s.created_at ASC, s.id ASC LIMIT 1), ''), " +
+                    "m.admin_alias, MIN(t.created_at), MAX(t.size) FROM textures t " +
+                    "LEFT JOIN texture_meta m ON m.hash = t.hash WHERE 1 = 1 " +
+                    "GROUP BY t.type, t.hash, m.admin_alias " +
+                    "ON CONFLICT (type, hash) DO NOTHING";
+            default -> "INSERT INTO texture_file_meta " +
+                    "(type, hash, first_upload_name, admin_file_name, first_uploaded_at, size) " +
+                    "SELECT t.type, t.hash, COALESCE((SELECT s.original_name FROM textures s " +
+                    "WHERE s.type = t.type AND s.hash = t.hash ORDER BY s.created_at ASC, s.id ASC LIMIT 1), ''), " +
+                    "m.admin_alias, MIN(t.created_at), MAX(t.size) FROM textures t " +
+                    "LEFT JOIN texture_meta m ON m.hash = t.hash WHERE 1 = 1 " +
+                    "GROUP BY t.type, t.hash, m.admin_alias " +
+                    "ON CONFLICT (type, hash) DO NOTHING";
+        };
+        try {
+            db.executeUpdate(migrateSql);
+            int updated = db.executeUpdate("UPDATE system_settings SET setting_value = ? WHERE setting_key = ?",
+                    "1", "texture_file_meta_v1");
+            if (updated == 0) {
+                db.executeUpdate("INSERT INTO system_settings (setting_key, setting_value) VALUES (?, ?)",
+                        "texture_file_meta_v1", "1");
+            }
+        } catch (Exception e) {
+            log.error("[DB Migration] migrateTextureFileMeta failed: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to migrate texture filenames", e);
+        }
+    }
+
+    private static void migrateAdminPaginationIndexes(DatabaseManager db) {
+        String prefix = "mysql".equals(db.getDbType()) ? "CREATE INDEX " : "CREATE INDEX IF NOT EXISTS ";
+        for (String indexSql : new String[]{
+                prefix + "idx_users_created_id ON users (created_at, id)",
+                prefix + "idx_admins_created_id ON admins (created_at, id)",
+                prefix + "idx_profiles_created_id ON player_profiles (created_at, id)"}) {
+            try {
+                db.executeUpdate(indexSql);
+            } catch (Exception e) {
+                if (!DatabaseManager.isDuplicateIndexName(e)) {
+                    throw new RuntimeException("Failed to create admin pagination index", e);
+                }
+            }
+        }
+    }
+
     private static void migrateTextureVisibility(DatabaseManager db) {
         try {
             String sql = switch (db.getDbType()) {
@@ -757,6 +832,18 @@ public class DatabaseSchema {
         """);
 
         db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_file_meta (
+                type TEXT NOT NULL,
+                hash TEXT NOT NULL,
+                first_upload_name TEXT NOT NULL,
+                admin_file_name TEXT,
+                first_uploaded_at TEXT NOT NULL,
+                size INTEGER,
+                PRIMARY KEY(type, hash)
+            )
+        """);
+
+        db.executeRaw("""
             CREATE TABLE IF NOT EXISTS texture_likes (
                 id TEXT PRIMARY KEY,
                 user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -971,6 +1058,18 @@ public class DatabaseSchema {
         """);
 
         db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_file_meta (
+                type VARCHAR(10) NOT NULL,
+                hash VARCHAR(64) NOT NULL,
+                first_upload_name VARCHAR(255) NOT NULL,
+                admin_file_name VARCHAR(255),
+                first_uploaded_at DATETIME NOT NULL,
+                size BIGINT,
+                PRIMARY KEY (type, hash)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4
+        """);
+
+        db.executeRaw("""
             CREATE TABLE IF NOT EXISTS texture_likes (
                 id VARCHAR(36) PRIMARY KEY,
                 user_id VARCHAR(36) NOT NULL,
@@ -1181,6 +1280,18 @@ public class DatabaseSchema {
             CREATE TABLE IF NOT EXISTS texture_meta (
                 hash TEXT PRIMARY KEY,
                 admin_alias TEXT
+            )
+        """);
+
+        db.executeRaw("""
+            CREATE TABLE IF NOT EXISTS texture_file_meta (
+                type TEXT NOT NULL,
+                hash TEXT NOT NULL,
+                first_upload_name TEXT NOT NULL,
+                admin_file_name TEXT,
+                first_uploaded_at TIMESTAMP NOT NULL,
+                size BIGINT,
+                PRIMARY KEY(type, hash)
             )
         """);
 

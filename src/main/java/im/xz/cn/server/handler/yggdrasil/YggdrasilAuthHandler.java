@@ -24,6 +24,7 @@ import im.xz.cn.model.AuthToken;
 import im.xz.cn.model.PlayerProfile;
 import im.xz.cn.model.User;
 import im.xz.cn.common.IpUtil;
+import im.xz.cn.common.TimeUtil;
 import im.xz.cn.common.UuidUtil;
 import im.xz.cn.yggdrasil.YggdrasilUtil;
 import im.xz.cn.yggdrasil.YggdrasilLoginingDelAts;
@@ -139,6 +140,7 @@ public class YggdrasilAuthHandler {
                     authToken, profiles, selectedProfile, user,
                     requestUser != null && requestUser);
 
+            authService.getUserDao().updateLastLogin(user.getId(), TimeUtil.now());
             ctx.contentType("application/json");
             ctx.json(response);
             logger.info("[Yggdrasil Auth] authenticate 成功: 角色={}, availableProfiles={}",
