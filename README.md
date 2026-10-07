@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.3.16-blueviolet?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/version-2.3.17-blueviolet?style=flat-square" alt="Version" />
   <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square" alt="Java" />
   <a href="https://www.gnu.org/licenses/agpl-3.0">
     <img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg?style=flat-square" alt="License: AGPL-3.0" />
@@ -26,7 +26,7 @@
 
 **泠 Yggdrasil** 是一个为 Minecraft 打造的 **Yggdrasil 外置鉴权系统**，完整兼容 authlib 体系，提供账户注册、登录、角色管理与皮肤/披风托管能力。内置 Web 安装向导、二次元风格的管控面板与多层级安全体系，让你在几分钟内搭起一套安全又好看的外置登录服务。
 
-> **在线预览**：[multimc.cn](https://multimc.cn/) —— 一个运行着最新稳定版的站点。在动手部署之前，可以先在这里零成本体验。
+> **在线预览**：[yggapi.minecraft.ist](https://yggapi.minecraft.ist/) —— 一个运行着最新稳定版的站点。在动手部署之前，可以先在这里零成本体验。
 
 <p align="center">
   <img src="img/player-card.png" alt="角色编辑" width="820" />
@@ -52,10 +52,10 @@
 # 1. 确认 Java 版本
 java --version
 
-# 2. 下载 LingYggdrasil-2.3.16.jar，放入一个独立的空目录
+# 2. 下载 LingYggdrasil-2.3.17.jar，放入一个独立的空目录
 
 # 3. 启动（该目录将成为数据目录）
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.3.16.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.3.17.jar
 ```
 
 首次启动会自动进入**安装向导**（`http://<服务器地址>:35598`），按提示完成管理员账户、数据库与邮箱配置即可。安装完成后，程序会同时提供三个服务：
@@ -88,7 +88,7 @@ java -Xms512M -Xmx2G -jar LingYggdrasil-2.3.16.jar
 - **后台插件管理** —— 一级菜单「插件管理」，总览展示图标、名称、版本、作者、介绍与运行状态，支持手动启停。
 - **插件二级菜单** —— 插件可注册至多一个后台二级菜单，承载自身控制功能。
 - **动态权限节点** —— 内置节点与插件节点统一由来源（`LingYggdrasil` / 各插件）动态注册，权限组页面按来源分组展示。
-- **插件开发 API** —— 构建同步产出 `LingYggdrasil-plugin-api-2.3.16.jar`，自包含，供插件开发者编译。
+- **插件开发 API** —— 构建同步产出 `LingYggdrasil-plugin-api-2.3.17.jar`，自包含，供插件开发者编译。
 
 > 插件为**完全可信代码**，请勿加载来路不明的插件，加载第三方插件后果自负。详见[插件系统](docs/05-plugins/management.md)。
 

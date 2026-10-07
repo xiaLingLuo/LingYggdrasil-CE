@@ -42,7 +42,7 @@ public class AdminAppInfoHandler {
 
     private static final String GITHUB_LATEST_URL =
             "https://api.github.com/repos/xiaLingLuo/LingYggdrasil-CE/releases/latest";
-    private static final String CN_LATEST_URL = "https://api.multimc.cn/";
+    private static final String CN_LATEST_URL = "https://upload.im.xz.cn/LingYggdrasil/ver.json";
     private static final String UPDATE_CACHE_PREFIX = "appinfo:update:";
     private static final long UPDATE_INTERVAL_MS = 60000L;
     private static final Pattern VERSION_PATTERN = Pattern.compile("^\\d+\\.\\d+\\.\\d+$");

@@ -2,7 +2,7 @@
 
 **泠 Yggdrasil** 是一个为 Minecraft 打造的 **Yggdrasil 外置鉴权系统**，完整兼容 authlib 体系，提供账户注册、登录、角色管理与皮肤/披风托管能力。内置 Web 安装向导、二次元风格的管控面板与多层级安全体系，让你在几分钟内搭起一套安全又好看的外置登录服务。
 
-> **在线预览**：[multimc.cn](https://multimc.cn/) —— 一个运行着最新稳定版的站点。
+> **在线预览**：[yggapi.minecraft.ist](https://yggapi.minecraft.ist/) —— 一个运行着最新稳定版的站点。
 
 ## 服务端口
 

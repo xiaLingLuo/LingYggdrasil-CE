@@ -40,10 +40,10 @@
 
 ## 版本
 
-当前文档对应 **2.3.16**（正式版）。构建目标为 **Java 25**。
+当前文档对应 **2.3.17**（正式版）。构建目标为 **Java 25**。
 
 ## 相关链接
 
 - 仓库：[github.com/xiaLingLuo/LingYggdrasil-CE](https://github.com/xiaLingLuo/LingYggdrasil-CE)
-- 在线预览：[multimc.cn](https://multimc.cn/)
+- 在线预览：[yggapi.minecraft.ist](https://yggapi.minecraft.ist/)
 - 许可协议：[AGPL-3.0](../LICENSE)
