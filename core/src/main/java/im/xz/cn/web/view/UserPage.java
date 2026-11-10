@@ -1,0 +1,1347 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package im.xz.cn.web.view;
+
+import static im.xz.cn.web.Shared.esc;
+import im.xz.cn.i18n.I18n;
+import im.xz.cn.web.PageRenderer;
+import im.xz.cn.web.Shared;
+
+public class UserPage {
+
+    public static String welcomeSection(String displayName) {
+        return """
+            <div class="welcome-section">
+                <h2>%s <i class="fas fa-wand-magic-sparkles"></i></h2>
+            </div>
+            """.formatted(I18n.t("user.dashboard.welcome", esc(displayName)));
+    }
+
+    public static String pageHeader(String title, String desc) {
+        return """
+            <div class="page-header">
+                <h2>%s</h2>
+                <p class="page-desc">%s</p>
+            </div>
+            """.formatted(esc(title), esc(desc));
+    }
+
+    
+    private static String label(String key, String fallback) {
+        String value = I18n.t(key);
+        return value == null || value.isBlank() || value.equals(key) ? fallback : value;
+    }
+
+    private static String settingsTr(String template) {
+        String html = PageRenderer.tr(template);
+        return html.replace("{SiteName}", esc(im.xz.cn.config.SystemConfig.getInstance().getSiteName()));
+    }
+
+    public static String yggdrasilGuide(String apiDomain) {
+        String displayUrl = (apiDomain != null && !apiDomain.isBlank())
+                ? esc(apiDomain)
+                : "<span style='color:#999'>" + I18n.t("user.guide.apiMissing") + "</span>";
+        return PageRenderer.tr(String.format("""
+            <div class="yggdrasil-guide">
+                <div class="guide-step">
+                    <div class="guide-step-num">1</div>
+                    <div class="guide-step-body">
+                        <div class="guide-step-title">{{user.guide.step1Title}}</div>
+                        <div class="guide-step-desc">{{user.guide.step1Desc}}</div>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="guide-step-num">2</div>
+                    <div class="guide-step-body">
+                        <div class="guide-step-title">{{user.guide.step2Title}}</div>
+                        <div class="guide-step-desc">{{user.guide.step2Desc}}</div>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="guide-step-num">3</div>
+                    <div class="guide-step-body">
+                        <div class="guide-step-title">{{user.guide.step3Title}}</div>
+                        <div class="guide-step-desc">{{user.guide.step3Desc}}</div>
+                        <div class="guide-code" id="yggdrasilUrl">%s</div>
+                    </div>
+                </div>
+                <div class="guide-step">
+                    <div class="guide-step-num">4</div>
+                    <div class="guide-step-body">
+                        <div class="guide-step-title">{{user.guide.step4Title}}</div>
+                        <div class="guide-step-desc">{{user.guide.step4Desc}}</div>
+                    </div>
+                </div>
+                <div class="guide-tips">
+                    <div class="guide-tips-title"><i class="fas fa-lightbulb"></i> {{user.guide.tipsTitle}}</div>
+                    <ul>
+                        <li>{{user.guide.tip1}}</li>
+                        <li>{{user.guide.tip2}}</li>
+                        <li>{{user.guide.tip3}}</li>
+                    </ul>
+                </div>
+            </div>
+            """, displayUrl));
+    }
+
+    public static String accountInfoContent(String username, String permGroup, String email,
+                                            boolean emailVerified, String createdAt,
+                                            int profileCount, int skinCount, int capeCount,
+                                            int publicCount, int friendCount) {
+        String emailBadge = emailVerified
+                ? "<span class='badge badge-success'>" + I18n.t("user.dashboard.verified") + "</span>"
+                : "<span class='badge badge-warning'>" + I18n.t("user.dashboard.unverified") + "</span>";
+        String groupName = (permGroup != null && !permGroup.isBlank()) ? permGroup : "default";
+        String groupAlias = I18n.tOrNull("permGroup." + groupName);
+        if (groupAlias == null || groupAlias.isBlank()) groupAlias = groupName;
+        String groupBadge = "<span class='badge badge-info'>" + esc(groupAlias) + "</span>";
+        String date = createdAt != null ? createdAt.substring(0, Math.min(10, createdAt.length())) : "-";
+        return """
+            <div class="account-info">
+                <div class="account-field">
+                    <div class="account-field-label">%s</div>
+                    <div class="account-field-value">%s %s</div>
+                </div>
+                <div class="account-field">
+                    <div class="account-field-label">%s</div>
+                    <div class="account-field-value">%s %s</div>
+                </div>
+                <div class="account-field">
+                    <div class="account-field-label">%s</div>
+                    <div class="account-field-value">%s</div>
+                </div>
+            </div>
+            <div class="account-stats">
+                %s
+                %s
+                %s
+                %s
+                %s
+            </div>
+            """.formatted(
+                I18n.t("user.account.username"), esc(username), groupBadge,
+                I18n.t("user.account.email"), esc(email), emailBadge,
+                I18n.t("user.account.registeredAt"), date,
+                statTile(profileCount, "user.account.profileCount"),
+                statTile(skinCount, "user.account.skinCount"),
+                statTile(capeCount, "user.account.capeCount"),
+                statTile(publicCount, "user.account.publicCount"),
+                statTile(friendCount, "user.account.friendCount"));
+    }
+
+    private static String formatKiB(long bytes) {
+        return String.format("%.1f KiB", bytes / 1024.0);
+    }
+
+    private static String statTile(int value, String labelKey) {
+        return "<div class=\"account-stat\"><div class=\"account-stat-num\">" + value
+                + "</div><div class=\"account-stat-label\">" + I18n.t(labelKey) + "</div></div>";
+    }
+
+    public static String nicknameForm(String currentNickname) {
+        return PageRenderer.tr("""
+            <form id="nicknameForm">
+                <div class="form-group">
+                    <label class="form-label">{{user.settings.currentNickname}}</label>
+                    <input type="text" class="form-input" value="%s" disabled>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{user.settings.newNickname}}</label>
+                    <input type="text" class="form-input" id="newNickname" placeholder="{{user.settings.newNicknamePlaceholder}}" maxlength="32">
+                </div>
+                <button type="submit" class="btn btn-primary">{{user.settings.saveNickname}}</button>
+            </form>
+            <div id="nicknameMsg" class="msg-area"></div>
+            """.formatted(esc(currentNickname)));
+    }
+
+    public static String emailForm(String currentEmail) {
+        return PageRenderer.tr("""
+            <form id="emailForm">
+                <div class="form-group">
+                    <label class="form-label">{{user.settings.currentEmail}}</label>
+                    <input type="text" class="form-input" value="%s" disabled>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{user.settings.newEmail}}</label>
+                    <input type="email" class="form-input" id="newEmail" placeholder="{{user.settings.newEmailPlaceholder}}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{user.settings.currentPassword}}</label>
+                    <input type="password" class="form-input" id="emailPassword" placeholder="{{user.settings.currentPasswordPlaceholder}}">
+                </div>
+                <div class="form-group form-row">
+                    <input type="text" class="form-input" id="emailVerifyCode" placeholder="{{user.settings.verifyCodePlaceholder}}" style="flex:1">
+                    <button type="button" class="btn btn-secondary" id="sendEmailCodeBtn" data-action="sendSettingsCode" data-args='["email_change"]'>{{user.settings.sendCode}}</button>
+                </div>
+                <button type="submit" class="btn btn-primary">{{user.settings.changeEmail}}</button>
+            </form>
+            <div id="emailMsg" class="msg-area"></div>
+            """.formatted(esc(currentEmail)));
+    }
+
+    public static String passwordForm() {
+        return PageRenderer.tr("""
+            <form id="passwordForm">
+                <div class="form-group">
+                    <label class="form-label">{{user.settings.currentPassword}}</label>
+                    <input type="password" class="form-input" id="currentPassword" placeholder="{{user.settings.currentPasswordPlaceholder}}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{user.settings.newPassword}}</label>
+                    <input type="password" class="form-input" id="newPassword" placeholder="{{user.settings.newPasswordPlaceholder}}">
+                    <div class="form-hint">{{user.settings.passwordHint}}<span>@</span><span>$</span><span>!</span><span>%</span><span>*</span><span>?</span><span>&amp;</span></div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">{{user.settings.confirmPassword}}</label>
+                    <input type="password" class="form-input" id="confirmPassword" placeholder="{{user.settings.confirmPasswordPlaceholder}}">
+                </div>
+                <div class="form-group form-row">
+                    <input type="text" class="form-input" id="passVerifyCode" placeholder="{{user.settings.verifyCodePlaceholder}}" style="flex:1">
+                    <button type="button" class="btn btn-secondary" id="sendPassCodeBtn" data-action="sendSettingsCode" data-args='["password_change"]'>{{user.settings.sendCode}}</button>
+                </div>
+                <button type="submit" class="btn btn-primary">{{user.settings.changePassword}}</button>
+            </form>
+            <div id="passwordMsg" class="msg-area"></div>
+            """);
+    }
+
+    
+    private static String cancelAccountForm() {
+        return settingsTr("""
+            <p class="form-hint">{{settings.cancelAccountDesc}}</p>
+            <div class="inline-form account-cancel-form">
+                <input type="password" class="form-input" id="cancelAccountPassword" placeholder="{{user.settings.currentPasswordPlaceholder}}" data-tooltip="输入当前登录密码以确认注销操作">
+                <button type="button" class="btn btn-danger" id="cancelAccountBtn">{{settings.cancelAccountButton}}</button>
+            </div>
+            <div id="cancelAccountMsg" class="msg-area"></div>
+            """);
+    }
+
+    
+    private static String externalLoginForm() {
+        return settingsTr("""
+            <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
+                <input type="checkbox" id="accountPasswordLoginToggle" style="margin-top:3px;width:18px;height:18px">
+                <span>
+                    <strong>{{settings.externalLoginToggle}}</strong><br>
+                    <span class="form-hint">{{settings.externalLoginDesc}}</span>
+                </span>
+            </label>
+            <div id="externalLoginMsg" class="msg-area"></div>
+            """);
+    }
+
+    public static String createProfileForm() {
+        return PageRenderer.tr("""
+            <form id="createProfileForm" class="inline-form">
+                <input type="text" class="form-input" id="newProfileName" placeholder="{{user.profiles.name}}" maxlength="16" style="flex:1">
+                <button type="submit" class="btn btn-primary">{{user.profiles.create}}</button>
+            </form>
+            <div id="createMsg" class="msg-area"></div>
+            """);
+    }
+
+
+
+    public static String renderDashboardPage(String csrfToken, String siteName,
+                                              String displayName, String username, String email,
+                                              boolean emailVerified, String createdAt, String permGroup,
+                                              String apiDomain, int profileCount,
+                                              int skinCount, int capeCount, int publicCount, int friendCount) {
+        String welcome = welcomeSection(displayName);
+        String guide = yggdrasilGuide(apiDomain);
+        String guideSection = PageRenderer.renderCard(I18n.t("user.dashboard.guideTitle"), guide);
+        String accountSection = PageRenderer.renderCard(I18n.t("user.dashboard.accountTitle"),
+                accountInfoContent(username, permGroup, email, emailVerified, createdAt,
+                        profileCount, skinCount, capeCount, publicCount, friendCount));
+        String widgets = "<div class='card-grid dashboard-grid' data-sortable='user-dashboard'>"
+                + "<div class='sortable-item' data-widget='guide'>" + guideSection + "</div>"
+                + "<div class='sortable-item' data-widget='account'>" + accountSection + "</div>"
+                + "</div>";
+        String body = Shared.buildUserLayout(siteName, "dashboard", welcome + widgets, "dashboard");
+        String csrf = Shared.csrfInject(csrfToken);
+        return PageRenderer.renderPage(I18n.t("user.dashboard.title"), csrf + body, "user",
+                Css.getUserCssLink(), Css.getUserDashboardCss());
+    }
+
+    public static String renderSettingsPage(String csrfToken, String siteName, String nickname, String email) {
+        String content = pageHeader(I18n.t("user.settings.title"), I18n.t("user.settings.desc"))
+                + PageRenderer.renderCard(I18n.t("user.settings.nicknameCard"), nicknameForm(nickname))
+                + "<br>" + PageRenderer.renderCard(I18n.t("user.settings.emailCard"), emailForm(email))
+                + "<br>" + PageRenderer.renderCard(I18n.t("user.settings.passwordCard"), passwordForm())
+                + "<br>" + PageRenderer.renderCard(I18n.t("user.settings.blockedCard"),
+                    "<div style='text-align:center'>"
+                    + "<p id='blockedCountText' style='color:#999;margin-bottom:12px'>" + I18n.t("common.loading") + "</p>"
+                    + "<div style='display:flex;gap:10px;justify-content:center'>"
+                    + "<button class='btn btn-danger' id='clearBlockedBtn'>" + I18n.t("user.settings.clearBlocked") + "</button>"
+                    + "<button class='btn btn-secondary' id='manageBlockedBtn'>" + I18n.t("user.settings.manageBlocked") + "</button>"
+                    + "</div></div>")
+                + "<br>" + PageRenderer.renderCard(label("settings.externalLoginCard", "外置登录"),
+                    externalLoginForm())
+                + "<br>" + PageRenderer.renderCard(label("settings.cancelAccountCard", "账号注销"),
+                    cancelAccountForm());
+        String body = Shared.buildUserLayout(siteName, "settings", content, "settings");
+        String csrf = Shared.csrfInject(csrfToken);
+        return PageRenderer.renderPage(I18n.t("user.settings.title"), csrf + body, "user",
+                Css.getUserCssLink(), Css.getUserDashboardCss());
+    }
+
+    public static String renderLogsPage(String csrfToken, String siteName, String logContent,
+                                        long usedBytes, long maxBytes, int percent) {
+        String usage = """
+            <div class="log-usage">
+                <div class="log-usage-head">
+                    <span>%s</span>
+                    <span>%s / %s</span>
+                </div>
+                <div class="log-usage-bar"><div class="log-usage-fill" style="width:%d%%"></div></div>
+                <div class="log-usage-actions">
+                    <button class="btn btn-secondary" data-action="downloadLog">%s</button>
+                    <button class="btn btn-danger" data-action="clearLog">%s</button>
+                </div>
+            </div>
+            """.formatted(
+                I18n.t("user.logs.usage"),
+                formatKiB(usedBytes), formatKiB(maxBytes), percent,
+                I18n.t("user.logs.download"), I18n.t("user.logs.clear"));
+        String inner = usage + ((logContent == null || logContent.isBlank())
+                ? "<p class='text-muted'>" + I18n.t("user.logs.empty") + "</p>"
+                : "<textarea class='action-log' readonly>" + esc(logContent) + "</textarea>");
+        String content = pageHeader(I18n.t("user.logs.title"), I18n.t("user.logs.desc"))
+                + PageRenderer.renderCard(I18n.t("user.logs.title"), inner);
+        String body = Shared.buildUserLayout(siteName, "logs", content, "logs");
+        String csrf = Shared.csrfInject(csrfToken);
+        return PageRenderer.renderPage(I18n.t("user.logs.title"), csrf + body, "user",
+                Css.getUserCssLink(), Css.getUserDashboardCss());
+    }
+
+    public static String renderProfilesPage(String csrfToken, String siteName, String apiDomain) {
+        String content = pageHeader(I18n.t("user.profiles.title"), I18n.t("user.profiles.desc"))
+                + "<div id='profileList'><p class='text-muted'>" + I18n.t("common.loading") + "</p></div>"
+                + "<div id='toast' class='toast' style='display:none;'></div>";
+        String body = Shared.buildUserLayout(siteName, "profiles", content, "profiles");
+        String apiDomainInject = "<script>window.YGGDRASIL_API_DOMAIN='" + esc(apiDomain != null ? apiDomain : "") + "';</script>";
+        String nameLengthInject = "<script>window.PROFILE_NAME_MIN_LENGTH="
+                + im.xz.cn.config.SystemConfig.getInstance().getMinProfileNameLength()
+                + ";window.PROFILE_NAME_MAX_LENGTH="
+                + im.xz.cn.config.SystemConfig.getInstance().getMaxProfileNameLength() + ";</script>";
+        String csrf = Shared.csrfInject(csrfToken)
+                + apiDomainInject
+                + nameLengthInject
+                + "<script src=\"/js/skinview3d.bundle.js\"></script>";
+        return PageRenderer.renderPage(I18n.t("user.profiles.title"), csrf + body, "user",
+                Css.getUserCssLink(), Css.getUserDashboardCss());
+    }
+
+    
+    public static String renderFriendsV2Page(String csrfToken) {
+        String content = """
+            <div class="page-header">
+                <h2>好友</h2>
+                <p class="page-desc">管理好友与待处理申请。</p>
+            </div>
+            <div id="friendsV2Msg" class="msg-area"></div>
+            <section class="friend-section">
+                <div class="friend-grid" id="friendsV2List"></div>
+            </section>
+            <script>
+            (function () {
+                var myInfo = null;
+                var friends = [];
+                var requests = [];
+                var outgoing = [];
+                function headers() {
+                    var h = { 'Content-Type': 'application/json' };
+                    if (window.CSRF_TOKEN) { h['X-CSRF-Token'] = window.CSRF_TOKEN; }
+                    return h;
+                }
+                function esc(value) {
+                    return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+                        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                    });
+                }
+                function msg(text, ok) {
+                    if (text && typeof showToast === 'function') showToast(text, ok ? 'success' : 'error');
+                    var el = document.getElementById('friendsV2Msg');
+                    if (el) { el.textContent = ''; el.className = 'msg-area'; }
+                }
+                function avatarMarkup(name, url) {
+                    var src = url || '/img/juststeve_face.png';
+                    return '<div class="friend-card-avatar"><img src="' + esc(src) + '" alt="'
+                        + esc(name || 'avatar') + '" style="width:100%;height:100%;object-fit:cover;'
+                        + 'object-position:center top;image-rendering:pixelated;"></div>';
+                }
+                function ownCard() {
+                    var name = (myInfo && (myInfo.displayName || myInfo.friendCode)) || '我的资料卡';
+                    var code = (myInfo && (myInfo.friendCodeFormatted || myInfo.friendCode)) || '----';
+                    return '<div class="friend-card friend-my-card card-animate" id="friendMyCard">'
+                        + avatarMarkup(name, myInfo && myInfo.avatar)
+                        + '<div class="friend-card-info"><div class="friend-card-name">' + esc(name) + '</div>'
+                        + '<div class="friend-card-code">' + esc(code) + '</div></div>'
+                        + '<div class="friend-card-label">我的资料卡</div></div>';
+                }
+                function friendCard(user) {
+                    var name = user.name || user.code || user.userId || '?';
+                    return '<div class="friend-card card-animate">'
+                        + avatarMarkup(name, user.avatar)
+                        + '<div class="friend-card-info"><div class="friend-card-name">' + esc(name) + '</div>'
+                        + '<div class="friend-card-code">' + esc(user.code || user.userId || '') + '</div></div>'
+                        + '<div class="friend-card-actions">'
+                        + '<a class="btn btn-sm" href="/userhome/' + esc(user.code || '') + '">查看</a>'
+                        + '<button class="btn btn-sm" data-friend-share="' + esc(user.userId) + '">分享</button>'
+                        + '<button class="btn btn-sm" data-friend-block="' + esc(user.userId) + '">屏蔽</button>'
+                        + '<button class="btn btn-sm btn-danger" data-friend-remove="' + esc(user.userId) + '">删除</button>'
+                        + '</div></div>';
+                }
+                function requestCard(request, direction) {
+                    var other = (direction === 'outgoing' ? request.toUser : request.fromUser) || {};
+                    var name = other.name || other.code || (direction === 'outgoing' ? request.toUserId : request.fromUserId) || '?';
+                    var actions = direction === 'outgoing'
+                        ? '<button class="btn btn-sm btn-danger" data-request-cancel="' + esc(request.id) + '">取消申请</button>'
+                        : '<button class="btn btn-sm btn-primary" data-request-accept="' + esc(request.id) + '">接受</button>'
+                          + '<button class="btn btn-sm" data-request-reject="' + esc(request.id) + '">拒绝</button>';
+                    return '<div class="friend-card friend-request-card card-animate">'
+                        + avatarMarkup(name, other.avatar)
+                        + '<div class="friend-card-info"><div class="friend-card-name">' + esc(name) + '</div>'
+                        + '<div class="friend-card-code">' + esc(other.code || '') + '</div>'
+                        + '<div class="friend-card-label">' + (direction === 'outgoing' ? '已发出申请' : '好友申请') + '</div></div>'
+                        + '<div class="friend-card-actions">' + actions + '</div></div>';
+                }
+                function addTile() {
+                    return '<div class="friend-add-tile card-animate" id="friendAddTile" role="button" tabindex="0">'
+                        + '<div class="friend-add-tile-icon"><span class="friend-add-tile-plus">+</span></div>'
+                        + '<div class="friend-add-tile-text">添加好友</div>'
+                        + '<div class="friend-add-tile-hint">输入好友代码</div></div>';
+                }
+                function render() {
+                    var list = document.getElementById('friendsV2List');
+                    if (!list) return;
+                    var html = myInfo ? ownCard() : '';
+                    friends.forEach(function (user) { html += friendCard(user); });
+                    requests.forEach(function (request) { html += requestCard(request, 'incoming'); });
+                    outgoing.forEach(function (request) { html += requestCard(request, 'outgoing'); });
+                    html += addTile();
+                    list.innerHTML = html;
+                    var mine = document.getElementById('friendMyCard');
+                    if (mine) mine.addEventListener('click', showMyProfileModal);
+                    var add = document.getElementById('friendAddTile');
+                    if (add) add.addEventListener('click', showAddFriendModal);
+                }
+                function loadAll() {
+                    Promise.all([
+                        fetch('/api/v2/friends/my-info', { headers: headers() }).then(function (r) { return r.json(); }),
+                        fetch('/api/v2/friends', { headers: headers() }).then(function (r) { return r.json(); }),
+                        fetch('/api/v2/friend-requests', { headers: headers() }).then(function (r) { return r.json(); }),
+                        fetch('/api/v2/friend-requests?direction=outgoing', { headers: headers() })
+                            .then(function (r) { return r.json(); })
+                    ]).then(function (results) {
+                        myInfo = results[0] && results[0].success ? results[0].info : null;
+                        friends = (results[1] && results[1].users) || [];
+                        requests = (results[2] && results[2].items) || [];
+                        outgoing = (results[3] && results[3].items) || [];
+                        render();
+                    }).catch(function () { msg('好友加载失败，请刷新重试', false); });
+                }
+                function showMyProfileModal() {
+                    if (!myInfo) return;
+                    var existing = document.getElementById('myProfileModal');
+                    if (existing) existing.remove();
+                    var profiles = myInfo.profiles || [];
+                    var options = '<option value="">不展示</option>';
+                    profiles.forEach(function (profile) {
+                        options += '<option value="' + esc(profile.id) + '"'
+                            + (myInfo.displayProfileId === profile.id ? ' selected' : '') + '>'
+                            + esc(profile.name) + '</option>';
+                    });
+                    var overlay = document.createElement('div');
+                    overlay.className = 'modal-overlay';
+                    overlay.id = 'myProfileModal';
+                    var box = document.createElement('div');
+                    box.className = 'modal-box';
+                    var friendCode = myInfo.friendCodeFormatted || myInfo.friendCode || '----';
+                    box.innerHTML = '<button class="modal-close-btn" id="myProfileClose">&times;</button>'
+                        + '<h3>我的资料卡</h3>'
+                        + '<div class="form-group"><label class="form-label">好友代码</label>'
+                        + '<div class="friend-code-display"><span id="myProfileCode">' + esc(friendCode) + '</span>'
+                        + '<button type="button" class="btn btn-secondary btn-small" id="myProfileCopy" '
+                        + 'data-tooltip="复制好友代码" aria-label="复制好友代码"><i class="fas fa-copy"></i></button></div></div>'
+                        + '<div class="form-group"><label class="form-label">展示角色</label>'
+                        + '<select class="form-input" id="myProfileSelect">' + options + '</select></div>'
+                        + '<div id="myProfileMsg" class="msg-area"></div>'
+                        + '<div class="modal-actions"><button class="btn btn-secondary" id="myProfileCancel">取消</button>'
+                        + '<button class="btn btn-primary" id="myProfileSave">保存</button></div>';
+                    overlay.appendChild(box);
+                    document.body.appendChild(overlay);
+                    function close() { overlay.remove(); }
+                    box.querySelector('#myProfileClose').addEventListener('click', close);
+                    box.querySelector('#myProfileCancel').addEventListener('click', close);
+                    overlay.addEventListener('click', function (event) { if (event.target === overlay) close(); });
+                    box.querySelector('#myProfileCopy').addEventListener('click', function () {
+                        var text = myInfo.friendCodeFormatted || myInfo.friendCode || '';
+                        function copied() { showToast('好友代码已复制', 'success'); }
+                        function fallback() {
+                            var input = document.createElement('textarea');
+                            input.value = text;
+                            input.style.position = 'fixed';
+                            input.style.opacity = '0';
+                            document.body.appendChild(input);
+                            input.select();
+                            try { document.execCommand('copy'); copied(); }
+                            catch (error) { showToast('复制失败，请手动选择代码', 'error'); }
+                            input.remove();
+                        }
+                        if (navigator.clipboard && window.isSecureContext) {
+                            navigator.clipboard.writeText(text).then(copied).catch(fallback);
+                        } else {
+                            fallback();
+                        }
+                    });
+                    box.querySelector('#myProfileSave').addEventListener('click', function () {
+                        var value = box.querySelector('#myProfileSelect').value;
+                        fetch('/api/v2/friends/display-profile', {
+                            method: 'POST', headers: headers(),
+                            body: JSON.stringify({ profileId: value })
+                        }).then(function (r) { return r.json(); }).then(function (data) {
+                            if (data.success) { close(); loadAll(); }
+                            else { box.querySelector('#myProfileMsg').textContent = data.message || '保存失败'; }
+                        }).catch(function () { box.querySelector('#myProfileMsg').textContent = '网络错误'; });
+                    });
+                }
+                function showAddFriendModal() {
+                    var existing = document.getElementById('friendAddModal');
+                    if (existing) existing.remove();
+                    var overlay = document.createElement('div');
+                    overlay.className = 'modal-overlay';
+                    overlay.id = 'friendAddModal';
+                    var box = document.createElement('div');
+                    box.className = 'modal-box';
+                    box.innerHTML = '<button class="modal-close-btn" id="friendAddClose">&times;</button>'
+                        + '<h3>添加好友</h3>'
+                        + '<p class="form-hint">输入对方好友代码，发送好友申请。</p>'
+                        + '<div class="form-group"><label class="form-label">好友代码</label>'
+                        + '<input class="form-input" id="friendCodeInput" placeholder="例如 ABCD-EFGH-IJKL"></div>'
+                        + '<div id="friendAddMsg" class="msg-area"></div>'
+                        + '<div class="modal-actions"><button class="btn btn-secondary" id="friendAddCancel">取消</button>'
+                        + '<button class="btn btn-primary" id="friendAddConfirm">发送申请</button></div>';
+                    overlay.appendChild(box);
+                    document.body.appendChild(overlay);
+                    function close() { overlay.remove(); }
+                    box.querySelector('#friendAddClose').addEventListener('click', close);
+                    box.querySelector('#friendAddCancel').addEventListener('click', close);
+                    overlay.addEventListener('click', function (event) { if (event.target === overlay) close(); });
+                    box.querySelector('#friendAddConfirm').addEventListener('click', function () {
+                        var code = (box.querySelector('#friendCodeInput').value || '').trim();
+                        var msgBox = box.querySelector('#friendAddMsg');
+                        if (!code) { if (window.showToast) showToast('请输入好友代码', 'warning'); if (msgBox) msgBox.textContent = ''; return; }
+                        fetch('/api/userhomes/' + encodeURIComponent(code), { headers: headers() })
+                            .then(function (r) { return r.json(); })
+                            .then(function (data) {
+                                if (!data || !data.userId) throw new Error('未找到该好友代码');
+                                return fetch('/api/v2/friend-requests', {
+                                    method: 'POST', headers: headers(), body: JSON.stringify({ toUserId: data.userId })
+                                });
+                            })
+                            .then(function (r) { return r.json(); })
+                            .then(function (data) {
+                                if (data && data.success) { close(); loadAll(); }
+                                else { if (window.showToast) showToast(data.message || '发送失败', 'error'); if (msgBox) msgBox.textContent = ''; }
+                            })
+                            .catch(function (error) {
+                                if (window.showToast) showToast(error.message || '发送失败', 'error');
+                                if (msgBox) msgBox.textContent = '';
+                            });
+                    });
+                    box.querySelector('#friendCodeInput').focus();
+                }
+                function removeFriend(anchor, userId) {
+                    showPopconfirm(anchor, '删除后将不再出现在好友列表中，确定继续吗？', function () {
+                        fetch('/api/v2/friends/' + encodeURIComponent(userId), { method: 'DELETE', headers: headers() })
+                            .then(function (r) { return r.json(); }).then(function (data) {
+                                msg(data.success ? '好友已删除' : (data.message || '删除失败'), data.success);
+                                loadAll();
+                            }).catch(function () { msg('删除请求失败', false); });
+                    }, { confirmText: '删除好友' });
+                }
+                function shareTexture(userId) {
+                    fetch('/api/v2/textures/my', { headers: headers() })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            var items = (data.skins || []).concat(data.capes || []);
+                            if (!items.length) { msg('暂无可分享的材质', false); return; }
+                            var names = items.map(function (item, index) {
+                                return (index + 1) + '. ' + (item.alias || item.displayName || item.id);
+                            }).join('\\n');
+                            showPromptDialog({
+                                title: '分享材质', message: '输入要分享的材质编号：',
+                                detail: names, value: '1'
+                            }, function (choice) {
+                                if (!choice) return false;
+                                var item = items[Number(choice) - 1];
+                                if (!item) { msg('无效的材质编号', false); return false; }
+                                fetch('/api/v2/shares', {
+                                    method: 'POST', headers: headers(),
+                                    body: JSON.stringify({ assetId: item.id, recipientUserId: userId })
+                                }).then(function (r) { return r.json(); }).then(function (d) {
+                                    msg(d.success ? '已分享' : ('分享失败：' + (d.message || '')), d.success);
+                                });
+                                return true;
+                            });
+                        });
+                }
+                function blockUser(userId) {
+                    showPopconfirm(document.body, '屏蔽后双方关系与共享授权将被解除，确定继续吗？', function () {
+                        fetch('/api/v2/blocks', {
+                            method: 'POST', headers: headers(),
+                            body: JSON.stringify({ toUserId: userId })
+                        }).then(function (r) { return r.json(); }).then(function (data) {
+                            msg(data.success ? '已屏蔽' : (data.message || '操作失败'), data.success);
+                            loadAll();
+                        });
+                    }, { confirmText: '屏蔽' });
+                }
+                function request(action, id, method) {
+                    var url = method === 'DELETE'
+                        ? '/api/v2/friend-requests/' + encodeURIComponent(id)
+                        : '/api/v2/friend-requests/' + encodeURIComponent(id) + '/' + action;
+                    fetch(url, {
+                        method: method || 'POST', headers: headers(), body: '{}'
+                    }).then(function (r) { return r.json(); }).then(function (data) {
+                        msg(data.success ? '操作成功' : (data.message || '操作失败'), data.success);
+                        loadAll();
+                    }).catch(function () { msg('请求失败', false); });
+                }
+                document.addEventListener('click', function (event) {
+                    var target = event.target;
+                    var accept = target.getAttribute('data-request-accept');
+                    if (accept) { request('accept', accept); return; }
+                    var reject = target.getAttribute('data-request-reject');
+                    if (reject) { request('reject', reject); return; }
+                    var cancelRequest = target.getAttribute('data-request-cancel');
+                    if (cancelRequest) { request('cancel', cancelRequest, 'DELETE'); return; }
+                    var share = target.getAttribute('data-friend-share');
+                    if (share) { shareTexture(share); return; }
+                    var blockId = target.getAttribute('data-friend-block');
+                    if (blockId) { blockUser(blockId); return; }
+                    var remove = target.getAttribute('data-friend-remove');
+                    if (remove) { removeFriend(target, remove); return; }
+                });
+                loadAll();
+            })();
+            </script>
+            """;
+        String navbar = PageRenderer.renderNavbar(im.xz.cn.config.SystemConfig.getInstance().getSiteName(), "user", false);
+        String sidebar = Shared.buildUserSidebar("friends");
+        String body = navbar + """
+            <div class="user-layout">
+                %s
+                <div class="user-content">%s</div>
+            </div>
+            """.formatted(sidebar, content);
+        return PageRenderer.renderPage("好友", Shared.csrfInject(csrfToken) + body, "user",
+                Css.getUserCssLink(), Css.getTextureCss());
+    }
+    
+    public static String renderSharedV2Page(String csrfToken) {
+        String content = pageHeader(I18n.t("user.shared.title"), I18n.t("user.shared.desc"))
+                + """
+            <section class="shared-section">
+                <h3 class="shared-section-title"><i class="fas fa-star"></i> 我的收藏</h3>
+                <div class="texture-grid" id="sharedFavorites"><p class="empty-hint" style="grid-column:1/-1">加载中...</p></div>
+            </section>
+            <section class="shared-section">
+                <h3 class="shared-section-title"><i class="fas fa-inbox"></i> 收到的共享</h3>
+                <div class="texture-grid" id="sharedIncoming"><p class="empty-hint" style="grid-column:1/-1">加载中...</p></div>
+            </section>
+            <section class="shared-section">
+                <h3 class="shared-section-title"><i class="fas fa-paper-plane"></i> 我分享的</h3>
+                <div class="texture-grid" id="sharedOutgoing"><p class="empty-hint" style="grid-column:1/-1">加载中...</p></div>
+            </section>
+            <div id="sharedV2Msg" class="msg-area"></div>
+            <script>
+            (function () {
+                function headers() {
+                    var h = { 'Content-Type': 'application/json' };
+                    if (window.CSRF_TOKEN) { h['X-CSRF-Token'] = window.CSRF_TOKEN; }
+                    return h;
+                }
+                function esc(value) {
+                    return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+                        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                    });
+                }
+                function msg(text, ok) {
+                    if (text && typeof showToast === 'function') showToast(text, ok ? 'success' : 'error');
+                    var el = document.getElementById('sharedV2Msg');
+                    if (el) { el.textContent = ''; el.className = 'msg-area'; }
+                }
+                function applyTexture(assetId, slot) {
+                    fetch('/api/profiles', { headers: headers() })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            var profiles = data.profiles || [];
+                            if (!profiles.length) { msg('请先创建角色', false); return; }
+                            var names = profiles.map(function (p) { return p.name; }).join('、');
+                            showPromptDialog({
+                                title: '应用到角色', message: '输入要应用的角色名称：',
+                                detail: '可选角色：' + names, value: profiles[0].name
+                            }, function (name) {
+                                if (!name) return false;
+                                var profile = profiles.filter(function (p) { return p.name === name; })[0];
+                                if (!profile) { msg('角色不存在', false); return false; }
+                                fetch('/api/profiles/' + encodeURIComponent(profile.id) + '/textures/' + slot, {
+                                    method: 'PUT', headers: headers(),
+                                    body: JSON.stringify({ assetId: assetId, skinModel: profile.skinModel || 'DEFAULT' })
+                                }).then(function (r) { return r.json(); }).then(function (d) {
+                                    msg(d.success ? '已应用到角色' : ('应用失败：' + (d.message || '')), d.success);
+                                });
+                                return true;
+                            });
+                        });
+                }
+                function renameTexture(assetId) {
+                    showPromptDialog({ title: '重命名', value: '' }, function (alias) {
+                        if (!alias || !alias.trim()) { showToast('名称不能为空', 'error'); return false; }
+                        fetch('/api/v2/textures/' + encodeURIComponent(assetId) + '/alias', {
+                            method: 'POST', headers: headers(), body: JSON.stringify({ alias: alias })
+                        }).then(function (r) { return r.json(); }).then(function (d) {
+                            msg(d.success ? '重命名成功' : ('重命名失败：' + (d.message || '')), d.success);
+                            loadAll();
+                        });
+                        return true;
+                    });
+                }
+                function card(item, direction) {
+                    var name = esc(item.alias || item.displayName
+                        || ((item.type === 'CAPE' ? '披风' : '皮肤') + ' · ' + esc(item.width) + 'x' + esc(item.height)));
+                    var slot = item.type === 'CAPE' ? 'CAPE' : 'SKIN';
+                    var counterpart = esc(item.counterpartName || '好友');
+                    var badge = direction === 'incoming' ? ('来自 ' + counterpart)
+                        : (direction === 'favorite' ? '我的收藏' : ('分享给 ' + counterpart));
+                    var actions = '';
+                    if (direction !== 'outgoing') {
+                        actions += '<button class="btn btn-sm btn-secondary" data-apply="' + esc(item.assetId || item.id)
+                            + '" data-slot="' + slot + '">应用到角色</button>'
+                            + '<button class="btn btn-sm btn-secondary" data-alias="' + esc(item.assetId || item.id) + '">重命名</button>';
+                    }
+                    if (direction === 'favorite') {
+                        actions += '<button class="btn btn-sm btn-danger" data-unfavorite="'
+                            + esc(item.publicationId) + '">取消收藏</button>';
+                    } else if (direction === 'incoming') {
+                        actions += '<button class="btn btn-sm btn-danger" data-share-revoke="' + esc(item.id) + '">移除共享</button>';
+                    } else {
+                        actions += '<button class="btn btn-sm btn-danger" data-share-revoke="' + esc(item.id) + '">移除共享</button>';
+                    }
+                    var cardEl = document.createElement('div');
+                    cardEl.className = 'texture-item card-animate';
+                    cardEl.innerHTML = '<div class="texture-thumb"><img src="' + esc(item.url) + '" alt="shared texture"></div>'
+                        + '<div class="texture-item-body">'
+                        + '<div class="texture-name">' + name + '</div>'
+                        + '<div class="texture-meta">' + (item.available === false ? '已不可用' : '可用')
+                        + ' · ' + esc(item.width) + 'x' + esc(item.height) + '</div>'
+                        + '</div>'
+                        + '<span class="shared-badge shared-badge-' + direction + '">' + badge + '</span>'
+                        + '<div class="shared-card-actions">' + actions + '</div>';
+                    return cardEl;
+                }
+                function loadDirection(direction, targetId, emptyText) {
+                    fetch('/api/v2/shares?direction=' + direction, { headers: headers() })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            var list = document.getElementById(targetId);
+                            list.innerHTML = '';
+                            (data.items || []).forEach(function (item) {
+                                list.appendChild(card(item, direction === 'received' ? 'incoming' : 'outgoing'));
+                            });
+                            if (!list.children.length) {
+                                list.innerHTML = '<p class="empty-hint" style="grid-column:1/-1">' + emptyText + '</p>';
+                            }
+                        })
+                        .catch(function () {
+                            document.getElementById(targetId).innerHTML = '<p class="empty-hint" style="grid-column:1/-1;color:#c62828">加载失败</p>';
+                        });
+                }
+                function loadFavorites() {
+                    fetch('/api/v2/textures/my', { headers: headers() })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            var list = document.getElementById('sharedFavorites');
+                            list.innerHTML = '';
+                            (data.favoriteSkins || []).concat(data.favoriteCapes || []).forEach(function (item) {
+                                list.appendChild(card(item, 'favorite'));
+                            });
+                            if (!list.children.length) {
+                                list.innerHTML = '<p class="empty-hint" style="grid-column:1/-1">还没有收藏材质。</p>';
+                            }
+                        })
+                        .catch(function () {
+                            document.getElementById('sharedFavorites').innerHTML =
+                                '<p class="empty-hint" style="grid-column:1/-1;color:#c62828">加载失败</p>';
+                        });
+                }
+                function loadAll() {
+                    loadDirection('received', 'sharedIncoming', '还没有收到好友共享的材质。');
+                    loadDirection('sent', 'sharedOutgoing', '还没有分享给好友的材质。');
+                    loadFavorites();
+                }
+                document.addEventListener('click', function (event) {
+                    var apply = event.target.getAttribute('data-apply');
+                    if (apply) { applyTexture(Number(apply), event.target.getAttribute('data-slot') || 'SKIN'); return; }
+                    var alias = event.target.getAttribute('data-alias');
+                    if (alias) { renameTexture(Number(alias)); return; }
+                    var unfavorite = event.target.getAttribute('data-unfavorite');
+                    if (unfavorite) {
+                        fetch('/api/v2/publications/' + encodeURIComponent(unfavorite) + '/favorite', {
+                            method: 'DELETE', headers: headers()
+                        }).then(function (r) { return r.json(); }).then(function (d) {
+                            msg(d.success ? '已取消收藏' : ('操作失败：' + (d.message || '')), d.success);
+                            loadFavorites();
+                        });
+                        return;
+                    }
+                    var id = event.target.getAttribute('data-share-revoke');
+                    if (!id) return;
+                    showPopconfirm(event.target, '移除后对方将不能再使用该共享，确定继续吗？', function () {
+                        fetch('/api/v2/shares/' + encodeURIComponent(id), { method: 'DELETE', headers: headers() })
+                            .then(function (r) { return r.json(); }).then(function (data) {
+                                msg(data.success ? '共享已移除' : ('移除失败：' + (data.message || '')), data.success);
+                                loadAll();
+                            }).catch(function () { msg('请求失败', false); });
+                    }, { confirmText: '移除共享' });
+                });
+                loadAll();
+            })();
+            </script>
+            """;
+        String navbar = PageRenderer.renderNavbar(im.xz.cn.config.SystemConfig.getInstance().getSiteName(), "user", false);
+        String sidebar = Shared.buildUserSidebar("shared");
+        String body = navbar + """
+            <div class="user-layout">
+                %s
+                <div class="user-content">%s</div>
+            </div>
+            """.formatted(sidebar, content);
+        return PageRenderer.renderPage(I18n.t("user.shared.title"), Shared.csrfInject(csrfToken) + body, "user",
+                Css.getUserCssLink(), Css.getTextureCss());
+    }
+    
+    
+    public static String renderWorldV2Page(String csrfToken) {
+        String content = pageHeader("材质库", "浏览公开材质，点击卡片查看详情。")
+                + """
+            <div class="world-toolbar">
+                <div class="world-tabs" role="tablist">
+                    <button type="button" class="btn btn-secondary active" data-world-type="ALL">全部</button>
+                    <button type="button" class="btn btn-secondary" data-world-type="SKIN">皮肤</button>
+                    <button type="button" class="btn btn-secondary" data-world-type="CAPE">披风</button>
+                    <button type="button" class="btn btn-secondary" data-world-lowend>低端显卡支持</button>
+                </div>
+                <div class="world-sort">
+                    <button type="button" class="btn btn-secondary active" data-world-sort="hot">热度</button>
+                    <button type="button" class="btn btn-secondary" data-world-sort="new">最新</button>
+                </div>
+                <span class="world-total" id="worldTotal"></span>
+            </div>
+            <div class="texture-grid" id="worldV2List"></div>
+            <div class="world-more"><button type="button" class="btn btn-secondary" id="worldMore">加载更多</button></div>
+            <script src="/js/skinview3d.bundle.js"></script>
+            <script src="/js/texture-3d.js"></script>
+            <script>
+            (function () {
+                var state = { type: 'ALL', sort: 'hot', offset: 0, limit: 20, done: false, loading: false };
+                function esc(value) {
+                    return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+                        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                    });
+                }
+                function detailUrl(item) {
+                    return '/userhome/' + encodeURIComponent(item.publisherCode || '')
+                        + '/public/' + encodeURIComponent(item.hash || '')
+                        + '?type=' + encodeURIComponent(item.type || 'SKIN');
+                }
+                function load(reset) {
+                    if (state.loading) return;
+                    if (reset) { state.offset = 0; state.done = false; }
+                    if (state.done) return;
+                    state.loading = true;
+                    var query = '?limit=' + state.limit + '&offset=' + state.offset
+                        + '&sort=' + encodeURIComponent(state.sort)
+                        + (state.type === 'ALL' ? '' : '&type=' + encodeURIComponent(state.type));
+                    fetch('/api/v2/publications' + query)
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            var list = document.getElementById('worldV2List');
+                            if (reset) { if (window.Texture3D) window.Texture3D.dispose(list); list.innerHTML = ''; }
+                            var items = data.items || [];
+                            items.forEach(function (item) {
+                                var name = item.displayName || (item.type === 'CAPE' ? '披风' : '皮肤');
+                                var card = document.createElement('a');
+                                card.className = 'texture-item card-animate texture-card-clickable';
+                                card.href = detailUrl(item);
+                                card.innerHTML = '<div class="texture-thumb">'
+                                    + '<canvas data-texture-3d data-type="' + esc(item.type)
+                                    + '" data-url="' + esc(item.url) + '"></canvas>'
+                                    + '</div>'
+                                    + '<div class="texture-item-body">'
+                                    + '<div class="texture-name">' + esc(name) + '</div>'
+                                    + '<div class="texture-meta">' + esc(item.type === 'CAPE' ? '披风' : '皮肤')
+                                    + ' · ' + esc(item.width) + '×' + esc(item.height) + '</div>'
+                                    + '<div class="texture-meta">♥ ' + esc(item.likes || 0)
+                                    + ' · ★ ' + esc(item.favorites || 0) + '</div>'
+                                    + '</div>';
+                                list.appendChild(card);
+                            });
+                            if (window.Texture3D) window.Texture3D.hydrate(list);
+                            document.getElementById('worldTotal').textContent =
+                                '共 ' + esc(data.total == null ? items.length : data.total) + ' 项';
+                            state.offset += items.length;
+                            state.done = items.length < state.limit;
+                            document.getElementById('worldMore').style.display = state.done ? 'none' : '';
+                            if (!list.children.length) {
+                                list.innerHTML = '<p class="empty-hint" style="grid-column:1/-1">暂无公开材质。</p>';
+                            }
+                        })
+                        .catch(function () {
+                            var list = document.getElementById('worldV2List');
+                            if (list) list.innerHTML = '<p class="empty-hint" style="grid-column:1/-1;color:#c62828">加载失败</p>';
+                        })
+                        .finally(function () { state.loading = false; });
+                }
+                document.querySelectorAll('[data-world-type]').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        document.querySelectorAll('[data-world-type]').forEach(function (b) { b.classList.remove('active'); });
+                        button.classList.add('active');
+                        state.type = button.getAttribute('data-world-type');
+                        load(true);
+                    });
+                });
+                if (window.Texture3D) {
+                    window.Texture3D.bindToggle(document.querySelector('[data-world-lowend]'), function () {
+                        load(true);
+                    });
+                }
+                document.querySelectorAll('[data-world-sort]').forEach(function (button) {
+                    button.addEventListener('click', function () {
+                        document.querySelectorAll('[data-world-sort]').forEach(function (b) { b.classList.remove('active'); });
+                        button.classList.add('active');
+                        state.sort = button.getAttribute('data-world-sort');
+                        load(true);
+                    });
+                });
+                document.getElementById('worldMore').addEventListener('click', function () { load(false); });
+                load(true);
+            })();
+            </script>
+            """;
+        String navbar = PageRenderer.renderNavbar(
+                im.xz.cn.config.SystemConfig.getInstance().getSiteName(), "world", false);
+        String body = navbar + "<div class=\"public-page\"><div class=\"public-library-page\">" + content + "</div></div>";
+        return PageRenderer.renderPage("材质库", Shared.csrfInject(csrfToken) + body, "user",
+                Css.getUserCssLink(), Css.getTextureCss());
+    }
+
+
+    
+    public static String renderTexturesV2Page(String csrfToken, String type) {
+        boolean cape = "CAPE".equals(type);
+        String pageTitle = cape ? I18n.t("user.capes.title") : I18n.t("user.skins.title");
+        String pageDesc = cape ? I18n.t("user.capes.desc") : I18n.t("user.skins.desc");
+        String uploadText = cape ? I18n.t("texture.uploadCape") : I18n.t("texture.uploadSkin");
+        String uploadTile = """
+            <input type="file" id="v2TextureFile" accept="image/png" style="display:none">
+            <div class="texture-grid" id="v2TextureGrid">
+                <div class="upload-tile card-animate" data-action="v2Upload" role="button" tabindex="0" data-tooltip="点击选择 PNG 文件，支持皮肤和披风上传">
+                    <div class="upload-tile-icon">
+                        <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    </div>
+                    <div class="upload-tile-text">%s</div>
+                    <div class="upload-tile-hint">%s</div>
+                </div>
+            </div>
+            <div id="v2TextureMsg" class="msg-area"></div>
+            """.formatted(uploadText, I18n.t("texture.pngHint"));
+        String content = pageHeader(pageTitle, pageDesc) + uploadTile
+                + """
+            <script>
+            (function () {
+                var TYPE = '__TYPE__';
+                function headers(extra) {
+                    var h = { 'Content-Type': 'application/json' };
+                    if (window.CSRF_TOKEN) { h['X-CSRF-Token'] = window.CSRF_TOKEN; }
+                    if (extra) { for (var k in extra) { h[k] = extra[k]; } }
+                    return h;
+                }
+                function msg(text, ok) {
+                    if (text && typeof showToast === 'function') showToast(text, ok ? 'success' : 'error');
+                    var el = document.getElementById('v2TextureMsg');
+                    if (el) { el.textContent = ''; el.className = 'msg-area'; }
+                }
+                function esc(value) {
+                    return String(value == null ? '' : value).replace(/[&<>"']/g, function (c) {
+                        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                    });
+                }
+                function load() {
+                    fetch('/api/v2/textures', { headers: headers() })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            var grid = document.getElementById('v2TextureGrid');
+                            var uploadTile = grid.querySelector('.upload-tile');
+                            grid.querySelectorAll('.texture-item, .empty-hint').forEach(function (el) { el.remove(); });
+                            var items = (data.items || []).filter(function (item) { return item.type === TYPE; });
+                            items.forEach(function (item) {
+                                var name = item.alias || item.displayName || item.originalName || item.hash;
+                                var card = document.createElement('div');
+                                card.className = 'texture-item card-animate texture-card-clickable';
+                                card.innerHTML = '<div class="texture-thumb"><canvas></canvas></div>'
+                                    + '<div class="texture-item-body">'
+                                    + '<div class="texture-name">\u273F ' + esc(name) + '</div>'
+                                    + '<div class="texture-meta">' + esc(formatSize(item.size)) + '</div>'
+                                    + '</div>'
+                                    + '<span style="position:absolute;top:8px;right:8px;font-size:10px;padding:1px 6px;border-radius:8px;border:1px solid '
+                                    + (item.isPublic ? '#0bda51' : '#5897fb') + ';color:' + (item.isPublic ? '#0bda51' : '#5897fb') + '">'
+                                    + (item.isPublic ? '公开' : '私有') + '</span>';
+                                card.addEventListener('click', function () { showTextureDetail(item); });
+                                grid.appendChild(card);
+                                if (TYPE === 'SKIN') drawFaceCanvas(card.querySelector('canvas'), item.url);
+                                else drawCapeThumb(card.querySelector('canvas'), item.url);
+                            });
+
+                            if (uploadTile) grid.appendChild(uploadTile);
+                        })
+                        .catch(function () { msg('加载失败', false); });
+                }
+                function showTextureDetail(item) {
+                    var old = document.getElementById('v2TextureDetail');
+                    if (old) old.remove();
+                    var overlay = document.createElement('div');
+                    overlay.className = 'modal-overlay';
+                    overlay.id = 'v2TextureDetail';
+                    var box = document.createElement('div');
+                    box.className = 'modal-box texture-detail-box';
+                    var name = item.alias || item.displayName || item.originalName || item.hash;
+                    var sizeText = typeof formatSize === 'function' ? formatSize(item.size) : '';
+                    box.innerHTML = '<button class="modal-close-btn" id="v2DetailClose">&times;</button>'
+                        + '<div class="detail-alias">\u273F ' + esc(name) + '</div>'
+                        + '<div class="detail-meta">' + esc(item.originalName || item.hash)
+                        + (sizeText ? ' &middot; ' + esc(sizeText) : '') + '</div>'
+                        + '<div class="detail-preview"><canvas id="v2Detail3d"></canvas></div>'
+                        + '<div class="detail-actions" id="v2DetailActions"></div>';
+                    overlay.appendChild(box);
+                    document.body.appendChild(overlay);
+
+                    var viewer = null;
+                    if (typeof skinview3d !== 'undefined') {
+                        try {
+                            var canvas = box.querySelector('#v2Detail3d');
+                            var preview = canvas.parentElement;
+                            var config = {
+                                canvas: canvas,
+                                width: preview.clientWidth || 300,
+                                height: 320,
+                                model: item.skinModel || 'default'
+                            };
+                            if (item.type === 'CAPE') config.cape = item.url;
+                            else config.skin = item.url;
+                            viewer = new skinview3d.SkinViewer(config);
+                            viewer.autoRotate = true;
+                            viewer.animation = new skinview3d.WalkingAnimation();
+                        } catch (error) {
+                            viewer = null;
+                        }
+                    }
+                    if (!viewer) {
+                        var previewBox = box.querySelector('.detail-preview');
+                        previewBox.innerHTML = '<img src="' + esc(item.url) + '" alt="texture">';
+                    }
+
+                    var actions = box.querySelector('#v2DetailActions');
+                    var download = document.createElement('button');
+                    download.className = 'btn btn-secondary';
+                    download.textContent = '下载';
+                    download.addEventListener('click', function () { window.open(item.url, '_blank', 'noopener'); });
+                    actions.appendChild(download);
+
+                    var apply = document.createElement('button');
+                    apply.className = 'btn btn-primary';
+                    apply.textContent = '应用到角色';
+                    apply.addEventListener('click', function () { close(); applyTexture(item.assetId); });
+                    actions.appendChild(apply);
+
+                    var aliasButton = document.createElement('button');
+                    aliasButton.className = 'btn btn-secondary';
+                    aliasButton.textContent = '重命名';
+                    aliasButton.addEventListener('click', function () { close(); alias(item.assetId); });
+                    actions.appendChild(aliasButton);
+
+                    var deleteButton = document.createElement('button');
+                    deleteButton.className = 'btn btn-danger';
+                    deleteButton.textContent = '删除';
+                    deleteButton.addEventListener('click', function () {
+                        showPopconfirm(deleteButton, '确定删除此纹理吗？', function () {
+                            fetch('/api/v2/textures/' + encodeURIComponent(item.assetId), { method: 'DELETE', headers: headers() })
+                                .then(function (r) { return r.json(); }).then(function (data) {
+                                    msg(data.success ? '已删除' : (data.message || '删除失败'), data.success);
+                                    close();
+                                    load();
+                                }).catch(function () { msg('删除请求失败', false); });
+                        }, { confirmText: '删除纹理' });
+                    });
+                    actions.appendChild(deleteButton);
+
+                    var segment = document.createElement('div');
+                    segment.className = 'visibility-segment';
+                    var privateButton = document.createElement('button');
+                    privateButton.type = 'button';
+                    privateButton.className = 'vis-option' + (item.isPublic ? '' : ' active');
+                    privateButton.textContent = '私有';
+                    var publicButton = document.createElement('button');
+                    publicButton.type = 'button';
+                    publicButton.className = 'vis-option' + (item.isPublic ? ' active' : '');
+                    publicButton.textContent = '公开';
+                    function setVisibility(isPublic) {
+                        fetch('/api/v2/textures/' + encodeURIComponent(item.assetId) + '/visibility', {
+                            method: 'POST', headers: headers(), body: JSON.stringify({ isPublic: isPublic })
+                        }).then(function (r) { return r.json(); }).then(function (data) {
+                            if (!data.success) { msg(data.message || '可见性更新失败', false); return; }
+                            item.isPublic = isPublic;
+                            privateButton.className = 'vis-option' + (isPublic ? '' : ' active');
+                            publicButton.className = 'vis-option' + (isPublic ? ' active' : '');
+                            msg('可见性已更新', true);
+                            load();
+                        }).catch(function () { msg('可见性更新请求失败', false); });
+                    }
+                    privateButton.addEventListener('click', function () { setVisibility(false); });
+                    publicButton.addEventListener('click', function () { setVisibility(true); });
+                    segment.appendChild(privateButton);
+                    segment.appendChild(publicButton);
+                    actions.appendChild(segment);
+
+                    function close() {
+                        if (viewer && typeof viewer.dispose === 'function') viewer.dispose();
+                        overlay.remove();
+                    }
+                    box.querySelector('#v2DetailClose').addEventListener('click', close);
+                    overlay.addEventListener('click', function (event) { if (event.target === overlay) close(); });
+                }
+                var pendingFile = null;
+                function openUploadPicker() {
+                    var input = document.getElementById('v2TextureFile');
+                    if (input) input.click();
+                }
+                function showToastSafe(text, ok) {
+                    if (typeof showToast === 'function') showToast(text, ok ? 'success' : 'error');
+                    else msg(text, ok);
+                }
+                function closeUploadModal() {
+                    var modal = document.getElementById('v2UploadModal');
+                    if (modal) modal.remove();
+                    pendingFile = null;
+                    var input = document.getElementById('v2TextureFile');
+                    if (input) input.value = '';
+                }
+                function showUploadModal(file) {
+                    if (!file) return;
+                    if (file.type !== 'image/png' && !/\\.png$/i.test(file.name || '')) { showAlertDialog({ type: 'warning', title: '文件格式不支持', message: '请选择 PNG 格式的皮肤或披风文件。' }); return; }
+                    closeUploadModal();
+                    pendingFile = file;
+                    var overlay = document.createElement('div');
+                    overlay.className = 'modal-overlay';
+                    overlay.id = 'v2UploadModal';
+                    var box = document.createElement('div');
+                    box.className = 'modal-box';
+                    box.innerHTML = '<button class="modal-close-btn" id="v2UploadClose">&times;</button>'
+                        + '<h3>' + (TYPE === 'CAPE' ? '上传披风' : '上传皮肤') + '</h3>'
+                        + '<div class="upload-modal-body">'
+                        + '<div class="upload-modal-preview"><img class="upload-modal-thumb" alt="preview">'
+                        + '<div class="upload-modal-info"><div class="upload-modal-filename">' + esc(file.name) + '</div>'
+                        + '<div class="upload-modal-filesize">' + Math.max(1, Math.round(file.size / 1024)) + ' KiB</div></div></div>'
+                        + '<div class="form-group" style="text-align:left"><label class="form-label">别名（可选）</label>'
+                        + '<input type="text" class="form-input" id="v2UploadAlias" maxlength="64" placeholder="给它起个名字"></div>'
+                        + '<div class="form-group" style="text-align:left"><label style="display:flex;gap:8px;align-items:center;cursor:pointer">'
+                        + '<input type="checkbox" id="v2UploadPublic"> 公开到材质库</label></div>'
+                        + '<div id="v2UploadMsg" class="msg-area"></div>'
+                        + '<div class="modal-actions"><button class="btn btn-secondary" id="v2UploadCancel">取消</button>'
+                        + '<button class="btn btn-primary" id="v2UploadConfirm">上传</button></div></div>';
+                    var preview = new FileReader();
+                    preview.onload = function (event) {
+                        var image = box.querySelector('.upload-modal-thumb');
+                        if (image) image.src = event.target.result;
+                    };
+                    preview.readAsDataURL(file);
+                    overlay.appendChild(box);
+                    document.body.appendChild(overlay);
+                    box.querySelector('#v2UploadClose').addEventListener('click', closeUploadModal);
+                    box.querySelector('#v2UploadCancel').addEventListener('click', closeUploadModal);
+                    overlay.addEventListener('click', function (event) { if (event.target === overlay) closeUploadModal(); });
+                    box.querySelector('#v2UploadConfirm').addEventListener('click', function () {
+                        uploadFile(box, function () { load(); });
+                    });
+                    box.querySelector('#v2UploadAlias').focus();
+                }
+                async function uploadFile(box, done) {
+                    if (!pendingFile) return;
+                    var file = pendingFile;
+                    var button = box.querySelector('#v2UploadConfirm');
+                    var message = box.querySelector('#v2UploadMsg');
+                    button.disabled = true;
+                    button.textContent = '上传中...';
+                    try {
+                        var bytes = await file.arrayBuffer();
+                        var result = await fetch('/api/v2/textures?type=' + encodeURIComponent(TYPE)
+                            + '&name=' + encodeURIComponent(file.name || 'texture.png'), {
+                            method: 'POST',
+                            headers: headers({ 'Content-Type': 'image/png' }),
+                            body: bytes
+                        }).then(function (r) { return r.json(); });
+                        if (!result.success) throw new Error(result.message || '上传失败');
+                        var warnings = [];
+                        var alias = box.querySelector('#v2UploadAlias').value.trim();
+                        if (alias) {
+                            var aliasResult = await fetch('/api/v2/textures/' + encodeURIComponent(result.assetId) + '/alias', {
+                                method: 'POST', headers: headers(), body: JSON.stringify({ alias: alias })
+                            }).then(function (r) { return r.json(); });
+                            if (!aliasResult.success) warnings.push('别名未保存：' + (aliasResult.message || ''));
+                        }
+                        if (box.querySelector('#v2UploadPublic').checked) {
+                            var publicResult = await fetch('/api/v2/textures/' + encodeURIComponent(result.assetId) + '/visibility', {
+                                method: 'POST', headers: headers(), body: JSON.stringify({ isPublic: true })
+                            }).then(function (r) { return r.json(); });
+                            if (!publicResult.success) warnings.push('公开未生效：' + (publicResult.message || ''));
+                        }
+                        closeUploadModal();
+                        showToastSafe(warnings.length ? ('上传成功；' + warnings.join('；')) : '上传成功',
+                            warnings.length === 0);
+                        if (typeof done === 'function') done();
+                    } catch (error) {
+                        if (window.showToast) showToast(error.message || '上传失败', 'error');
+                        if (message) message.textContent = '';
+                        button.disabled = false;
+                        button.textContent = '上传';
+                    }
+                }
+                function applyTexture(assetId) {
+                    fetch('/api/profiles', { headers: headers() })
+                        .then(function (r) { return r.json(); })
+                        .then(function (data) {
+                            var profiles = data.profiles || [];
+                            if (!profiles.length) { showToastSafe('请先创建角色', false); return; }
+                            var old = document.getElementById('v2ApplyModal');
+                            if (old) old.remove();
+                            var overlay = document.createElement('div');
+                            overlay.className = 'modal-overlay';
+                            overlay.id = 'v2ApplyModal';
+                            var box = document.createElement('div');
+                            box.className = 'modal-box';
+                            var opts = profiles.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + ' (' + esc(p.id) + ')</option>'; }).join('');
+                            box.innerHTML = '<button class="modal-close-btn" id="v2ApplyClose">&times;</button><h3>应用到角色</h3>'
+                                + '<div class="form-group"><label class="form-label">选择角色</label><select class="form-input" id="v2ApplyProfile">' + opts + '</select></div>'
+                                + '<div class="modal-actions"><button class="btn btn-secondary" id="v2ApplyCancel">取消</button>'
+                                + '<button class="btn btn-primary" id="v2ApplyConfirm">应用</button></div>';
+                            overlay.appendChild(box);
+                            document.body.appendChild(overlay);
+                            function close() { overlay.remove(); }
+                            box.querySelector('#v2ApplyClose').addEventListener('click', close);
+                            box.querySelector('#v2ApplyCancel').addEventListener('click', close);
+                            overlay.addEventListener('click', function (event) { if (event.target === overlay) close(); });
+                            box.querySelector('#v2ApplyConfirm').addEventListener('click', function () {
+                                var profileId = box.querySelector('#v2ApplyProfile').value;
+                                fetch('/api/profiles/' + encodeURIComponent(profileId) + '/textures/' + TYPE, {
+                                    method: 'PUT', headers: headers(),
+                                    body: JSON.stringify({ assetId: assetId })
+                                }).then(function (r) { return r.json(); }).then(function (res) {
+                                    if (res.success) { close(); showToastSafe('已应用到角色', true); }
+                                    else { showToastSafe(res.message || '应用失败', false); }
+                                }).catch(function () { showToastSafe('应用请求失败', false); });
+                            });
+                        }).catch(function () { showToastSafe('角色加载失败', false); });
+                }
+                function alias(id) {
+                    showPromptDialog({ title: '重命名' }, function (value) {
+                        if (!value || !value.trim()) { showToast('名称不能为空', 'error'); return false; }
+                        fetch('/api/v2/textures/' + encodeURIComponent(id) + '/alias', {
+                            method: 'POST', headers: headers(), body: JSON.stringify({ alias: value })
+                        }).then(function (r) { return r.json(); }).then(function (data) {
+                            msg(data.success ? '重命名成功' : ('重命名失败：' + (data.message || '')), data.success); load();
+                        }).catch(function () { msg('更新请求失败', false); });
+                        return true;
+                    });
+                }
+                function visibility(id, isPublic) {
+                    fetch('/api/v2/textures/' + encodeURIComponent(id) + '/visibility', {
+                        method: 'POST', headers: headers(), body: JSON.stringify({ isPublic: isPublic })
+                    }).then(function (r) { return r.json(); }).then(function (data) {
+                        msg(data.success ? '可见性已更新' : ('更新失败：' + (data.message || '')), data.success); load();
+                    }).catch(function () { msg('更新请求失败', false); });
+                }
+                function remove(id, anchor) {
+                    showPopconfirm(anchor, '确定删除此纹理吗？', function () {
+                        fetch('/api/v2/textures/' + encodeURIComponent(id), { method: 'DELETE', headers: headers() })
+                            .then(function (r) { return r.json(); }).then(function (data) {
+                                msg(data.success ? '已删除' : ('删除失败：' + (data.message || '')), data.success); load();
+                            }).catch(function () { msg('删除请求失败', false); });
+                    }, { confirmText: '删除纹理' });
+                }
+                document.addEventListener('click', function (event) {
+                    var target = event.target;
+                    var actionEl = target.closest ? target.closest('[data-action]') : null;
+                    if (actionEl && actionEl.getAttribute('data-action') === 'v2Upload') { openUploadPicker(); }
+                    var applyId = target.getAttribute('data-v2-apply');
+                    if (applyId) { applyTexture(applyId); }
+                    var aliasId = target.getAttribute('data-v2-alias');
+                    if (aliasId) { alias(aliasId); }
+                    var visibilityId = target.getAttribute('data-v2-visibility');
+                    if (visibilityId) { visibility(visibilityId, target.getAttribute('data-public') === '1'); }
+                    var deleteId = target.getAttribute('data-v2-delete');
+                    if (deleteId) { remove(deleteId, target); }
+                });
+                var fileInput = document.getElementById('v2TextureFile');
+                if (fileInput) {
+                    fileInput.addEventListener('change', function () {
+                        if (this.files && this.files[0]) showUploadModal(this.files[0]);
+                    });
+                }
+                load();
+            })();
+            </script>
+            """.replace("__TYPE__", type);
+        String navbar = PageRenderer.renderNavbar(im.xz.cn.config.SystemConfig.getInstance().getSiteName(), "user", false);
+        String sidebar = Shared.buildUserSidebar(cape ? "capes" : "skins");
+        String body = navbar + """
+            <div class="user-layout">
+                %s
+                <div class="user-content">%s</div>
+            </div>
+            """.formatted(sidebar, content);
+        String csrf = Shared.csrfInject(csrfToken)
+                + "<script src=\"/js/skinview3d.bundle.js\"></script>";
+        return PageRenderer.renderPage(pageTitle, csrf + body, "user",
+                Css.getUserCssLink(), Css.getTextureCss());
+    }
+
+
+
+    private static String formatSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format("%.2f KiB", bytes / 1024.0);
+        return String.format("%.2f MiB", bytes / (1024.0 * 1024.0));
+    }
+
+}
+

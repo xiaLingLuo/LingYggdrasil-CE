@@ -1,0 +1,350 @@
+
+
+body.ui-modal-open { overflow: hidden; }
+
+
+.ui-toast-stack {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 10px;
+    width: min(420px, calc(100vw - 32px));
+    pointer-events: none;
+}
+
+.ui-toast {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    width: 100%;
+    padding: 13px 14px 14px 15px;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: 0 16px 40px rgba(17, 24, 39, .16);
+    overflow: hidden;
+    pointer-events: auto;
+    animation: uiToastIn .24s cubic-bezier(.2, .8, .2, 1);
+}
+
+.ui-toast.ui-toast-leaving {
+    opacity: 0;
+    transform: translateX(18px) scale(.98);
+    transition: opacity .2s ease, transform .2s ease;
+}
+
+.ui-toast-icon {
+    flex: 0 0 30px;
+    width: 30px;
+    height: 30px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    font-size: 14px;
+    background: color-mix(in srgb, currentColor 13%, transparent);
+}
+
+.ui-toast-body { flex: 1 1 auto; min-width: 0; padding-top: 1px; }
+.ui-toast-title { font-size: 13px; font-weight: 700; line-height: 1.35; }
+.ui-toast-message { margin-top: 2px; font-size: 13px; line-height: 1.55; color: var(--color-text-muted); word-break: break-word; }
+
+.ui-toast-close {
+    flex: 0 0 auto;
+    border: 0;
+    background: transparent;
+    color: var(--color-text-faint);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 7px;
+    line-height: 1;
+}
+.ui-toast-close:hover { color: var(--color-text); background: var(--color-surface-3); }
+
+.ui-toast-progress {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    background: currentColor;
+    opacity: .45;
+    transform-origin: left center;
+    animation: uiToastProgress linear forwards;
+}
+
+.ui-toast-success { color: #047857; border-left: 4px solid var(--color-success); }
+.ui-toast-success .ui-toast-icon { color: #047857; background: #ECFDF5; }
+.ui-toast-error { color: #B91C1C; border-left: 4px solid var(--color-danger); }
+.ui-toast-error .ui-toast-icon { color: #B91C1C; background: #FEF2F2; }
+.ui-toast-warning { color: #B45309; border-left: 4px solid #F59E0B; }
+.ui-toast-warning .ui-toast-icon { color: #B45309; background: #FFFBEB; }
+.ui-toast-info { color: #1D4ED8; border-left: 4px solid var(--color-info); }
+.ui-toast-info .ui-toast-icon { color: #1D4ED8; background: #EFF6FF; }
+.ui-toast-success .ui-toast-message,
+.ui-toast-error .ui-toast-message,
+.ui-toast-warning .ui-toast-message,
+.ui-toast-info .ui-toast-message { color: var(--color-text-muted); }
+
+@keyframes uiToastIn {
+    from { opacity: 0; transform: translateX(26px) scale(.97); }
+    to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes uiToastProgress {
+    from { transform: scaleX(1); }
+    to { transform: scaleX(0); }
+}
+
+
+.ui-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(13, 10, 25, .48);
+    backdrop-filter: blur(4px);
+    animation: uiFadeIn .18s ease;
+}
+
+.ui-dialog {
+    width: min(460px, 100%);
+    max-height: min(86vh, 760px);
+    overflow: auto;
+    position: relative;
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 18px;
+    box-shadow: 0 28px 80px rgba(17, 24, 39, .28);
+    padding: 24px;
+    animation: uiDialogIn .22s cubic-bezier(.2, .8, .2, 1);
+}
+.ui-dialog.ui-dialog-wide { width: min(620px, 100%); }
+
+.ui-dialog-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 9px;
+    background: transparent;
+    color: var(--color-text-faint);
+    cursor: pointer;
+    font-size: 20px;
+    line-height: 1;
+}
+.ui-dialog-close:hover { background: var(--color-surface-3); color: var(--color-text); }
+
+.ui-dialog-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+}
+.ui-dialog-icon-success { color: #047857; background: #ECFDF5; }
+.ui-dialog-icon-error { color: #B91C1C; background: #FEF2F2; }
+.ui-dialog-icon-warning { color: #B45309; background: #FFFBEB; }
+.ui-dialog-icon-info { color: #1D4ED8; background: #EFF6FF; }
+.ui-dialog-icon-danger { color: #B91C1C; background: #FEF2F2; }
+
+.ui-dialog h3 { margin: 0 0 8px; padding-right: 34px; font-size: 18px; line-height: 1.4; }
+.ui-dialog-message { margin: 0; color: var(--color-text-muted); font-size: 14px; line-height: 1.7; white-space: pre-line; }
+.ui-dialog-detail { margin-top: 10px; padding: 10px 12px; border-radius: 10px; background: var(--color-surface-2); font-size: 13px; color: var(--color-text-muted); white-space: pre-line; word-break: break-all; }
+.ui-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+.ui-dialog-actions .btn { min-width: 88px; }
+
+@keyframes uiFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes uiDialogIn { from { opacity: 0; transform: translateY(12px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+
+.modal-overlay { backdrop-filter: blur(4px); }
+.modal-box .modal-actions { gap: 10px; }
+.modal-box .modal-actions .btn { min-width: 84px; }
+
+
+
+.modal-overlay {
+    background: rgba(13, 10, 25, .48);
+    backdrop-filter: blur(4px);
+}
+.modal-box {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 18px;
+    box-shadow: 0 28px 80px rgba(17, 24, 39, .28);
+    padding: 24px;
+}
+.modal-box h3 {
+    color: var(--color-text);
+    font-size: 18px;
+    line-height: 1.4;
+    padding-right: 34px;
+}
+.modal-close-btn {
+    color: var(--color-text-faint);
+    border-radius: 9px;
+}
+.modal-close-btn:hover {
+    color: var(--color-text);
+    background: var(--color-surface-3);
+}
+.modal-actions { gap: 10px; }
+.modal-actions .btn { min-width: 84px; }
+.modal-card {
+    background: var(--color-surface);
+    color: var(--color-text);
+    border-color: var(--color-border);
+    border-radius: 18px;
+}
+.modal-header { border-bottom: 1px solid var(--color-border); }
+.modal-footer { border-top: 1px solid var(--color-border); }
+
+
+.ui-inline-alert {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    text-align: left;
+}
+.ui-inline-alert i { margin-top: 2px; flex: 0 0 auto; }
+.ui-inline-alert-success { color: #047857; background: #ECFDF5; border-color: #A7F3D0; }
+.ui-inline-alert-error { color: #B91C1C; background: #FEF2F2; border-color: #FECACA; }
+.ui-inline-alert-warning { color: #B45309; background: #FFFBEB; border-color: #FDE68A; }
+.ui-inline-alert-info { color: #1D4ED8; background: #EFF6FF; border-color: #BFDBFE; }
+.ui-inline-alert .ui-inline-alert-close { margin-left: auto; border: 0; background: transparent; color: inherit; cursor: pointer; opacity: .7; padding: 0 2px; }
+
+
+.ui-popconfirm {
+    position: fixed;
+    z-index: 9500;
+    width: min(300px, calc(100vw - 24px));
+    padding: 12px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    box-shadow: 0 16px 42px rgba(17, 24, 39, .22);
+    animation: uiPopIn .16s ease;
+}
+.ui-popconfirm::before {
+    content: "";
+    position: absolute;
+    width: 9px;
+    height: 9px;
+    background: var(--color-surface);
+    border-left: 1px solid var(--color-border);
+    border-top: 1px solid var(--color-border);
+    transform: rotate(45deg);
+    top: -5px;
+    left: var(--ui-arrow-left, 18px);
+}
+.ui-popconfirm-message { font-size: 13px; line-height: 1.55; color: var(--color-text); }
+.ui-popconfirm-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+.ui-popconfirm-actions .btn { min-height: 30px; padding: 5px 10px; font-size: 12px; }
+.ui-popconfirm-danger .ui-popconfirm-message { color: #B91C1C; }
+@keyframes uiPopIn { from { opacity: 0; transform: translateY(5px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
+.ui-popconfirm.ui-popconfirm-below::before { top: auto; bottom: -5px; transform: rotate(225deg); }
+
+
+.ui-tooltip {
+    position: fixed;
+    z-index: 10001;
+    max-width: 260px;
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: #1F2937;
+    color: #F9FAFB;
+    font-size: 12px;
+    line-height: 1.5;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
+    pointer-events: none;
+    animation: uiFadeIn .12s ease;
+}
+.ui-tooltip::after {
+    content: "";
+    position: absolute;
+    left: var(--ui-arrow-left, 14px);
+    bottom: -4px;
+    width: 8px;
+    height: 8px;
+    background: #1F2937;
+    transform: rotate(45deg);
+}
+.ui-tooltip.ui-tooltip-below::after {
+    top: -4px;
+    bottom: auto;
+}
+.ui-help {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 17px;
+    height: 17px;
+    margin-left: 4px;
+    border: 1px solid var(--color-border-strong);
+    border-radius: 50%;
+    background: var(--color-surface-2);
+    color: var(--color-text-muted);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: help;
+    vertical-align: 1px;
+}
+.ui-help:hover, .ui-help:focus-visible { color: var(--color-primary-strong); border-color: var(--color-primary); outline: none; }
+
+
+.inline-form.account-cancel-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+.account-cancel-form .form-input {
+    width: 100%;
+    min-width: 0;
+}
+.account-cancel-form .btn {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 104px;
+    white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+    .inline-form.account-cancel-form { grid-template-columns: 1fr; }
+    .inline-form.account-cancel-form .btn { width: 100%; }
+}
+
+@media (max-width: 640px) {
+    .ui-toast-stack { left: 12px; right: 12px; bottom: 12px; width: auto; align-items: stretch; }
+    .ui-toast { width: 100%; }
+    .ui-dialog-overlay { padding: 12px; align-items: flex-end; }
+    .ui-dialog { width: 100%; border-radius: 16px 16px 12px 12px; padding: 20px; }
+    .inline-form.account-cancel-form { grid-template-columns: 1fr; }
+    .account-cancel-form .btn { width: 100%; }
+}

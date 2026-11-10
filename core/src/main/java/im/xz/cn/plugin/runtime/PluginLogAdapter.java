@@ -1,0 +1,54 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package im.xz.cn.plugin.runtime;
+
+import im.xz.cn.logging.logApi;
+import im.xz.cn.plugin.spi.PluginLogger;
+
+
+public final class PluginLogAdapter implements PluginLogger {
+
+    private final logApi logger;
+
+    public PluginLogAdapter(String pluginId) {
+        this.logger = logApi.getLogger(PluginLogAdapter.class);
+        this.pluginId = pluginId;
+    }
+
+    private final String pluginId;
+
+    @Override
+    public void info(String message, Object... args) {
+        logger.info("[Plugin:" + pluginId + "] " + message, args);
+    }
+
+    @Override
+    public void warn(String message, Object... args) {
+        logger.warn("[Plugin:" + pluginId + "] " + message, args);
+    }
+
+    @Override
+    public void error(String message, Object... args) {
+        logger.error("[Plugin:" + pluginId + "] " + message, args);
+    }
+
+    @Override
+    public void error(String message, Throwable cause, Object... args) {
+        logger.error("[Plugin:" + pluginId + "] " + message, cause, args);
+    }
+}

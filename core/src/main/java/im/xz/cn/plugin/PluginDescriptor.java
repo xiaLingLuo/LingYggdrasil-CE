@@ -1,0 +1,49 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package im.xz.cn.plugin;
+
+import im.xz.cn.permission.PermissionNode;
+
+import java.nio.file.Path;
+import java.util.List;
+
+public record PluginDescriptor(
+        String name,
+        String version,
+        String mainClass,
+        String apiVer,
+        boolean hotReloadable,
+        String friendlyName,
+        List<String> authors,
+        String website,
+        String description,
+        String iconPath,
+        List<String> depend,
+        List<String> softdepend,
+        List<PermissionNode> permissions,
+        Path jarPath,
+        String fileName
+) {
+    public String displayName() {
+        return (friendlyName == null || friendlyName.isBlank()) ? name : friendlyName;
+    }
+
+    public String sourceName() {
+        return displayName();
+    }
+}

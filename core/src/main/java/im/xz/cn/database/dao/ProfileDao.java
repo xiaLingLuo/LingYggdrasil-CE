@@ -1,0 +1,294 @@
+/*
+ * LingYggdrasil - A modern Minecraft skin/cape hosting and Yggdrasil API system
+ * Copyright (C) 2026 XIAZHIRUI HUANG
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+package im.xz.cn.database.dao;
+
+import im.xz.cn.database.DatabaseManager;
+import im.xz.cn.database.SqlLike;
+import im.xz.cn.logging.logApi;
+import im.xz.cn.model.PlayerProfile;
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+public class ProfileDao {
+    private static final logApi log = logApi.getLogger(ProfileDao.class);
+    private final DatabaseManager db;
+
+    public record AdminProfileRow(PlayerProfile profile, String ownerUsername) {}
+
+    public ProfileDao(DatabaseManager db) {
+        this.db = db;
+    }
+
+    public void insert(PlayerProfile profile) {
+        db.executeUpdate(
+            "INSERT INTO player_profiles (id, user_id, name, skin_hash, cape_hash, skin_model, yggdrasil_token, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            profile.getId(), profile.getUserId(), profile.getName(),
+            profile.getSkinHash(), profile.getCapeHash(), profile.getSkinModel(),
+            profile.getYggdrasilToken(), profile.getCreatedAt()
+        );
+        syncContractOwner(profile);
+    }
+
+    
+    private void syncContractOwner(PlayerProfile profile) {
+        try {
+            db.executeUpdate("UPDATE player_profiles SET owner_user_id = ? WHERE id = ?",
+                    profile.getUserId(), profile.getId());
+        } catch (RuntimeException ignored) {
+            
+        }
+    }
+
+    public PlayerProfile findById(String id) {
+        PlayerProfile p = querySingle("SELECT * FROM player_profiles WHERE id = ?", id);
+        if (p != null) {
+            log.debug("[ProfileDao] findById: id={} -> name={}, skinHash={}", id, p.getName(), p.getSkinHash());
+        } else {
+            log.debug("[ProfileDao] findById: id={} -> 未找到", id);
+        }
+        return p;
+    }
+
+    public PlayerProfile findByName(String name) {
+        PlayerProfile p = querySingle("SELECT * FROM player_profiles WHERE name = ?", name);
+        if (p != null) {
+            log.debug("[ProfileDao] findByName: name={} -> id={}, skinHash={}", name, p.getId(), p.getSkinHash());
+        } else {
+            log.debug("[ProfileDao] findByName: name={} -> 未找到", name);
+        }
+        return p;
+    }
+
+    public List<PlayerProfile> findByUserId(String userId) {
+        List<PlayerProfile> profiles = new ArrayList<>();
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM player_profiles WHERE user_id = ? ORDER BY created_at ASC")) {
+            ps.setString(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    profiles.add(PlayerProfile.fromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("ProfileDao.findByUserId failed: {}", e.getMessage(), e);
+            throw new RuntimeException("ProfileDao.findByUserId failed", e);
+        }
+        return profiles;
+    }
+
+    public List<PlayerProfile> findByNames(List<String> names) {
+        if (names == null || names.isEmpty()) return new ArrayList<>();
+        List<PlayerProfile> profiles = new ArrayList<>();
+        StringBuilder sb = new StringBuilder("SELECT * FROM player_profiles WHERE name IN (");
+        for (int i = 0; i < names.size(); i++) {
+            if (i > 0) sb.append(",");
+            sb.append("?");
+        }
+        sb.append(")");
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sb.toString())) {
+            for (int i = 0; i < names.size(); i++) {
+                ps.setString(i + 1, names.get(i));
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    profiles.add(PlayerProfile.fromResultSet(rs));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("ProfileDao.findByNames failed: {}", e.getMessage(), e);
+            throw new RuntimeException("ProfileDao.findByNames failed", e);
+        }
+        return profiles;
+    }
+
+    public void update(PlayerProfile profile) {
+        db.executeUpdate(
+            "UPDATE player_profiles SET name = ?, skin_hash = ?, cape_hash = ?, skin_model = ?, yggdrasil_token = ? WHERE id = ?",
+            profile.getName(), profile.getSkinHash(), profile.getCapeHash(),
+            profile.getSkinModel(), profile.getYggdrasilToken(), profile.getId()
+        );
+        syncContractOwner(profile);
+    }
+
+    public List<PlayerProfile> findAll() {
+        List<PlayerProfile> profiles = new ArrayList<>();
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement("SELECT * FROM player_profiles ORDER BY created_at ASC");
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                profiles.add(PlayerProfile.fromResultSet(rs));
+            }
+        } catch (SQLException e) {
+            log.error("ProfileDao.findAll failed: {}", e.getMessage(), e);
+            throw new RuntimeException("ProfileDao.findAll failed", e);
+        }
+        return profiles;
+    }
+
+    public List<AdminProfileRow> findAdminPage(String search, int limit, long offset) {
+        List<AdminProfileRow> profiles = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+                "SELECT p.*, u.username AS owner_username FROM player_profiles p " +
+                "LEFT JOIN users u ON u.id = p.user_id WHERE 1 = 1 ");
+        if (search != null && !search.isBlank()) {
+            sql.append("AND (LOWER(p.name) LIKE ? ESCAPE '!' OR LOWER(p.id) LIKE ? ESCAPE '!') ");
+        }
+        sql.append("ORDER BY p.created_at ASC, p.id ASC LIMIT ? OFFSET ?");
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql.toString())) {
+            int index = 1;
+            if (search != null && !search.isBlank()) {
+                String pattern = SqlLike.contains(search);
+                ps.setString(index++, pattern);
+                ps.setString(index++, pattern);
+            }
+            ps.setInt(index++, limit);
+            ps.setLong(index, offset);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    profiles.add(new AdminProfileRow(PlayerProfile.fromResultSet(rs), rs.getString("owner_username")));
+                }
+            }
+        } catch (SQLException e) {
+            log.error("ProfileDao.findAdminPage failed: {}", e.getMessage(), e);
+            throw new RuntimeException("ProfileDao.findAdminPage failed", e);
+        }
+        return profiles;
+    }
+
+    public int countAdminProfiles(String search) {
+        StringBuilder sql = new StringBuilder("SELECT COUNT(*) AS cnt FROM player_profiles p WHERE 1 = 1 ");
+        if (search != null && !search.isBlank()) {
+            sql.append("AND (LOWER(p.name) LIKE ? ESCAPE '!' OR LOWER(p.id) LIKE ? ESCAPE '!')");
+        }
+        java.util.Map<String, Object> result;
+        if (search == null || search.isBlank()) {
+            result = db.executeQuerySingle(sql.toString());
+        } else {
+            String pattern = SqlLike.contains(search);
+            result = db.executeQuerySingle(sql.toString(), pattern, pattern);
+        }
+        return result == null || result.get("cnt") == null ? 0 : ((Number) result.get("cnt")).intValue();
+    }
+
+    public void updateName(String id, String newName) {
+        db.executeUpdate("UPDATE player_profiles SET name = ? WHERE id = ?", newName, id);
+    }
+
+    public void clearTextures(String id) {
+        db.executeUpdate("UPDATE player_profiles SET skin_hash = NULL, cape_hash = NULL, skin_model = ? WHERE id = ?", "default", id);
+    }
+
+    public void clearTextureRefByHash(String userId, String type, String hash) {
+        String col = "SKIN".equalsIgnoreCase(type) ? "skin_hash" : "cape_hash";
+        db.executeUpdate("UPDATE player_profiles SET " + col + " = NULL WHERE user_id = ? AND " + col + " = ?", userId, hash);
+    }
+
+    public void clearTextureRefByHashForAll(String type, String hash, String excludeUserId) {
+        String col = "SKIN".equalsIgnoreCase(type) ? "skin_hash" : "cape_hash";
+        db.executeUpdate("UPDATE player_profiles SET " + col + " = NULL WHERE user_id != ? AND " + col + " = ?", excludeUserId, hash);
+    }
+
+    public void updateUserId(String id, String newUserId) {
+        db.executeUpdate("UPDATE player_profiles SET user_id = ? WHERE id = ?", newUserId, id);
+        
+        try {
+            db.executeUpdate("UPDATE player_profiles SET owner_user_id = ? WHERE id = ?", newUserId, id);
+        } catch (RuntimeException ignored) {
+            
+        }
+    }
+
+    public void updateToken(String id, String newToken) {
+        db.executeUpdate("UPDATE player_profiles SET yggdrasil_token = ? WHERE id = ?", newToken, id);
+    }
+
+    public PlayerProfile findByNameAndToken(String name, String token) {
+        return querySingle("SELECT * FROM player_profiles WHERE name = ? AND yggdrasil_token = ?", name, token);
+    }
+
+    
+    public PlayerProfile findByNameAndWorldTreeKey(String name, String token) {
+        if (name == null || token == null || token.isBlank()) {
+            return null;
+        }
+        PlayerProfile profile = findByName(name);
+        if (profile == null) {
+            return null;
+        }
+        String effective = new im.xz.cn.profile.ProfileCredentialService(db)
+                .reveal(profile.getId(), profile.getYggdrasilToken());
+        return token.equals(effective) ? profile : null;
+    }
+
+    public void delete(String id) {
+        db.executeUpdate("DELETE FROM player_profiles WHERE id = ?", id);
+        for (String table : new String[]{"profile_texture_bindings", "profile_credentials"}) {
+            try {
+                db.executeUpdate("DELETE FROM " + table + " WHERE profile_id = ?", id);
+            } catch (RuntimeException ignored) {
+                
+            }
+        }
+    }
+
+    public int count() {
+        var result = db.executeQuerySingle("SELECT COUNT(*) AS cnt FROM player_profiles");
+        if (result != null && result.get("cnt") != null) {
+            return ((Number) result.get("cnt")).intValue();
+        }
+        return 0;
+    }
+
+    public int countByUserId(String userId) {
+        var result = db.executeQuerySingle("SELECT COUNT(*) AS cnt FROM player_profiles WHERE user_id = ?", userId);
+        if (result != null && result.get("cnt") != null) {
+            return ((Number) result.get("cnt")).intValue();
+        }
+        return 0;
+    }
+
+    public boolean existsByName(String name) {
+        var result = db.executeQuerySingle("SELECT COUNT(*) AS cnt FROM player_profiles WHERE name = ?", name);
+        if (result != null && result.get("cnt") != null) {
+            return ((Number) result.get("cnt")).intValue() > 0;
+        }
+        return false;
+    }
+
+    private PlayerProfile querySingle(String sql, Object... params) {
+        try (Connection conn = db.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (int i = 0; i < params.length; i++) {
+                ps.setObject(i + 1, params[i]);
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return PlayerProfile.fromResultSet(rs);
+                }
+            }
+        } catch (SQLException e) {
+            log.error("ProfileDao query failed: {}", e.getMessage(), e);
+            throw new RuntimeException("ProfileDao query failed", e);
+        }
+        return null;
+    }
+}
