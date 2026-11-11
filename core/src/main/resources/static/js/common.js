@@ -50,10 +50,10 @@
         info: 'fa-circle-info'
     };
     var TOAST_TITLES = {
-        success: '操作成功',
-        error: '操作失败',
-        warning: '请注意',
-        info: '提示'
+        success: '' + t('common.success') + '',
+        error: '' + t('common.operationFailed') + '',
+        warning: '' + t('common.warningTitle') + '',
+        info: '' + t('common.infoTitle') + ''
     };
 
     function showToast(message, type, options) {
@@ -298,7 +298,7 @@
         button.textContent = options.confirmText || t('common.confirm');
         var dialog = openUiDialog({
             id: options.id || 'uiAlertDialog',
-            title: options.title || '提示',
+            title: options.title || '' + t('common.infoTitle') + '',
             message: options.message || '',
             detail: options.detail,
             type: options.type,
@@ -330,7 +330,7 @@
         confirm.textContent = options.confirmText || t('common.save');
         var dialog = openUiDialog({
             id: options.id || 'uiPromptDialog',
-            title: options.title || '修改',
+            title: options.title || '' + t('common.edit') + '',
             message: options.message || '',
             body: body,
             actions: [cancel, confirm],

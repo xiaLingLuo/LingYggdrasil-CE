@@ -227,7 +227,7 @@ public class UserPage {
         return settingsTr("""
             <p class="form-hint">{{settings.cancelAccountDesc}}</p>
             <div class="inline-form account-cancel-form">
-                <input type="password" class="form-input" id="cancelAccountPassword" placeholder="{{user.settings.currentPasswordPlaceholder}}" data-tooltip="输入当前登录密码以确认注销操作">
+                <input type="password" class="form-input" id="cancelAccountPassword" placeholder="{{user.settings.currentPasswordPlaceholder}}" data-tooltip="{{settings.currentPasswordHint}}">
                 <button type="button" class="btn btn-danger" id="cancelAccountBtn">{{settings.cancelAccountButton}}</button>
             </div>
             <div id="cancelAccountMsg" class="msg-area"></div>
@@ -293,9 +293,9 @@ public class UserPage {
                     + "<button class='btn btn-danger' id='clearBlockedBtn'>" + I18n.t("user.settings.clearBlocked") + "</button>"
                     + "<button class='btn btn-secondary' id='manageBlockedBtn'>" + I18n.t("user.settings.manageBlocked") + "</button>"
                     + "</div></div>")
-                + "<br>" + PageRenderer.renderCard(label("settings.externalLoginCard", "外置登录"),
+                + "<br>" + PageRenderer.renderCard(label("settings.externalLoginCard", "{{settings.externalLoginCard}}"),
                     externalLoginForm())
-                + "<br>" + PageRenderer.renderCard(label("settings.cancelAccountCard", "账号注销"),
+                + "<br>" + PageRenderer.renderCard(label("settings.cancelAccountCard", "{{settings.cancelAccountCard}}"),
                     cancelAccountForm());
         String body = Shared.buildUserLayout(siteName, "settings", content, "settings");
         String csrf = Shared.csrfInject(csrfToken);
@@ -354,8 +354,8 @@ public class UserPage {
     public static String renderFriendsV2Page(String csrfToken) {
         String content = """
             <div class="page-header">
-                <h2>好友</h2>
-                <p class="page-desc">管理好友与待处理申请。</p>
+                <h2>{{friends.title}}</h2>
+                <p class="page-desc">{{friends.pageDesc}}</p>
             </div>
             <div id="friendsV2Msg" class="msg-area"></div>
             <section class="friend-section">
@@ -389,13 +389,13 @@ public class UserPage {
                         + 'object-position:center top;image-rendering:pixelated;"></div>';
                 }
                 function ownCard() {
-                    var name = (myInfo && (myInfo.displayName || myInfo.friendCode)) || '我的资料卡';
+                    var name = (myInfo && (myInfo.displayName || myInfo.friendCode)) || '{{friends.myCard}}';
                     var code = (myInfo && (myInfo.friendCodeFormatted || myInfo.friendCode)) || '----';
                     return '<div class="friend-card friend-my-card card-animate" id="friendMyCard">'
                         + avatarMarkup(name, myInfo && myInfo.avatar)
                         + '<div class="friend-card-info"><div class="friend-card-name">' + esc(name) + '</div>'
                         + '<div class="friend-card-code">' + esc(code) + '</div></div>'
-                        + '<div class="friend-card-label">我的资料卡</div></div>';
+                        + '<div class="friend-card-label">{{friends.myCard}}</div></div>';
                 }
                 function friendCard(user) {
                     var name = user.name || user.code || user.userId || '?';
@@ -404,31 +404,31 @@ public class UserPage {
                         + '<div class="friend-card-info"><div class="friend-card-name">' + esc(name) + '</div>'
                         + '<div class="friend-card-code">' + esc(user.code || user.userId || '') + '</div></div>'
                         + '<div class="friend-card-actions">'
-                        + '<a class="btn btn-sm" href="/userhome/' + esc(user.code || '') + '">查看</a>'
-                        + '<button class="btn btn-sm" data-friend-share="' + esc(user.userId) + '">分享</button>'
-                        + '<button class="btn btn-sm" data-friend-block="' + esc(user.userId) + '">屏蔽</button>'
-                        + '<button class="btn btn-sm btn-danger" data-friend-remove="' + esc(user.userId) + '">删除</button>'
+                        + '<a class="btn btn-sm" href="/userhome/' + esc(user.code || '') + '">{{common.view}}</a>'
+                        + '<button class="btn btn-sm" data-friend-share="' + esc(user.userId) + '">{{shared.share}}</button>'
+                        + '<button class="btn btn-sm" data-friend-block="' + esc(user.userId) + '">{{friends.blockLabel}}</button>'
+                        + '<button class="btn btn-sm btn-danger" data-friend-remove="' + esc(user.userId) + '">{{common.delete}}</button>'
                         + '</div></div>';
                 }
                 function requestCard(request, direction) {
                     var other = (direction === 'outgoing' ? request.toUser : request.fromUser) || {};
                     var name = other.name || other.code || (direction === 'outgoing' ? request.toUserId : request.fromUserId) || '?';
                     var actions = direction === 'outgoing'
-                        ? '<button class="btn btn-sm btn-danger" data-request-cancel="' + esc(request.id) + '">取消申请</button>'
-                        : '<button class="btn btn-sm btn-primary" data-request-accept="' + esc(request.id) + '">接受</button>'
-                          + '<button class="btn btn-sm" data-request-reject="' + esc(request.id) + '">拒绝</button>';
+                        ? '<button class="btn btn-sm btn-danger" data-request-cancel="' + esc(request.id) + '">{{friends.cancelRequestLabel}}</button>'
+                        : '<button class="btn btn-sm btn-primary" data-request-accept="' + esc(request.id) + '">{{friends.accept}}</button>'
+                          + '<button class="btn btn-sm" data-request-reject="' + esc(request.id) + '">{{friends.reject}}</button>';
                     return '<div class="friend-card friend-request-card card-animate">'
                         + avatarMarkup(name, other.avatar)
                         + '<div class="friend-card-info"><div class="friend-card-name">' + esc(name) + '</div>'
                         + '<div class="friend-card-code">' + esc(other.code || '') + '</div>'
-                        + '<div class="friend-card-label">' + (direction === 'outgoing' ? '已发出申请' : '好友申请') + '</div></div>'
+                        + '<div class="friend-card-label">' + (direction === 'outgoing' ? '{{friends.requestSentLabel}}' : '{{friends.request}}') + '</div></div>'
                         + '<div class="friend-card-actions">' + actions + '</div></div>';
                 }
                 function addTile() {
                     return '<div class="friend-add-tile card-animate" id="friendAddTile" role="button" tabindex="0">'
                         + '<div class="friend-add-tile-icon"><span class="friend-add-tile-plus">+</span></div>'
-                        + '<div class="friend-add-tile-text">添加好友</div>'
-                        + '<div class="friend-add-tile-hint">输入好友代码</div></div>';
+                        + '<div class="friend-add-tile-text">{{friends.add}}</div>'
+                        + '<div class="friend-add-tile-hint">{{friends.enterCodeShort}}</div></div>';
                 }
                 function render() {
                     var list = document.getElementById('friendsV2List');
@@ -457,14 +457,14 @@ public class UserPage {
                         requests = (results[2] && results[2].items) || [];
                         outgoing = (results[3] && results[3].items) || [];
                         render();
-                    }).catch(function () { msg('好友加载失败，请刷新重试', false); });
+                    }).catch(function () { msg('{{friends.loadFailedRetryText}}', false); });
                 }
                 function showMyProfileModal() {
                     if (!myInfo) return;
                     var existing = document.getElementById('myProfileModal');
                     if (existing) existing.remove();
                     var profiles = myInfo.profiles || [];
-                    var options = '<option value="">不展示</option>';
+                    var options = '<option value="">{{texture.hidden}}</option>';
                     profiles.forEach(function (profile) {
                         options += '<option value="' + esc(profile.id) + '"'
                             + (myInfo.displayProfileId === profile.id ? ' selected' : '') + '>'
@@ -477,16 +477,16 @@ public class UserPage {
                     box.className = 'modal-box';
                     var friendCode = myInfo.friendCodeFormatted || myInfo.friendCode || '----';
                     box.innerHTML = '<button class="modal-close-btn" id="myProfileClose">&times;</button>'
-                        + '<h3>我的资料卡</h3>'
-                        + '<div class="form-group"><label class="form-label">好友代码</label>'
+                        + '<h3>{{friends.myCard}}</h3>'
+                        + '<div class="form-group"><label class="form-label">{{friends.code}}</label>'
                         + '<div class="friend-code-display"><span id="myProfileCode">' + esc(friendCode) + '</span>'
                         + '<button type="button" class="btn btn-secondary btn-small" id="myProfileCopy" '
-                        + 'data-tooltip="复制好友代码" aria-label="复制好友代码"><i class="fas fa-copy"></i></button></div></div>'
-                        + '<div class="form-group"><label class="form-label">展示角色</label>'
+                        + 'data-tooltip="{{friends.copyCode}}" aria-label="{{friends.copyCode}}"><i class="fas fa-copy"></i></button></div></div>'
+                        + '<div class="form-group"><label class="form-label">{{texture.displayProfile}}</label>'
                         + '<select class="form-input" id="myProfileSelect">' + options + '</select></div>'
                         + '<div id="myProfileMsg" class="msg-area"></div>'
-                        + '<div class="modal-actions"><button class="btn btn-secondary" id="myProfileCancel">取消</button>'
-                        + '<button class="btn btn-primary" id="myProfileSave">保存</button></div>';
+                        + '<div class="modal-actions"><button class="btn btn-secondary" id="myProfileCancel">{{common.cancel}}</button>'
+                        + '<button class="btn btn-primary" id="myProfileSave">{{common.save}}</button></div>';
                     overlay.appendChild(box);
                     document.body.appendChild(overlay);
                     function close() { overlay.remove(); }
@@ -495,7 +495,7 @@ public class UserPage {
                     overlay.addEventListener('click', function (event) { if (event.target === overlay) close(); });
                     box.querySelector('#myProfileCopy').addEventListener('click', function () {
                         var text = myInfo.friendCodeFormatted || myInfo.friendCode || '';
-                        function copied() { showToast('好友代码已复制', 'success'); }
+                        function copied() { showToast('{{friends.codeCopied}}', 'success'); }
                         function fallback() {
                             var input = document.createElement('textarea');
                             input.value = text;
@@ -504,7 +504,7 @@ public class UserPage {
                             document.body.appendChild(input);
                             input.select();
                             try { document.execCommand('copy'); copied(); }
-                            catch (error) { showToast('复制失败，请手动选择代码', 'error'); }
+                            catch (error) { showToast('{{friends.copyFailedManual}}', 'error'); }
                             input.remove();
                         }
                         if (navigator.clipboard && window.isSecureContext) {
@@ -520,8 +520,8 @@ public class UserPage {
                             body: JSON.stringify({ profileId: value })
                         }).then(function (r) { return r.json(); }).then(function (data) {
                             if (data.success) { close(); loadAll(); }
-                            else { box.querySelector('#myProfileMsg').textContent = data.message || '保存失败'; }
-                        }).catch(function () { box.querySelector('#myProfileMsg').textContent = '网络错误'; });
+                            else { box.querySelector('#myProfileMsg').textContent = data.message || '{{common.saveFailed}}'; }
+                        }).catch(function () { box.querySelector('#myProfileMsg').textContent = '{{common.networkErrorShort}}'; });
                     });
                 }
                 function showAddFriendModal() {
@@ -533,13 +533,13 @@ public class UserPage {
                     var box = document.createElement('div');
                     box.className = 'modal-box';
                     box.innerHTML = '<button class="modal-close-btn" id="friendAddClose">&times;</button>'
-                        + '<h3>添加好友</h3>'
-                        + '<p class="form-hint">输入对方好友代码，发送好友申请。</p>'
-                        + '<div class="form-group"><label class="form-label">好友代码</label>'
-                        + '<input class="form-input" id="friendCodeInput" placeholder="例如 ABCD-EFGH-IJKL"></div>'
+                        + '<h3>{{friends.add}}</h3>'
+                        + '<p class="form-hint">{{friends.addHintText}}</p>'
+                        + '<div class="form-group"><label class="form-label">{{friends.code}}</label>'
+                        + '<input class="form-input" id="friendCodeInput" placeholder="{{common.example}} ABCD-EFGH-IJKL"></div>'
                         + '<div id="friendAddMsg" class="msg-area"></div>'
-                        + '<div class="modal-actions"><button class="btn btn-secondary" id="friendAddCancel">取消</button>'
-                        + '<button class="btn btn-primary" id="friendAddConfirm">发送申请</button></div>';
+                        + '<div class="modal-actions"><button class="btn btn-secondary" id="friendAddCancel">{{common.cancel}}</button>'
+                        + '<button class="btn btn-primary" id="friendAddConfirm">{{friends.sendRequest}}</button></div>';
                     overlay.appendChild(box);
                     document.body.appendChild(overlay);
                     function close() { overlay.remove(); }
@@ -549,11 +549,11 @@ public class UserPage {
                     box.querySelector('#friendAddConfirm').addEventListener('click', function () {
                         var code = (box.querySelector('#friendCodeInput').value || '').trim();
                         var msgBox = box.querySelector('#friendAddMsg');
-                        if (!code) { if (window.showToast) showToast('请输入好友代码', 'warning'); if (msgBox) msgBox.textContent = ''; return; }
+                        if (!code) { if (window.showToast) showToast('{{friends.enterCode}}', 'warning'); if (msgBox) msgBox.textContent = ''; return; }
                         fetch('/api/userhomes/' + encodeURIComponent(code), { headers: headers() })
                             .then(function (r) { return r.json(); })
                             .then(function (data) {
-                                if (!data || !data.userId) throw new Error('未找到该好友代码');
+                                if (!data || !data.userId) throw new Error('{{friends.codeNotFound}}');
                                 return fetch('/api/v2/friend-requests', {
                                     method: 'POST', headers: headers(), body: JSON.stringify({ toUserId: data.userId })
                                 });
@@ -561,60 +561,60 @@ public class UserPage {
                             .then(function (r) { return r.json(); })
                             .then(function (data) {
                                 if (data && data.success) { close(); loadAll(); }
-                                else { if (window.showToast) showToast(data.message || '发送失败', 'error'); if (msgBox) msgBox.textContent = ''; }
+                                else { if (window.showToast) showToast(data.message || '{{common.sendFailed}}', 'error'); if (msgBox) msgBox.textContent = ''; }
                             })
                             .catch(function (error) {
-                                if (window.showToast) showToast(error.message || '发送失败', 'error');
+                                if (window.showToast) showToast(error.message || '{{common.sendFailed}}', 'error');
                                 if (msgBox) msgBox.textContent = '';
                             });
                     });
                     box.querySelector('#friendCodeInput').focus();
                 }
                 function removeFriend(anchor, userId) {
-                    showPopconfirm(anchor, '删除后将不再出现在好友列表中，确定继续吗？', function () {
+                    showPopconfirm(anchor, '{{friends.deleteShortConfirm}}', function () {
                         fetch('/api/v2/friends/' + encodeURIComponent(userId), { method: 'DELETE', headers: headers() })
                             .then(function (r) { return r.json(); }).then(function (data) {
-                                msg(data.success ? '好友已删除' : (data.message || '删除失败'), data.success);
+                                msg(data.success ? '{{msg.friendDeleted}}' : (data.message || '{{common.deleteFailed}}'), data.success);
                                 loadAll();
-                            }).catch(function () { msg('删除请求失败', false); });
-                    }, { confirmText: '删除好友' });
+                            }).catch(function () { msg('{{texture.deleteRequestFailed}}', false); });
+                    }, { confirmText: '{{friends.deleteFriend}}' });
                 }
                 function shareTexture(userId) {
                     fetch('/api/v2/textures/my', { headers: headers() })
                         .then(function (r) { return r.json(); })
                         .then(function (data) {
                             var items = (data.skins || []).concat(data.capes || []);
-                            if (!items.length) { msg('暂无可分享的材质', false); return; }
+                            if (!items.length) { msg('{{friends.noShareable}}', false); return; }
                             var names = items.map(function (item, index) {
                                 return (index + 1) + '. ' + (item.alias || item.displayName || item.id);
                             }).join('\\n');
                             showPromptDialog({
-                                title: '分享材质', message: '输入要分享的材质编号：',
+                                title: '{{shared.shareTitle}}', message: '{{shared.sharePrompt}}',
                                 detail: names, value: '1'
                             }, function (choice) {
                                 if (!choice) return false;
                                 var item = items[Number(choice) - 1];
-                                if (!item) { msg('无效的材质编号', false); return false; }
+                                if (!item) { msg('{{msg.invalidTextureId}}', false); return false; }
                                 fetch('/api/v2/shares', {
                                     method: 'POST', headers: headers(),
                                     body: JSON.stringify({ assetId: item.id, recipientUserId: userId })
                                 }).then(function (r) { return r.json(); }).then(function (d) {
-                                    msg(d.success ? '已分享' : ('分享失败：' + (d.message || '')), d.success);
+                                    msg(d.success ? '{{shared.shared}}' : ('{{shared.shareFailed}}' + (d.message || '')), d.success);
                                 });
                                 return true;
                             });
                         });
                 }
                 function blockUser(userId) {
-                    showPopconfirm(document.body, '屏蔽后双方关系与共享授权将被解除，确定继续吗？', function () {
+                    showPopconfirm(document.body, '{{friends.blockConfirmCurrent}}', function () {
                         fetch('/api/v2/blocks', {
                             method: 'POST', headers: headers(),
                             body: JSON.stringify({ toUserId: userId })
                         }).then(function (r) { return r.json(); }).then(function (data) {
-                            msg(data.success ? '已屏蔽' : (data.message || '操作失败'), data.success);
+                            msg(data.success ? '{{friends.blockedLabel}}' : (data.message || '{{common.operationFailed}}'), data.success);
                             loadAll();
                         });
-                    }, { confirmText: '屏蔽' });
+                    }, { confirmText: '{{friends.blockLabel}}' });
                 }
                 function request(action, id, method) {
                     var url = method === 'DELETE'
@@ -623,9 +623,9 @@ public class UserPage {
                     fetch(url, {
                         method: method || 'POST', headers: headers(), body: '{}'
                     }).then(function (r) { return r.json(); }).then(function (data) {
-                        msg(data.success ? '操作成功' : (data.message || '操作失败'), data.success);
+                        msg(data.success ? '{{common.success}}' : (data.message || '{{common.operationFailed}}'), data.success);
                         loadAll();
-                    }).catch(function () { msg('请求失败', false); });
+                    }).catch(function () { msg('{{common.requestFailed}}', false); });
                 }
                 document.addEventListener('click', function (event) {
                     var target = event.target;
@@ -654,7 +654,7 @@ public class UserPage {
                 <div class="user-content">%s</div>
             </div>
             """.formatted(sidebar, content);
-        return PageRenderer.renderPage("好友", Shared.csrfInject(csrfToken) + body, "user",
+        return PageRenderer.renderPage("{{friends.title}}", Shared.csrfInject(csrfToken) + body, "user",
                 Css.getUserCssLink(), Css.getTextureCss());
     }
     
@@ -662,16 +662,16 @@ public class UserPage {
         String content = pageHeader(I18n.t("user.shared.title"), I18n.t("user.shared.desc"))
                 + """
             <section class="shared-section">
-                <h3 class="shared-section-title"><i class="fas fa-star"></i> 我的收藏</h3>
-                <div class="texture-grid" id="sharedFavorites"><p class="empty-hint" style="grid-column:1/-1">加载中...</p></div>
+                <h3 class="shared-section-title"><i class="fas fa-star"></i> {{shared.myFavorites}}</h3>
+                <div class="texture-grid" id="sharedFavorites"><p class="empty-hint" style="grid-column:1/-1">{{common.loadingShort}}...</p></div>
             </section>
             <section class="shared-section">
-                <h3 class="shared-section-title"><i class="fas fa-inbox"></i> 收到的共享</h3>
-                <div class="texture-grid" id="sharedIncoming"><p class="empty-hint" style="grid-column:1/-1">加载中...</p></div>
+                <h3 class="shared-section-title"><i class="fas fa-inbox"></i> {{shared.receivedTitle}}</h3>
+                <div class="texture-grid" id="sharedIncoming"><p class="empty-hint" style="grid-column:1/-1">{{common.loadingShort}}...</p></div>
             </section>
             <section class="shared-section">
-                <h3 class="shared-section-title"><i class="fas fa-paper-plane"></i> 我分享的</h3>
-                <div class="texture-grid" id="sharedOutgoing"><p class="empty-hint" style="grid-column:1/-1">加载中...</p></div>
+                <h3 class="shared-section-title"><i class="fas fa-paper-plane"></i> {{shared.myShared}}</h3>
+                <div class="texture-grid" id="sharedOutgoing"><p class="empty-hint" style="grid-column:1/-1">{{common.loadingShort}}...</p></div>
             </section>
             <div id="sharedV2Msg" class="msg-area"></div>
             <script>
@@ -696,32 +696,32 @@ public class UserPage {
                         .then(function (r) { return r.json(); })
                         .then(function (data) {
                             var profiles = data.profiles || [];
-                            if (!profiles.length) { msg('请先创建角色', false); return; }
+                            if (!profiles.length) { msg('{{msg.createProfileFirst}}', false); return; }
                             var names = profiles.map(function (p) { return p.name; }).join('、');
                             showPromptDialog({
-                                title: '应用到角色', message: '输入要应用的角色名称：',
-                                detail: '可选角色：' + names, value: profiles[0].name
+                                title: '{{texture.applyToProfile}}', message: '{{texture.applyPrompt}}',
+                                detail: '{{texture.selectProfileDetail}}' + names, value: profiles[0].name
                             }, function (name) {
                                 if (!name) return false;
                                 var profile = profiles.filter(function (p) { return p.name === name; })[0];
-                                if (!profile) { msg('角色不存在', false); return false; }
+                                if (!profile) { msg('{{msg.profileNotExist}}', false); return false; }
                                 fetch('/api/profiles/' + encodeURIComponent(profile.id) + '/textures/' + slot, {
                                     method: 'PUT', headers: headers(),
                                     body: JSON.stringify({ assetId: assetId, skinModel: profile.skinModel || 'DEFAULT' })
                                 }).then(function (r) { return r.json(); }).then(function (d) {
-                                    msg(d.success ? '已应用到角色' : ('应用失败：' + (d.message || '')), d.success);
+                                    msg(d.success ? '{{texture.applied}}' : ('{{texture.applyFailedDetail}}' + (d.message || '')), d.success);
                                 });
                                 return true;
                             });
                         });
                 }
                 function renameTexture(assetId) {
-                    showPromptDialog({ title: '重命名', value: '' }, function (alias) {
-                        if (!alias || !alias.trim()) { showToast('名称不能为空', 'error'); return false; }
+                    showPromptDialog({ title: '{{common.rename}}', value: '' }, function (alias) {
+                        if (!alias || !alias.trim()) { showToast('{{common.nameRequired}}', 'error'); return false; }
                         fetch('/api/v2/textures/' + encodeURIComponent(assetId) + '/alias', {
                             method: 'POST', headers: headers(), body: JSON.stringify({ alias: alias })
                         }).then(function (r) { return r.json(); }).then(function (d) {
-                            msg(d.success ? '重命名成功' : ('重命名失败：' + (d.message || '')), d.success);
+                            msg(d.success ? '{{common.rename}}成功' : ('{{common.rename}}失败：' + (d.message || '')), d.success);
                             loadAll();
                         });
                         return true;
@@ -729,31 +729,31 @@ public class UserPage {
                 }
                 function card(item, direction) {
                     var name = esc(item.alias || item.displayName
-                        || ((item.type === 'CAPE' ? '披风' : '皮肤') + ' · ' + esc(item.width) + 'x' + esc(item.height)));
+                        || ((item.type === 'CAPE' ? '{{texture.cape}}' : '{{texture.skin}}') + ' · ' + esc(item.width) + 'x' + esc(item.height)));
                     var slot = item.type === 'CAPE' ? 'CAPE' : 'SKIN';
-                    var counterpart = esc(item.counterpartName || '好友');
-                    var badge = direction === 'incoming' ? ('来自 ' + counterpart)
-                        : (direction === 'favorite' ? '我的收藏' : ('分享给 ' + counterpart));
+                    var counterpart = esc(item.counterpartName || '{{friends.title}}');
+                    var badge = direction === 'incoming' ? ('{{common.from}} ' + counterpart)
+                        : (direction === 'favorite' ? '{{shared.myFavorites}}' : ('{{common.shareTo}} ' + counterpart));
                     var actions = '';
                     if (direction !== 'outgoing') {
                         actions += '<button class="btn btn-sm btn-secondary" data-apply="' + esc(item.assetId || item.id)
-                            + '" data-slot="' + slot + '">应用到角色</button>'
-                            + '<button class="btn btn-sm btn-secondary" data-alias="' + esc(item.assetId || item.id) + '">重命名</button>';
+                            + '" data-slot="' + slot + '">{{texture.applyToProfile}}</button>'
+                            + '<button class="btn btn-sm btn-secondary" data-alias="' + esc(item.assetId || item.id) + '">{{common.rename}}</button>';
                     }
                     if (direction === 'favorite') {
                         actions += '<button class="btn btn-sm btn-danger" data-unfavorite="'
-                            + esc(item.publicationId) + '">取消收藏</button>';
+                            + esc(item.publicationId) + '">{{shared.unfavorite}}</button>';
                     } else if (direction === 'incoming') {
-                        actions += '<button class="btn btn-sm btn-danger" data-share-revoke="' + esc(item.id) + '">移除共享</button>';
+                        actions += '<button class="btn btn-sm btn-danger" data-share-revoke="' + esc(item.id) + '">{{shared.revoke}}</button>';
                     } else {
-                        actions += '<button class="btn btn-sm btn-danger" data-share-revoke="' + esc(item.id) + '">移除共享</button>';
+                        actions += '<button class="btn btn-sm btn-danger" data-share-revoke="' + esc(item.id) + '">{{shared.revoke}}</button>';
                     }
                     var cardEl = document.createElement('div');
                     cardEl.className = 'texture-item card-animate';
                     cardEl.innerHTML = '<div class="texture-thumb"><img src="' + esc(item.url) + '" alt="shared texture"></div>'
                         + '<div class="texture-item-body">'
                         + '<div class="texture-name">' + name + '</div>'
-                        + '<div class="texture-meta">' + (item.available === false ? '已不可用' : '可用')
+                        + '<div class="texture-meta">' + (item.available === false ? '{{common.unavailable}}' : '{{common.available}}')
                         + ' · ' + esc(item.width) + 'x' + esc(item.height) + '</div>'
                         + '</div>'
                         + '<span class="shared-badge shared-badge-' + direction + '">' + badge + '</span>'
@@ -774,7 +774,7 @@ public class UserPage {
                             }
                         })
                         .catch(function () {
-                            document.getElementById(targetId).innerHTML = '<p class="empty-hint" style="grid-column:1/-1;color:#c62828">加载失败</p>';
+                            document.getElementById(targetId).innerHTML = '<p class="empty-hint" style="grid-column:1/-1;color:#c62828">{{common.loadFailedShort}}</p>';
                         });
                 }
                 function loadFavorites() {
@@ -787,17 +787,17 @@ public class UserPage {
                                 list.appendChild(card(item, 'favorite'));
                             });
                             if (!list.children.length) {
-                                list.innerHTML = '<p class="empty-hint" style="grid-column:1/-1">还没有收藏材质。</p>';
+                                list.innerHTML = '<p class="empty-hint" style="grid-column:1/-1">{{shared.emptyFavorites}}</p>';
                             }
                         })
                         .catch(function () {
                             document.getElementById('sharedFavorites').innerHTML =
-                                '<p class="empty-hint" style="grid-column:1/-1;color:#c62828">加载失败</p>';
+                                '<p class="empty-hint" style="grid-column:1/-1;color:#c62828">{{common.loadFailedShort}}</p>';
                         });
                 }
                 function loadAll() {
-                    loadDirection('received', 'sharedIncoming', '还没有收到好友共享的材质。');
-                    loadDirection('sent', 'sharedOutgoing', '还没有分享给好友的材质。');
+                    loadDirection('received', 'sharedIncoming', '{{shared.emptyIncomingShort}}');
+                    loadDirection('sent', 'sharedOutgoing', '{{shared.emptyOutgoingShort}}');
                     loadFavorites();
                 }
                 document.addEventListener('click', function (event) {
@@ -810,20 +810,20 @@ public class UserPage {
                         fetch('/api/v2/publications/' + encodeURIComponent(unfavorite) + '/favorite', {
                             method: 'DELETE', headers: headers()
                         }).then(function (r) { return r.json(); }).then(function (d) {
-                            msg(d.success ? '已取消收藏' : ('操作失败：' + (d.message || '')), d.success);
+                            msg(d.success ? '{{shared.favRemoved}}' : ('{{common.operationFailedDetail}}' + (d.message || '')), d.success);
                             loadFavorites();
                         });
                         return;
                     }
                     var id = event.target.getAttribute('data-share-revoke');
                     if (!id) return;
-                    showPopconfirm(event.target, '移除后对方将不能再使用该共享，确定继续吗？', function () {
+                    showPopconfirm(event.target, '{{shared.revokeConfirm}}', function () {
                         fetch('/api/v2/shares/' + encodeURIComponent(id), { method: 'DELETE', headers: headers() })
                             .then(function (r) { return r.json(); }).then(function (data) {
-                                msg(data.success ? '共享已移除' : ('移除失败：' + (data.message || '')), data.success);
+                                msg(data.success ? '{{shared.revoked}}' : ('{{shared.revokeFailed}}' + (data.message || '')), data.success);
                                 loadAll();
-                            }).catch(function () { msg('请求失败', false); });
-                    }, { confirmText: '移除共享' });
+                            }).catch(function () { msg('{{common.requestFailed}}', false); });
+                    }, { confirmText: '{{shared.revoke}}' });
                 });
                 loadAll();
             })();
@@ -843,23 +843,23 @@ public class UserPage {
     
     
     public static String renderWorldV2Page(String csrfToken) {
-        String content = pageHeader("材质库", "浏览公开材质，点击卡片查看详情。")
+        String content = pageHeader("{{world.title}}", "{{world.browseHint}}")
                 + """
             <div class="world-toolbar">
                 <div class="world-tabs" role="tablist">
-                    <button type="button" class="btn btn-secondary active" data-world-type="ALL">全部</button>
-                    <button type="button" class="btn btn-secondary" data-world-type="SKIN">皮肤</button>
-                    <button type="button" class="btn btn-secondary" data-world-type="CAPE">披风</button>
-                    <button type="button" class="btn btn-secondary" data-world-lowend>低端显卡支持</button>
+                    <button type="button" class="btn btn-secondary active" data-world-type="ALL">{{common.all}}</button>
+                    <button type="button" class="btn btn-secondary" data-world-type="SKIN">{{texture.skin}}</button>
+                    <button type="button" class="btn btn-secondary" data-world-type="CAPE">{{texture.cape}}</button>
+                    <button type="button" class="btn btn-secondary" data-world-lowend>{{world.lowEnd}}</button>
                 </div>
                 <div class="world-sort">
-                    <button type="button" class="btn btn-secondary active" data-world-sort="hot">热度</button>
-                    <button type="button" class="btn btn-secondary" data-world-sort="new">最新</button>
+                    <button type="button" class="btn btn-secondary active" data-world-sort="hot">{{common.hot}}</button>
+                    <button type="button" class="btn btn-secondary" data-world-sort="new">{{common.latest}}</button>
                 </div>
                 <span class="world-total" id="worldTotal"></span>
             </div>
             <div class="texture-grid" id="worldV2List"></div>
-            <div class="world-more"><button type="button" class="btn btn-secondary" id="worldMore">加载更多</button></div>
+            <div class="world-more"><button type="button" class="btn btn-secondary" id="worldMore">{{common.loadMore}}</button></div>
             <script src="/js/skinview3d.bundle.js"></script>
             <script src="/js/texture-3d.js"></script>
             <script>
@@ -890,7 +890,7 @@ public class UserPage {
                             if (reset) { if (window.Texture3D) window.Texture3D.dispose(list); list.innerHTML = ''; }
                             var items = data.items || [];
                             items.forEach(function (item) {
-                                var name = item.displayName || (item.type === 'CAPE' ? '披风' : '皮肤');
+                                var name = item.displayName || (item.type === 'CAPE' ? '{{texture.cape}}' : '{{texture.skin}}');
                                 var card = document.createElement('a');
                                 card.className = 'texture-item card-animate texture-card-clickable';
                                 card.href = detailUrl(item);
@@ -900,7 +900,7 @@ public class UserPage {
                                     + '</div>'
                                     + '<div class="texture-item-body">'
                                     + '<div class="texture-name">' + esc(name) + '</div>'
-                                    + '<div class="texture-meta">' + esc(item.type === 'CAPE' ? '披风' : '皮肤')
+                                    + '<div class="texture-meta">' + esc(item.type === 'CAPE' ? '{{texture.cape}}' : '{{texture.skin}}')
                                     + ' · ' + esc(item.width) + '×' + esc(item.height) + '</div>'
                                     + '<div class="texture-meta">♥ ' + esc(item.likes || 0)
                                     + ' · ★ ' + esc(item.favorites || 0) + '</div>'
@@ -909,17 +909,17 @@ public class UserPage {
                             });
                             if (window.Texture3D) window.Texture3D.hydrate(list);
                             document.getElementById('worldTotal').textContent =
-                                '共 ' + esc(data.total == null ? items.length : data.total) + ' 项';
+                                '{{world.total}}'.replace('{0}', esc(data.total == null ? items.length : data.total));
                             state.offset += items.length;
                             state.done = items.length < state.limit;
                             document.getElementById('worldMore').style.display = state.done ? 'none' : '';
                             if (!list.children.length) {
-                                list.innerHTML = '<p class="empty-hint" style="grid-column:1/-1">暂无公开材质。</p>';
+                                list.innerHTML = '<p class="empty-hint" style="grid-column:1/-1">{{world.emptyShort}}</p>';
                             }
                         })
                         .catch(function () {
                             var list = document.getElementById('worldV2List');
-                            if (list) list.innerHTML = '<p class="empty-hint" style="grid-column:1/-1;color:#c62828">加载失败</p>';
+                            if (list) list.innerHTML = '<p class="empty-hint" style="grid-column:1/-1;color:#c62828">{{common.loadFailedShort}}</p>';
                         })
                         .finally(function () { state.loading = false; });
                 }
@@ -952,7 +952,7 @@ public class UserPage {
         String navbar = PageRenderer.renderNavbar(
                 im.xz.cn.config.SystemConfig.getInstance().getSiteName(), "world", false);
         String body = navbar + "<div class=\"public-page\"><div class=\"public-library-page\">" + content + "</div></div>";
-        return PageRenderer.renderPage("材质库", Shared.csrfInject(csrfToken) + body, "user",
+        return PageRenderer.renderPage("{{world.title}}", Shared.csrfInject(csrfToken) + body, "user",
                 Css.getUserCssLink(), Css.getTextureCss());
     }
 
@@ -966,7 +966,7 @@ public class UserPage {
         String uploadTile = """
             <input type="file" id="v2TextureFile" accept="image/png" style="display:none">
             <div class="texture-grid" id="v2TextureGrid">
-                <div class="upload-tile card-animate" data-action="v2Upload" role="button" tabindex="0" data-tooltip="点击选择 PNG 文件，支持皮肤和披风上传">
+                <div class="upload-tile card-animate" data-action="v2Upload" role="button" tabindex="0" data-tooltip="{{texture.uploadTooltip}}">
                     <div class="upload-tile-icon">
                         <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                     </div>
@@ -1016,7 +1016,7 @@ public class UserPage {
                                     + '</div>'
                                     + '<span style="position:absolute;top:8px;right:8px;font-size:10px;padding:1px 6px;border-radius:8px;border:1px solid '
                                     + (item.isPublic ? '#0bda51' : '#5897fb') + ';color:' + (item.isPublic ? '#0bda51' : '#5897fb') + '">'
-                                    + (item.isPublic ? '公开' : '私有') + '</span>';
+                                    + (item.isPublic ? '{{texture.publicLabel}}' : '{{texture.private}}') + '</span>';
                                 card.addEventListener('click', function () { showTextureDetail(item); });
                                 grid.appendChild(card);
                                 if (TYPE === 'SKIN') drawFaceCanvas(card.querySelector('canvas'), item.url);
@@ -1025,7 +1025,7 @@ public class UserPage {
 
                             if (uploadTile) grid.appendChild(uploadTile);
                         })
-                        .catch(function () { msg('加载失败', false); });
+                        .catch(function () { msg('{{common.loadFailedShort}}', false); });
                 }
                 function showTextureDetail(item) {
                     var old = document.getElementById('v2TextureDetail');
@@ -1074,34 +1074,34 @@ public class UserPage {
                     var actions = box.querySelector('#v2DetailActions');
                     var download = document.createElement('button');
                     download.className = 'btn btn-secondary';
-                    download.textContent = '下载';
+                    download.textContent = '{{texture.download}}';
                     download.addEventListener('click', function () { window.open(item.url, '_blank', 'noopener'); });
                     actions.appendChild(download);
 
                     var apply = document.createElement('button');
                     apply.className = 'btn btn-primary';
-                    apply.textContent = '应用到角色';
+                    apply.textContent = '{{texture.applyToProfile}}';
                     apply.addEventListener('click', function () { close(); applyTexture(item.assetId); });
                     actions.appendChild(apply);
 
                     var aliasButton = document.createElement('button');
                     aliasButton.className = 'btn btn-secondary';
-                    aliasButton.textContent = '重命名';
+                    aliasButton.textContent = '{{common.rename}}';
                     aliasButton.addEventListener('click', function () { close(); alias(item.assetId); });
                     actions.appendChild(aliasButton);
 
                     var deleteButton = document.createElement('button');
                     deleteButton.className = 'btn btn-danger';
-                    deleteButton.textContent = '删除';
+                    deleteButton.textContent = '{{common.delete}}';
                     deleteButton.addEventListener('click', function () {
-                        showPopconfirm(deleteButton, '确定删除此纹理吗？', function () {
+                        showPopconfirm(deleteButton, '{{texture.deleteShortConfirm}}', function () {
                             fetch('/api/v2/textures/' + encodeURIComponent(item.assetId), { method: 'DELETE', headers: headers() })
                                 .then(function (r) { return r.json(); }).then(function (data) {
-                                    msg(data.success ? '已删除' : (data.message || '删除失败'), data.success);
+                                    msg(data.success ? '{{common.deleted}}' : (data.message || '{{common.deleteFailed}}'), data.success);
                                     close();
                                     load();
-                                }).catch(function () { msg('删除请求失败', false); });
-                        }, { confirmText: '删除纹理' });
+                                }).catch(function () { msg('{{texture.deleteRequestFailed}}', false); });
+                        }, { confirmText: '{{texture.deleteTexture}}' });
                     });
                     actions.appendChild(deleteButton);
 
@@ -1110,22 +1110,22 @@ public class UserPage {
                     var privateButton = document.createElement('button');
                     privateButton.type = 'button';
                     privateButton.className = 'vis-option' + (item.isPublic ? '' : ' active');
-                    privateButton.textContent = '私有';
+                    privateButton.textContent = '{{texture.private}}';
                     var publicButton = document.createElement('button');
                     publicButton.type = 'button';
                     publicButton.className = 'vis-option' + (item.isPublic ? ' active' : '');
-                    publicButton.textContent = '公开';
+                    publicButton.textContent = '{{texture.publicLabel}}';
                     function setVisibility(isPublic) {
                         fetch('/api/v2/textures/' + encodeURIComponent(item.assetId) + '/visibility', {
                             method: 'POST', headers: headers(), body: JSON.stringify({ isPublic: isPublic })
                         }).then(function (r) { return r.json(); }).then(function (data) {
-                            if (!data.success) { msg(data.message || '可见性更新失败', false); return; }
+                            if (!data.success) { msg(data.message || '{{texture.visibilityUpdateFailed}}', false); return; }
                             item.isPublic = isPublic;
                             privateButton.className = 'vis-option' + (isPublic ? '' : ' active');
                             publicButton.className = 'vis-option' + (isPublic ? ' active' : '');
-                            msg('可见性已更新', true);
+                            msg('{{texture.visibilityUpdated}}', true);
                             load();
-                        }).catch(function () { msg('可见性更新请求失败', false); });
+                        }).catch(function () { msg('可见性{{texture.updateRequestFailed}}', false); });
                     }
                     privateButton.addEventListener('click', function () { setVisibility(false); });
                     publicButton.addEventListener('click', function () { setVisibility(true); });
@@ -1158,7 +1158,7 @@ public class UserPage {
                 }
                 function showUploadModal(file) {
                     if (!file) return;
-                    if (file.type !== 'image/png' && !/\\.png$/i.test(file.name || '')) { showAlertDialog({ type: 'warning', title: '文件格式不支持', message: '请选择 PNG 格式的皮肤或披风文件。' }); return; }
+                    if (file.type !== 'image/png' && !/\\.png$/i.test(file.name || '')) { showAlertDialog({ type: 'warning', title: '{{texture.invalidFormat}}', message: '{{texture.pngOnlyMessage}}' }); return; }
                     closeUploadModal();
                     pendingFile = file;
                     var overlay = document.createElement('div');
@@ -1167,18 +1167,18 @@ public class UserPage {
                     var box = document.createElement('div');
                     box.className = 'modal-box';
                     box.innerHTML = '<button class="modal-close-btn" id="v2UploadClose">&times;</button>'
-                        + '<h3>' + (TYPE === 'CAPE' ? '上传披风' : '上传皮肤') + '</h3>'
+                        + '<h3>' + (TYPE === 'CAPE' ? '{{texture.uploadCape}}' : '{{texture.uploadSkin}}') + '</h3>'
                         + '<div class="upload-modal-body">'
                         + '<div class="upload-modal-preview"><img class="upload-modal-thumb" alt="preview">'
                         + '<div class="upload-modal-info"><div class="upload-modal-filename">' + esc(file.name) + '</div>'
                         + '<div class="upload-modal-filesize">' + Math.max(1, Math.round(file.size / 1024)) + ' KiB</div></div></div>'
-                        + '<div class="form-group" style="text-align:left"><label class="form-label">别名（可选）</label>'
-                        + '<input type="text" class="form-input" id="v2UploadAlias" maxlength="64" placeholder="给它起个名字"></div>'
+                        + '<div class="form-group" style="text-align:left"><label class="form-label">{{texture.aliasOptionalLabel}}</label>'
+                        + '<input type="text" class="form-input" id="v2UploadAlias" maxlength="64" placeholder="{{texture.aliasPlaceholderShort}}"></div>'
                         + '<div class="form-group" style="text-align:left"><label style="display:flex;gap:8px;align-items:center;cursor:pointer">'
-                        + '<input type="checkbox" id="v2UploadPublic"> 公开到材质库</label></div>'
+                        + '<input type="checkbox" id="v2UploadPublic"> {{texture.publicToLibrary}}</label></div>'
                         + '<div id="v2UploadMsg" class="msg-area"></div>'
-                        + '<div class="modal-actions"><button class="btn btn-secondary" id="v2UploadCancel">取消</button>'
-                        + '<button class="btn btn-primary" id="v2UploadConfirm">上传</button></div></div>';
+                        + '<div class="modal-actions"><button class="btn btn-secondary" id="v2UploadCancel">{{common.cancel}}</button>'
+                        + '<button class="btn btn-primary" id="v2UploadConfirm">{{texture.upload}}</button></div></div>';
                     var preview = new FileReader();
                     preview.onload = function (event) {
                         var image = box.querySelector('.upload-modal-thumb');
@@ -1201,7 +1201,7 @@ public class UserPage {
                     var button = box.querySelector('#v2UploadConfirm');
                     var message = box.querySelector('#v2UploadMsg');
                     button.disabled = true;
-                    button.textContent = '上传中...';
+                    button.textContent = '{{common.uploading}}...';
                     try {
                         var bytes = await file.arrayBuffer();
                         var result = await fetch('/api/v2/textures?type=' + encodeURIComponent(TYPE)
@@ -1210,30 +1210,30 @@ public class UserPage {
                             headers: headers({ 'Content-Type': 'image/png' }),
                             body: bytes
                         }).then(function (r) { return r.json(); });
-                        if (!result.success) throw new Error(result.message || '上传失败');
+                        if (!result.success) throw new Error(result.message || '{{texture.uploadFailed}}');
                         var warnings = [];
                         var alias = box.querySelector('#v2UploadAlias').value.trim();
                         if (alias) {
                             var aliasResult = await fetch('/api/v2/textures/' + encodeURIComponent(result.assetId) + '/alias', {
                                 method: 'POST', headers: headers(), body: JSON.stringify({ alias: alias })
                             }).then(function (r) { return r.json(); });
-                            if (!aliasResult.success) warnings.push('别名未保存：' + (aliasResult.message || ''));
+                            if (!aliasResult.success) warnings.push('{{texture.aliasNotSaved}}' + (aliasResult.message || ''));
                         }
                         if (box.querySelector('#v2UploadPublic').checked) {
                             var publicResult = await fetch('/api/v2/textures/' + encodeURIComponent(result.assetId) + '/visibility', {
                                 method: 'POST', headers: headers(), body: JSON.stringify({ isPublic: true })
                             }).then(function (r) { return r.json(); });
-                            if (!publicResult.success) warnings.push('公开未生效：' + (publicResult.message || ''));
+                            if (!publicResult.success) warnings.push('{{texture.publicFailed}}' + (publicResult.message || ''));
                         }
                         closeUploadModal();
-                        showToastSafe(warnings.length ? ('上传成功；' + warnings.join('；')) : '上传成功',
+                        showToastSafe(warnings.length ? ('{{texture.uploadSuccessPrefix}}' + warnings.join('；')) : '{{texture.uploadSuccess}}',
                             warnings.length === 0);
                         if (typeof done === 'function') done();
                     } catch (error) {
-                        if (window.showToast) showToast(error.message || '上传失败', 'error');
+                        if (window.showToast) showToast(error.message || '{{texture.uploadFailed}}', 'error');
                         if (message) message.textContent = '';
                         button.disabled = false;
-                        button.textContent = '上传';
+                        button.textContent = '{{texture.upload}}';
                     }
                 }
                 function applyTexture(assetId) {
@@ -1241,7 +1241,7 @@ public class UserPage {
                         .then(function (r) { return r.json(); })
                         .then(function (data) {
                             var profiles = data.profiles || [];
-                            if (!profiles.length) { showToastSafe('请先创建角色', false); return; }
+                            if (!profiles.length) { showToastSafe('{{msg.createProfileFirst}}', false); return; }
                             var old = document.getElementById('v2ApplyModal');
                             if (old) old.remove();
                             var overlay = document.createElement('div');
@@ -1250,10 +1250,10 @@ public class UserPage {
                             var box = document.createElement('div');
                             box.className = 'modal-box';
                             var opts = profiles.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(p.name) + ' (' + esc(p.id) + ')</option>'; }).join('');
-                            box.innerHTML = '<button class="modal-close-btn" id="v2ApplyClose">&times;</button><h3>应用到角色</h3>'
-                                + '<div class="form-group"><label class="form-label">选择角色</label><select class="form-input" id="v2ApplyProfile">' + opts + '</select></div>'
-                                + '<div class="modal-actions"><button class="btn btn-secondary" id="v2ApplyCancel">取消</button>'
-                                + '<button class="btn btn-primary" id="v2ApplyConfirm">应用</button></div>';
+                            box.innerHTML = '<button class="modal-close-btn" id="v2ApplyClose">&times;</button><h3>{{texture.applyToProfile}}</h3>'
+                                + '<div class="form-group"><label class="form-label">{{texture.selectProfile}}</label><select class="form-input" id="v2ApplyProfile">' + opts + '</select></div>'
+                                + '<div class="modal-actions"><button class="btn btn-secondary" id="v2ApplyCancel">{{common.cancel}}</button>'
+                                + '<button class="btn btn-primary" id="v2ApplyConfirm">{{texture.apply}}</button></div>';
                             overlay.appendChild(box);
                             document.body.appendChild(overlay);
                             function close() { overlay.remove(); }
@@ -1266,20 +1266,20 @@ public class UserPage {
                                     method: 'PUT', headers: headers(),
                                     body: JSON.stringify({ assetId: assetId })
                                 }).then(function (r) { return r.json(); }).then(function (res) {
-                                    if (res.success) { close(); showToastSafe('已应用到角色', true); }
-                                    else { showToastSafe(res.message || '应用失败', false); }
-                                }).catch(function () { showToastSafe('应用请求失败', false); });
+                                    if (res.success) { close(); showToastSafe('{{texture.applied}}', true); }
+                                    else { showToastSafe(res.message || '{{texture.applyFailed}}', false); }
+                                }).catch(function () { showToastSafe('{{texture.applyRequestFailed}}', false); });
                             });
-                        }).catch(function () { showToastSafe('角色加载失败', false); });
+                        }).catch(function () { showToastSafe('{{msg.profileLoadFailed}}', false); });
                 }
                 function alias(id) {
-                    showPromptDialog({ title: '重命名' }, function (value) {
-                        if (!value || !value.trim()) { showToast('名称不能为空', 'error'); return false; }
+                    showPromptDialog({ title: '{{common.rename}}' }, function (value) {
+                        if (!value || !value.trim()) { showToast('{{common.nameRequired}}', 'error'); return false; }
                         fetch('/api/v2/textures/' + encodeURIComponent(id) + '/alias', {
                             method: 'POST', headers: headers(), body: JSON.stringify({ alias: value })
                         }).then(function (r) { return r.json(); }).then(function (data) {
-                            msg(data.success ? '重命名成功' : ('重命名失败：' + (data.message || '')), data.success); load();
-                        }).catch(function () { msg('更新请求失败', false); });
+                            msg(data.success ? '{{common.rename}}成功' : ('{{common.rename}}失败：' + (data.message || '')), data.success); load();
+                        }).catch(function () { msg('{{texture.updateRequestFailed}}', false); });
                         return true;
                     });
                 }
@@ -1287,16 +1287,16 @@ public class UserPage {
                     fetch('/api/v2/textures/' + encodeURIComponent(id) + '/visibility', {
                         method: 'POST', headers: headers(), body: JSON.stringify({ isPublic: isPublic })
                     }).then(function (r) { return r.json(); }).then(function (data) {
-                        msg(data.success ? '可见性已更新' : ('更新失败：' + (data.message || '')), data.success); load();
-                    }).catch(function () { msg('更新请求失败', false); });
+                        msg(data.success ? '{{texture.visibilityUpdated}}' : ('{{common.updateFailedDetail}}' + (data.message || '')), data.success); load();
+                    }).catch(function () { msg('{{texture.updateRequestFailed}}', false); });
                 }
                 function remove(id, anchor) {
-                    showPopconfirm(anchor, '确定删除此纹理吗？', function () {
+                    showPopconfirm(anchor, '{{texture.deleteShortConfirm}}', function () {
                         fetch('/api/v2/textures/' + encodeURIComponent(id), { method: 'DELETE', headers: headers() })
                             .then(function (r) { return r.json(); }).then(function (data) {
-                                msg(data.success ? '已删除' : ('删除失败：' + (data.message || '')), data.success); load();
-                            }).catch(function () { msg('删除请求失败', false); });
-                    }, { confirmText: '删除纹理' });
+                                msg(data.success ? '{{common.deleted}}' : ('{{common.deleteFailedDetail}}' + (data.message || '')), data.success); load();
+                            }).catch(function () { msg('{{texture.deleteRequestFailed}}', false); });
+                    }, { confirmText: '{{texture.deleteTexture}}' });
                 }
                 document.addEventListener('click', function (event) {
                     var target = event.target;

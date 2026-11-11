@@ -52,7 +52,7 @@
                 return { el: el, value: valueOf(el) };
             });
             if (status) {
-                status.textContent = '未修改';
+                status.textContent = '' + t('common.unchanged') + '';
                 status.className = 'settings-status settings-status-clean';
             }
             update();
@@ -68,7 +68,7 @@
                 if (reset) reset.disabled = !changed;
                 if (save) save.disabled = !changed;
                 if (status) {
-                    status.textContent = changed ? '有未保存更改' : '未修改';
+                    status.textContent = changed ? '' + t('common.unsaved') + '' : '' + t('common.unchanged') + '';
                     status.className = 'settings-status settings-status-' + (changed ? 'dirty' : 'clean');
                 }
             }
@@ -79,13 +79,13 @@
             if (ok) {
                 capture();
                 if (status) {
-                    status.textContent = '已保存';
+                    status.textContent = '' + t('common.saved') + '';
                     status.className = 'settings-status settings-status-saved';
                 }
             } else {
                 update();
                 if (status) {
-                    status.textContent = message || '保存失败';
+                    status.textContent = message || '' + t('common.saveFailed') + '';
                     status.className = 'settings-status settings-status-failed';
                 }
             }
@@ -112,20 +112,20 @@
                 }
                 var fn = window[action];
                 if (typeof fn !== 'function') {
-                    finish(false, '保存操作不可用');
+                    finish(false, '' + t('admin.saveCards.unavailable') + '');
                     return;
                 }
                 saving = true;
                 save.disabled = true;
                 reset.disabled = true;
                 if (status) {
-                    status.textContent = '正在保存...';
+                    status.textContent = '' + t('common.saving') + '...';
                     status.className = 'settings-status settings-status-saving';
                 }
                 Promise.resolve(fn(save)).then(function (ok) {
                     finish(ok !== false);
                 }).catch(function (error) {
-                    finish(false, error && error.message ? error.message : '保存失败');
+                    finish(false, error && error.message ? error.message : '' + t('common.saveFailed') + '');
                 });
             });
         }

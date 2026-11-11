@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.10.0-blueviolet?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/version-2.10.1-blueviolet?style=flat-square" alt="Version" />
   <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square" alt="Java" />
   <a href="https://www.gnu.org/licenses/agpl-3.0">
     <img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg?style=flat-square" alt="License: AGPL-3.0" />
@@ -49,10 +49,10 @@
 # 1. 确认 Java 版本（需要 25+）
 java --version
 
-# 2. 下载 LingYggdrasil-2.10.0.jar，放入一个独立空目录
+# 2. 下载 LingYggdrasil-2.10.1.jar，放入一个独立空目录
 
 # 3. 启动（当前目录会成为数据目录）
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.0.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.1.jar
 ```
 
 首次启动进入**安装向导** `http://<服务器地址>:35598`，按提示设置管理员账户、外网 URL 与数据库（SQLite 或 MySQL）。安装完成后重启，程序同时提供三个服务：
@@ -130,7 +130,7 @@ After=network-online.target
 [Service]
 User=lingyggdrasil
 WorkingDirectory=/opt/lingyggdrasil
-ExecStart=/usr/bin/java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.0.jar
+ExecStart=/usr/bin/java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.1.jar
 Restart=on-failure
 RestartSec=5
 

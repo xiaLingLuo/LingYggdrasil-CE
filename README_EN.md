@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-2.10.0-blueviolet?style=flat-square" alt="Version" />
+  <img src="https://img.shields.io/badge/version-2.10.1-blueviolet?style=flat-square" alt="Version" />
   <img src="https://img.shields.io/badge/Java-25-orange?style=flat-square" alt="Java" />
   <a href="https://www.gnu.org/licenses/agpl-3.0">
     <img src="https://img.shields.io/badge/License-AGPL--3.0-blue.svg?style=flat-square" alt="License: AGPL-3.0" />
@@ -49,10 +49,10 @@
 # 1. Verify Java (25+)
 java --version
 
-# 2. Download LingYggdrasil-2.10.0.jar into an empty directory
+# 2. Download LingYggdrasil-2.10.1.jar into an empty directory
 
 # 3. Start (current directory becomes the data directory)
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.0.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.1.jar
 ```
 
 On first launch the **installation wizard** opens at `http://<host>:35598`. After finishing the wizard, restart and the following services are available:
@@ -127,7 +127,7 @@ After=network-online.target
 [Service]
 User=lingyggdrasil
 WorkingDirectory=/opt/lingyggdrasil
-ExecStart=/usr/bin/java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.0.jar
+ExecStart=/usr/bin/java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.1.jar
 Restart=on-failure
 RestartSec=5
 

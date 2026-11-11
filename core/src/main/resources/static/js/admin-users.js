@@ -162,7 +162,7 @@ function openUsernameModal(id, currentUsername) {
 }
 
 function openUserUuidModal(username, uuid) {
-    document.getElementById('userUuidText').textContent = username + '的UUID是\n' + uuid;
+    document.getElementById('userUuidText').textContent = t('admin.users.uuidMessage').replace('{0}', username).replace('{1}', uuid).replace('\\n', '\n');
     document.getElementById('userUuidModal').style.display = 'flex';
 }
 

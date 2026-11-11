@@ -6,7 +6,7 @@
         help.type = 'button';
         help.className = 'ui-help';
         help.tabIndex = 0;
-        help.setAttribute('aria-label', '字段说明');
+        help.setAttribute('aria-label', '' + t('common.fieldHint') + '');
         help.setAttribute('data-tooltip', text);
         help.textContent = '?';
         target.appendChild(document.createTextNode(' '));

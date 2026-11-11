@@ -47,7 +47,7 @@ public final class UserHomePage {
                 + "</div></div></div></div>";
         String toolbar = "<div class='world-toolbar' style='margin-top:16px'>"
                 + "<div class='world-tabs' role='tablist'>"
-                + "<button type='button' class='btn btn-secondary' data-world-lowend>低端显卡支持</button>"
+                + "<button type='button' class='btn btn-secondary' data-world-lowend>{{world.lowEnd}}</button>"
                 + "</div></div>";
 
         StringBuilder grid = new StringBuilder();
@@ -169,7 +169,7 @@ public final class UserHomePage {
                 + "<button type='button' class='btn btn-secondary' id='userhomeFavorite'>"
                 + I18n.t("userhome.favorites") + " " + item.favorites() + "</button>"
                 + "<a class='btn btn-secondary' href='" + PageRenderer.escapeHtml(textureUrl == null ? "" : textureUrl)
-                + "' target='_blank' rel='noopener'>下载</a>"
+                + "' target='_blank' rel='noopener'>{{texture.download}}</a>"
                 + "<a class='btn btn-secondary' href='/userhome/"
                 + PageRenderer.escapeHtml(identity.userCode()) + "'>"
                 + I18n.t("userhome.back") + "</a></div>"
@@ -181,7 +181,7 @@ public final class UserHomePage {
                 + "fetch('/api/v2/publications/'+id+'/'+kind,{method:next?'POST':'DELETE',headers:headers(),"
                 + "body:next?'{}':undefined}).then(function(r){if(r.status===401){location.href='/login';return null;}"
                 + "return r.json();}).then(function(d){if(!d||!d.success){return;}"
-                + "button.textContent=(kind==='like'?'点赞 ':'收藏 ')+(kind==='like'?d.likes:d.favorites);"
+                + "button.textContent=(kind==='like'?'{{userhome.like}} ':'{{userhome.favorite}} ')+(kind==='like'?d.likes:d.favorites);"
                 + "button.dataset.active=next?'1':'0';button.className='btn '+(next?'btn-primary':'btn-secondary');});}"
                 + "var l=document.getElementById('userhomeLike'),f=document.getElementById('userhomeFavorite');"
                 + "l.addEventListener('click',function(){toggle('like',l,l.dataset.active==='1',0);});"

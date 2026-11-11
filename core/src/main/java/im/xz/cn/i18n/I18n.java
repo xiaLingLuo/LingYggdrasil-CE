@@ -83,7 +83,6 @@ public final class I18n {
             migrateLegacyBundles(root, userDir, adminDir, locales);
             releaseBundlesTo(userDir, true, locales);
             releaseBundlesTo(adminDir, false, locales);
-            migrateUpdatedDefaultText(userDir, adminDir, locales);
         } catch (Exception e) {
             log.error("[i18n] Cannot initialize language configuration: {}", e.getMessage(), e);
             throw new IllegalStateException("无法初始化语言配置，请检查运行目录下的 i18n/lang.json：" + e.getMessage(), e);
@@ -112,37 +111,6 @@ public final class I18n {
             File legacyPage = new File(legacyPages, opt.code() + ".html");
             if (legacyPage.isFile()) {
                 copyIfMissing(legacyPage, new File(userPages, opt.code() + ".html"));
-            }
-        }
-    }
-
-    
-    private static void migrateUpdatedDefaultText(File userDir, File adminDir,
-                                                  List<LocaleOption> locales) {
-        String[][] replacements = {
-                {"注销仅停用登录并对外匿名展示，账户、角色、纹理、好友与授权数据会保留；本版本不提供自助恢复。",
-                        "这将会使此账户被永久注销，但{SiteName}仍然有权保留你的账户数据"},
-                {"按分区修改系统配置；保存后立即应用，敏感值不会回显。",
-                        "修改 LingYggdrasil 的系统设置"}
-        };
-        for (File dir : new File[]{userDir, adminDir}) {
-            for (LocaleOption locale : locales) {
-                File file = new File(dir, locale.code() + ".json");
-                if (!file.isFile()) {
-                    continue;
-                }
-                try {
-                    String content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
-                    String updated = content;
-                    for (String[] pair : replacements) {
-                        updated = updated.replace(pair[0], pair[1]);
-                    }
-                    if (!updated.equals(content)) {
-                        Files.writeString(file.toPath(), updated, StandardCharsets.UTF_8);
-                    }
-                } catch (Exception error) {
-                    log.warn("[i18n] Cannot update default text in {}: {}", file.getName(), error.getMessage());
-                }
             }
         }
     }

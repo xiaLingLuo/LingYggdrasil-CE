@@ -29,13 +29,13 @@ my-plugin.jar
 └── com/example/MyPlugin.class
 ```
 
-依赖 `LingYggdrasil-plugin-spi-2.10.0.jar`（由主程序构建产出，或从发布包获取）；不要依赖 `:core` 内部类。
+依赖 `LingYggdrasil-plugin-spi-2.10.1.jar`（由主程序构建产出，或从发布包获取）；不要依赖 `:core` 内部类。
 
 Gradle 示例：
 
 ```kotlin
 dependencies {
-    compileOnly(files("libs/LingYggdrasil-plugin-spi-2.10.0.jar"))
+    compileOnly(files("libs/LingYggdrasil-plugin-spi-2.10.1.jar"))
 }
 java { toolchain { languageVersion.set(JavaLanguageVersion.of(25)) } }
 ```
@@ -46,7 +46,7 @@ Maven 示例：
 <dependency>
   <groupId>im.xz.cn</groupId>
   <artifactId>LingYggdrasil-plugin-spi</artifactId>
-  <version>2.10.0</version>
+  <version>2.10.1</version>
   <scope>provided</scope>
 </dependency>
 ```
@@ -161,7 +161,7 @@ jar cf my-plugin.jar plugin.json -C build/classes/java/main .
 
 ## 7. 旧 `plugin.api` 插件（桥接迁移）
 
-旧插件使用 `im.xz.cn.plugin.api.LingPlugin` 与 `LingYggdrasil-plugin-api-2.10.0.jar` 编译。放入 `plugins/legacy/` 后由桥接加载：
+旧插件使用 `im.xz.cn.plugin.api.LingPlugin` 与 `LingYggdrasil-plugin-api-2.10.1.jar` 编译。放入 `plugins/legacy/` 后由桥接加载：
 
 ```java
 public class OldPlugin extends LingPlugin {

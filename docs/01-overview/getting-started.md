@@ -27,7 +27,7 @@ java --version
 从 Releases 获取：
 
 ```text
-LingYggdrasil-2.10.0.jar
+LingYggdrasil-2.10.1.jar
 ```
 
 将 JAR 放入一个**独立空目录**（该目录会成为数据目录：数据库、配置、`skins/`、`capes/`、`plugins/`、`logs/` 等）。
@@ -35,7 +35,7 @@ LingYggdrasil-2.10.0.jar
 ## 3. 首次启动
 
 ```bash
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.0.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.1.jar
 ```
 
 首次启动不会进入正常服务，而是打开**安装向导**：
@@ -56,14 +56,14 @@ http://<服务器IP或域名>:35598
 | MySQL 连接 | host / port / database / username / password（选择 MySQL 时生效） |
 | 邮件 | 可关闭；开启后配置 SMTP |
 
-> 安装过程中会初始化 2.10.0 数据模型与旧结构兼容表。**生产环境请勿把 35599/35598 暴露公网。**
+> 安装过程中会初始化 2.10.1 数据模型与旧结构兼容表。**生产环境请勿把 35599/35598 暴露公网。**
 
 ## 4. 重启并访问
 
 安装成功后按页面提示重启程序：
 
 ```bash
-java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.0.jar
+java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.1.jar
 ```
 
 | 入口 | 地址 | 说明 |

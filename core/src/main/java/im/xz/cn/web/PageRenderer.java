@@ -23,6 +23,7 @@ import im.xz.cn.common.AppIcons;
 import im.xz.cn.common.FooterInfo;
 import im.xz.cn.config.AppConfig;
 import im.xz.cn.config.SystemConfig;
+import im.xz.cn.i18n.AdminI18n;
 import im.xz.cn.i18n.I18n;
 import im.xz.cn.i18n.LocaleContext;
 
@@ -39,10 +40,18 @@ public class PageRenderer {
     private static final ConcurrentHashMap<String, String> LANGUAGE_ICONS = new ConcurrentHashMap<>();
 
     public static String tr(String template) {
+        return replaceTokens(template, I18n::t);
+    }
+
+    public static String trAdmin(String template) {
+        return replaceTokens(template, AdminI18n::t);
+    }
+
+    private static String replaceTokens(String template, java.util.function.Function<String, String> resolver) {
         java.util.regex.Matcher m = I18N_TOKEN.matcher(template);
         StringBuilder sb = new StringBuilder();
         while (m.find()) {
-            m.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(I18n.t(m.group(1))));
+            m.appendReplacement(sb, java.util.regex.Matcher.quoteReplacement(resolver.apply(m.group(1))));
         }
         m.appendTail(sb);
         return sb.toString();
@@ -72,6 +81,8 @@ public class PageRenderer {
 
     private static String renderPageInternal(String title, String description, String keywords,
                                              String bodyContent, String pageType, String... extraCss) {
+        title = tr(title);
+        bodyContent = tr(bodyContent);
         StringBuilder linkTags = new StringBuilder();
         StringBuilder inlineCss = new StringBuilder();
         for (String c : extraCss) {
@@ -164,10 +175,12 @@ public class PageRenderer {
             result = INLINE_SCRIPT.matcher(result)
                     .replaceAll(java.util.regex.Matcher.quoteReplacement("<script nonce=\"" + nonce + "\""));
         }
-        return UiAutoLocalizer.localize(result);
+        return result;
     }
 
     public static String renderAdminPage(String title, String bodyContent, String pageType, String... extraCss) {
+        title = trAdmin(title);
+        bodyContent = trAdmin(bodyContent);
         StringBuilder linkTags = new StringBuilder();
         StringBuilder inlineCss = new StringBuilder();
         for (String c : extraCss) {
@@ -216,7 +229,7 @@ public class PageRenderer {
             result = INLINE_SCRIPT.matcher(result)
                     .replaceAll(java.util.regex.Matcher.quoteReplacement("<script nonce=\"" + nonce + "\""));
         }
-        return UiAutoLocalizer.localize(result);
+        return result;
     }
 
     public static String renderFooter() {

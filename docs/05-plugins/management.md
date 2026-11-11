@@ -18,7 +18,7 @@
 
 ```text
 运行目录/
-├── LingYggdrasil-2.10.0.jar
+├── LingYggdrasil-2.10.1.jar
 └── plugins/
     ├── plugins-state.json     # 传统插件启停状态（自动生成）
     ├── HelloWorld.jar         # 传统插件（plugin.yml）
@@ -47,7 +47,7 @@
 
 ### 旧 API 桥接插件
 
-1. 将旧插件 JAR（使用 `LingYggdrasil-plugin-api-2.10.0.jar` 编译）放入 `plugins/legacy/`；
+1. 将旧插件 JAR（使用 `LingYggdrasil-plugin-api-2.10.1.jar` 编译）放入 `plugins/legacy/`；
 2. 重启，启动日志 `[Plugin] Legacy plugins bridged: N`；
 3. 生命周期由新宿主统一管理；旧上下文的菜单/路由注册在桥接模式不支持（记录警告）。
 

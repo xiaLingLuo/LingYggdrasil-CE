@@ -33,14 +33,14 @@ sudo dnf install -y java-25-openjdk
 ```bash
 sudo useradd -r -m -d /opt/lingyggdrasil lingyggdrasil
 sudo -u lingyggdrasil mkdir -p /opt/lingyggdrasil
-sudo -u lingyggdrasil cp LingYggdrasil-2.10.0.jar /opt/lingyggdrasil/
+sudo -u lingyggdrasil cp LingYggdrasil-2.10.1.jar /opt/lingyggdrasil/
 ```
 
 数据目录内容：
 
 ```text
 /opt/lingyggdrasil/
-├── LingYggdrasil-2.10.0.jar
+├── LingYggdrasil-2.10.1.jar
 ├── config.yml        # 服务/日志配置
 ├── sql.yml           # 数据库/邮件（密码 ENC: 加密）
 ├── data.db           # SQLite 模式
@@ -78,7 +78,7 @@ FLUSH PRIVILEGES;
 ```ini
 # /etc/systemd/system/lingyggdrasil.service
 [Unit]
-Description=LingYggdrasil 2.10.0
+Description=LingYggdrasil 2.10.1
 After=network-online.target
 Wants=network-online.target
 
@@ -86,7 +86,7 @@ Wants=network-online.target
 User=lingyggdrasil
 Group=lingyggdrasil
 WorkingDirectory=/opt/lingyggdrasil
-ExecStart=/usr/bin/java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.0.jar
+ExecStart=/usr/bin/java -Xms512M -Xmx2G -jar LingYggdrasil-2.10.1.jar
 Restart=on-failure
 RestartSec=5
 LimitNOFILE=65536

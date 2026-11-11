@@ -240,10 +240,10 @@ public class AdminPage {
 
     public static String renderTextureRosterPage(String adminUsername, String adminRole, String csrfToken, String type) {
         boolean cape = "CAPE".equalsIgnoreCase(type);
-        String pageTitle = cape ? "披风名册" : "皮肤名册";
+        String pageTitle = cape ? "{{admin.capes.rosterTitle}}" : "{{admin.skins.rosterTitle}}";
         String title = pageTitle;
-        String pageDesc = cape ? "管理披风资产。" : "管理皮肤资产。";
-        String typeHeader = cape ? "" : "<th>皮肤类型</th>";
+        String pageDesc = cape ? "{{admin.capes.manageDesc}}" : "{{admin.skins.manageDesc}}";
+        String typeHeader = cape ? "" : "<th>{{admin.skins.model}}</th>";
         String content = """
             <div class="page-header">
                 <h2>%s</h2>
@@ -253,12 +253,12 @@ public class AdminPage {
             <div class="settings-card card" id="textureRosterRoot" data-type="%s">
                 <div class="card-body">
                     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-                        <input id="textureRosterSearch" class="form-input" style="max-width:300px" placeholder="搜索名称/作者/哈希">
-                        <button class="btn btn-primary" data-action="textureRosterSearch">查询</button>
+                        <input id="textureRosterSearch" class="form-input" style="max-width:300px" placeholder="{{admin.skins.searchPlaceholder}}/{{common.author}}/{{admin.skins.hash}}">
+                        <button class="btn btn-primary" data-action="textureRosterSearch">{{admin.skins.search}}</button>
                     </div>
                     <div style="overflow:auto">
                         <table class="table" style="width:100%%">
-                            <thead><tr><th>HASH</th><th>名称</th><th>作者</th>%s<th>大小</th><th>引用</th><th>创建时间</th><th>操作</th></tr></thead>
+                            <thead><tr><th>HASH</th><th>{{common.name}}</th><th>{{common.author}}</th>%s<th>{{common.size}}</th><th>{{common.references}}</th><th>创建时间</th><th>{{common.operation}}</th></tr></thead>
                             <tbody id="textureRosterBody"></tbody>
                         </table>
                     </div>
@@ -276,17 +276,17 @@ public class AdminPage {
         StringBuilder nav = new StringBuilder("<div class=\"subnav\" style=\"margin-bottom:16px\">");
         if (im.xz.cn.security.AdminPermissions.has("admin.skins.view")) {
             nav.append("<a class=\"subnav-item").append("SKIN".equalsIgnoreCase(type) ? " active" : "")
-                    .append("\" href=\"/admin/skins\">皮肤名册</a>");
+                    .append("\" href=\"/admin/skins\">{{admin.skins.rosterTitle}}</a>");
         }
         if (im.xz.cn.security.AdminPermissions.has("admin.capes.view")) {
             nav.append("<a class=\"subnav-item").append("CAPE".equalsIgnoreCase(type) ? " active" : "")
-                    .append("\" href=\"/admin/capes\">披风名册</a>");
+                    .append("\" href=\"/admin/capes\">{{admin.capes.rosterTitle}}</a>");
         }
         if (im.xz.cn.security.AdminPermissions.has("admin.system.view")) {
             nav.append("<a class=\"subnav-item").append("SETTINGS".equalsIgnoreCase(type) ? " active" : "")
-                    .append("\" href=\"/admin/texture-settings\">纹理设置</a>");
+                    .append("\" href=\"/admin/texture-settings\">{{admin.textureSettings.title}}</a>");
             nav.append("<a class=\"subnav-item").append("BLACKLIST".equalsIgnoreCase(type) ? " active" : "")
-                    .append("\" href=\"/admin/texture-blacklist\">纹理黑名单</a>");
+                    .append("\" href=\"/admin/texture-blacklist\">{{admin.textureBlacklist.title}}</a>");
         }
         nav.append("</div>");
         return nav.toString();
@@ -294,21 +294,21 @@ public class AdminPage {
     
     public static String renderSystemPage(String adminUsername, String adminRole, String csrfToken) {
         return renderSystemPage(adminUsername, adminRole, csrfToken, null, "", null, null,
-                "系统管理", "修改系统配置并保存。");
+                "{{admin.system.title}}", "{{common.edit}}系统配置并{{common.save}}。");
     }
 
     
     public static String renderTextureSettingsPage(String adminUsername, String adminRole, String csrfToken) {
         return renderSystemPage(adminUsername, adminRole, csrfToken, "texture", textureSubnav("SETTINGS"),
-                null, "texture_hash_blacklist", "纹理设置",
-                "皮肤与披风共用以下设置。");
+                null, "texture_hash_blacklist", "{{admin.textureSettings.title}}",
+                "{{admin.textureSettings.sharedDesc}}");
     }
 
     
     public static String renderTextureBlacklistPage(String adminUsername, String adminRole, String csrfToken) {
         return renderSystemPage(adminUsername, adminRole, csrfToken, "texture", textureSubnav("BLACKLIST"),
-                "texture_hash_blacklist", null, "纹理黑名单",
-                "每行一条 HASH，上传命中时拒绝。");
+                "texture_hash_blacklist", null, "{{admin.textureBlacklist.title}}",
+                "{{admin.textureSettings.hashHint}}");
     }
 
     private static String renderSystemPage(String adminUsername, String adminRole, String csrfToken,
@@ -316,13 +316,13 @@ public class AdminPage {
                                            String headerTitle, String headerDescription) {
         String content = """
             <div class="page-header">
-                <h2>系统管理</h2>
-                <p class="page-desc">修改系统配置并保存。</p>
+                <h2>{{admin.system.title}}</h2>
+                <p class="page-desc">{{common.edit}}系统配置并{{common.save}}。</p>
             </div>
             <div id="settingsApp">
-                <div id="settingsNav" class="subnav" aria-label="系统设置分区"></div>
+                <div id="settingsNav" class="subnav" aria-label="{{admin.system.sectionsLabel}}"></div>
                 <div id="settingsPanels">
-                    <p class="empty-hint">正在加载设置...</p>
+                    <p class="empty-hint">{{admin.settings.loading}}...</p>
                 </div>
             </div>
             <script>
@@ -409,7 +409,7 @@ public class AdminPage {
                     var tab = nav.querySelector('[data-settings-tab="' + group + '"]');
                     if (tab) tab.classList.toggle('has-changes', dirty);
                     if (status) {
-                        status.textContent = dirty ? '有未保存更改' : '未修改';
+                        status.textContent = dirty ? '{{common.unsaved}}' : '{{common.unchanged}}';
                         status.className = 'settings-status settings-status-' + (dirty ? 'dirty' : 'clean');
                     }
                 }
@@ -432,13 +432,13 @@ public class AdminPage {
                         });
                         input += '</div>';
                     } else {
-                        input = '<input type="' + esc(field.type === 'password' ? 'password' : field.type) + '" class="form-input setting-input" data-setting-key="' + esc(field.key) + '" placeholder="' + esc(field.secret && field.description ? '已设置时留空不变' : field.placeholder) + '"';
+                        input = '<input type="' + esc(field.type === 'password' ? 'password' : field.type) + '" class="form-input setting-input" data-setting-key="' + esc(field.key) + '" placeholder="' + esc(field.secret && field.description ? '{{admin.system.secretUnchanged}}' : field.placeholder) + '"';
                         if (field.min != null) input += ' min="' + esc(field.min) + '"';
                         if (field.max != null) input += ' max="' + esc(field.max) + '"';
                         input += '>';
                     }
                     return '<div class="setting-item ' + (field.type === 'textarea' ? 'setting-item-stack' : '') + '">'
-                        + '<div class="setting-info"><div class="setting-label">' + esc(field.label) + (field.description ? ' <button type="button" class="ui-help" tabindex="0" aria-label="字段说明" data-tooltip="' + esc(field.description) + '">?</button>' : '') + '</div>'
+                        + '<div class="setting-info"><div class="setting-label">' + esc(field.label) + (field.description ? ' <button type="button" class="ui-help" tabindex="0" aria-label="{{common.fieldHint}}" data-tooltip="' + esc(field.description) + '">?</button>' : '') + '</div>'
                         + '</div>' + input + '</div>';
                 }
                 function renderPanel(group) {
@@ -451,18 +451,18 @@ public class AdminPage {
                         + fields.map(fieldHtml).join('')
                         + '</div></div>';
                     if (advanced.length) {
-                        html += '<details class="settings-card card"><summary class="settings-details-summary">高级选项</summary><div class="card-body">'
+                        html += '<details class="settings-card card"><summary class="settings-details-summary">{{common.advanced}}</summary><div class="card-body">'
                             + advanced.map(fieldHtml).join('') + '</div></details>';
                     }
                     if ((group.actions || []).indexOf('test-mail') >= 0) {
                         html += '<div class="settings-card card"><div class="card-body"><div class="setting-item setting-item-stack">'
-                            + '<div class="setting-info"><div class="setting-label">发送测试邮件</div><div class="setting-desc">用当前已保存的 SMTP 配置发送测试邮件。</div></div>'
-                            + '<div class="settings-inline-actions"><input class="form-input" id="settingsTestMailTo" placeholder="目标邮箱">'
-                            + '<button type="button" class="btn btn-secondary" data-settings-test-mail>发送测试</button></div></div></div></div>';
+                            + '<div class="setting-info"><div class="setting-label">{{admin.system.mailTestSend}}</div><div class="setting-desc">{{admin.system.mailTestDesc}}</div></div>'
+                            + '<div class="settings-inline-actions"><input class="form-input" id="settingsTestMailTo" placeholder="{{admin.system.mailTestTarget}}">'
+                            + '<button type="button" class="btn btn-secondary" data-settings-test-mail>{{admin.system.mailTestSendShort}}</button></div></div></div></div>';
                     }
-                    html += '<div class="settings-toolbar"><span class="settings-status" data-settings-status>未修改</span>'
-                        + '<button type="button" class="btn btn-secondary" data-settings-reset>放弃更改</button>'
-                        + '<button type="button" class="btn btn-primary" data-settings-save disabled>保存更改</button></div>'
+                    html += '<div class="settings-toolbar"><span class="settings-status" data-settings-status>{{common.unchanged}}</span>'
+                        + '<button type="button" class="btn btn-secondary" data-settings-reset>{{common.discardChanges}}</button>'
+                        + '<button type="button" class="btn btn-primary" data-settings-save disabled>{{common.saveChanges}}</button></div>'
                         + '</section>';
                     return html;
                 }
@@ -499,7 +499,7 @@ public class AdminPage {
                     if (changed === 0) { updateStatus(group); return; }
                     panel.querySelector('[data-settings-save]').disabled = true;
                     var status = panel.querySelector('[data-settings-status]');
-                    status.textContent = '正在保存...';
+                    status.textContent = '{{common.saving}}...';
                     function attempt(retryOnConflict) {
                         body.revision = state.revisions[group] || 0;
                         request('/admin/api/settings/' + encodeURIComponent(group), {
@@ -511,9 +511,9 @@ public class AdminPage {
                                 if (field.secret) setValue(field, '');
                             });
                             state.initial[group] = snapshot(group);
-                            setToast('设置已保存', true);
+                            setToast('{{common.settingsSaved}}', true);
                             updateStatus(group);
-                            status.textContent = '已保存';
+                            status.textContent = '{{common.saved}}';
                             status.className = 'settings-status settings-status-saved';
                         }).catch(function (error) {
                             if (error.status === 409 && retryOnConflict) {
@@ -526,13 +526,13 @@ public class AdminPage {
                             }
                             function showFailure() {
                                 if (error.status === 409) {
-                                    setToast('配置已被其他管理员修改，请刷新页面后重试', false);
+                                    setToast('{{admin.settings.conflict}}', false);
                                 } else {
-                                    setToast(error.message || '保存失败', false);
+                                    setToast(error.message || '{{common.saveFailed}}', false);
                                 }
                                 var saveButton = panel.querySelector('[data-settings-save]');
                                 if (saveButton) saveButton.disabled = !isDirty(group);
-                                status.textContent = error.message || '保存失败';
+                                status.textContent = error.message || '{{common.saveFailed}}';
                                 status.className = 'settings-status settings-status-failed';
                             }
                             request('/admin/api/settings/' + encodeURIComponent(group)).then(function (latest) {
@@ -549,10 +549,10 @@ public class AdminPage {
                                 state.initial[group] = snapshot(group);
                                 var runtimeWarning = error.message && error.message !== 'HTTP ' + error.status;
                                 setToast(runtimeWarning
-                                        ? '设置已保存，但运行时应用失败：' + error.message
-                                        : '设置已保存', !runtimeWarning);
+                                        ? '{{common.settingsSaved}}，但运行时{{texture.applyFailedDetail}}' + error.message
+                                        : '{{common.settingsSaved}}', !runtimeWarning);
                                 updateStatus(group);
-                                status.textContent = runtimeWarning ? '已保存（运行时未应用）' : '已保存';
+                                status.textContent = runtimeWarning ? '{{common.saved}}（运行时未{{texture.apply}}）' : '{{common.saved}}';
                                 status.className = 'settings-status settings-status-' + (runtimeWarning ? 'failed' : 'saved');
                             }).catch(showFailure);
                         });
@@ -562,11 +562,11 @@ public class AdminPage {
                 function testMail(panel) {
                     var input = panel.querySelector('#settingsTestMailTo');
                     var to = input ? input.value.trim() : '';
-                    if (!to) { setToast('请输入测试收件邮箱', false); return; }
+                    if (!to) { setToast('{{admin.system.mailTestRequired}}', false); return; }
                     request('/admin/api/settings/mail/test', {
                         method: 'POST', headers: headers(), body: JSON.stringify({ to: to })
-                    }).then(function () { setToast('测试邮件已发送', true); })
-                      .catch(function (error) { setToast(error.message || '发送失败', false); });
+                    }).then(function () { setToast('{{admin.system.mailTestSent}}', true); })
+                      .catch(function (error) { setToast(error.message || '{{common.sendFailed}}', false); });
                 }
                 function activate(name) {
                     state.active = name;
@@ -631,14 +631,14 @@ public class AdminPage {
                         }
                         render();
                     } catch (error) {
-                        root.innerHTML = '<p class="empty-hint" style="color:#c62828">设置加载失败：' + esc(error.message) + '</p>';
-                        setToast('设置加载失败：' + error.message, false);
+                        root.innerHTML = '<p class="empty-hint" style="color:#c62828">{{admin.settings.loadFailed}}' + esc(error.message) + '</p>';
+                        setToast('{{admin.settings.loadFailed}}' + error.message, false);
                     }
                 })();
             })();
             </script>
             """;
-        String pageTitle = headerTitle == null ? "系统管理" : headerTitle;
+        String pageTitle = headerTitle == null ? "{{admin.system.title}}" : headerTitle;
         String currentPage = "system";
         if (onlyGroup != null) {
             currentPage = "skins";
@@ -650,9 +650,9 @@ public class AdminPage {
                 scope += " window.SETTINGS_HIDDEN_FIELD = '" + hiddenField + "';";
             }
             content = content
-                    .replace("<h2>系统管理</h2>", "<h2>" + esc(pageTitle) + "</h2>")
-                    .replace("修改系统配置并保存。", esc(headerDescription))
-                    .replace("<div id=\"settingsNav\" class=\"subnav\" aria-label=\"系统设置分区\"></div>",
+                    .replace("<h2>{{admin.system.title}}</h2>", "<h2>" + esc(pageTitle) + "</h2>")
+                    .replace("{{common.edit}}系统配置并{{common.save}}。", esc(headerDescription))
+                    .replace("<div id=\"settingsNav\" class=\"subnav\" aria-label=\"{{admin.system.sectionsLabel}}\"></div>",
                             prefix + "<div id=\"settingsNav\" style=\"display:none\"></div>")
                     .replace("(function () {", "(function () {\n                " + scope);
         }
@@ -839,9 +839,9 @@ public class AdminPage {
                         <input type="password" id="rootConfirmPassword" class="form-input setting-input" maxlength="128" autocomplete="new-password">
                     </div>
                     <div class="settings-toolbar" data-save-card data-save-action="saveRootSettings">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>
@@ -911,9 +911,9 @@ public class AdminPage {
                         <input type="number" id="pngMaxConcurrent" class="form-input setting-input" min="1" max="99999" step="1" required>
                     </div>
                     <div class="settings-toolbar" data-save-card data-save-action="savePngSettings">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>
@@ -926,9 +926,9 @@ public class AdminPage {
                     </div>
                     <input type="hidden" id="encryptionLevel" value="1">
                     <div class="settings-toolbar" data-save-card data-save-action="saveSettings">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>
@@ -993,9 +993,9 @@ public class AdminPage {
                     </div>
                     <textarea id="requestRates" class="form-input setting-textarea" rows="8"></textarea>
                     <div class="settings-toolbar" data-save-card data-save-action="saveFrequencySettings">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>
@@ -1061,9 +1061,9 @@ public class AdminPage {
                         <input type="text" id="headerCacheControl" class="form-input setting-input">
                     </div>
                     <div class="settings-toolbar" data-save-card data-save-action="confirmCorsSettings">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>
@@ -1466,8 +1466,8 @@ public class AdminPage {
                 <p class="page-desc">%s</p>
             </div>
             <div class="subnav" style="margin-bottom:16px">
-                <a class="subnav-item active" href="/admin/profiles">角色名册</a>
-                <a class="subnav-item" href="/admin/profiles/settings">角色设置</a>
+                <a class="subnav-item active" href="/admin/profiles">{{admin.profiles.rosterTitle}}</a>
+                <a class="subnav-item" href="/admin/profiles/settings">{{admin.profiles.settingsTitle}}</a>
             </div>
             <div class="settings-card card">
                 <div class="card-header" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
@@ -1611,15 +1611,15 @@ public class AdminPage {
     public static String renderProfileSettingsPage(String adminUsername, String adminRole, String csrfToken) {
         String content = """
             <div class="page-header">
-                <h2>角色设置</h2>
-                <p class="page-desc">管理角色名称与数量限制。</p>
+                <h2>{{admin.profiles.settingsTitle}}</h2>
+                <p class="page-desc">{{admin.profiles.limitsDesc}}</p>
             </div>
             <div class="subnav" style="margin-bottom:16px">
-                <a class="subnav-item" href="/admin/profiles">角色名册</a>
-                <a class="subnav-item active" href="/admin/profiles/settings">角色设置</a>
+                <a class="subnav-item" href="/admin/profiles">{{admin.profiles.rosterTitle}}</a>
+                <a class="subnav-item active" href="/admin/profiles/settings">{{admin.profiles.settingsTitle}}</a>
             </div>
             <div class="settings-card card">
-                <div class="card-header"><h3 class="card-title">角色限制</h3></div>
+                <div class="card-header"><h3 class="card-title">{{admin.profiles.limitsTitle}}</h3></div>
                 <div class="card-body">
                     <div class="setting-item setting-item-stack">
                         <div class="setting-info"><div class="setting-label">%s</div></div>
@@ -1645,9 +1645,9 @@ public class AdminPage {
                         </div>
                     </div>
                     <div class="settings-toolbar" data-save-card data-save-action="saveProfileSettings">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>
@@ -1679,7 +1679,7 @@ public class AdminPage {
                         max_profile_name_length: input('maxProfileNameLength').value
                     };
                     if (Number(values.min_profile_name_length) > Number(values.max_profile_name_length)) {
-                        if (window.showToast) showToast('最小长度不能大于最大长度', 'error');
+                        if (window.showToast) showToast('{{admin.profiles.minMaxError}}', 'error');
                         return false;
                     }
                     return fetch('/admin/api/profiles/settings', {
@@ -1691,13 +1691,13 @@ public class AdminPage {
                     }).then(function (result) {
                         if (result.ok && result.data.success) {
                             revision = result.data.revision;
-                            if (window.showToast) showToast('角色设置已保存', 'success');
+                            if (window.showToast) showToast('{{admin.profiles.saved}}', 'success');
                             return true;
                         }
                         if (result.data && result.data.revision != null) revision = result.data.revision;
                         return verifyPersisted(result.data && result.data.message);
                     }).catch(function () {
-                        return verifyPersisted('保存失败');
+                        return verifyPersisted('{{common.saveFailed}}');
                     });
                     function verifyPersisted(message) {
                         return fetch('/admin/api/profiles/settings').then(function (r) { return r.json(); }).then(function (data) {
@@ -1707,13 +1707,13 @@ public class AdminPage {
                             });
                             if (persisted) {
                                 revision = data.revision;
-                                if (window.showToast) showToast('角色设置已保存', 'success');
+                                if (window.showToast) showToast('{{admin.profiles.saved}}', 'success');
                                 return true;
                             }
-                            if (window.showToast) showToast(message || '保存失败', 'error');
+                            if (window.showToast) showToast(message || '{{common.saveFailed}}', 'error');
                             return false;
                         }).catch(function () {
-                            if (window.showToast) showToast(message || '保存失败', 'error');
+                            if (window.showToast) showToast(message || '{{common.saveFailed}}', 'error');
                             return false;
                         });
                     }
@@ -1795,9 +1795,9 @@ public class AdminPage {
                     </div>
                     <p class="setting-desc" style="margin-top:10px">{{admin.yggdrasil.apiModeSaveHint}}</p>
                     <div class="settings-toolbar" data-save-card data-save-action="saveYggdrasilSection">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>
@@ -1816,9 +1816,9 @@ public class AdminPage {
                         </select>
                     </div>
                     <div class="settings-toolbar" data-save-card data-save-action="saveYggdrasilSection">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>
@@ -1854,9 +1854,9 @@ public class AdminPage {
                         <input type="number" id="worldTreeKeyLength" class="form-input setting-input" data-ygg-key="world_tree_key_length" placeholder="32" min="16" max="256">
                     </div>
                     <div class="settings-toolbar" data-save-card data-save-action="saveYggdrasilSection">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>
@@ -1878,9 +1878,9 @@ public class AdminPage {
                         <input type="number" id="batchQueryMaxCount" class="form-input setting-input" data-ygg-key="batch_query_max_count" placeholder="6">
                     </div>
                     <div class="settings-toolbar" data-save-card data-save-action="saveYggdrasilSection">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>
@@ -1917,9 +1917,9 @@ public class AdminPage {
                         <button class="btn btn-warning" id="switchModeBtn" data-action="confirmSwitchMode" style="display:none;">{{admin.yggdrasil.switchMode}}</button>
                     </div>
                     <div class="settings-toolbar" data-save-card data-save-action="saveYggdrasilSection">
-                        <span class="settings-status" data-save-status>未修改</span>
-                        <button type="button" class="btn btn-secondary" data-save-reset disabled>放弃更改</button>
-                        <button type="button" class="btn btn-primary" data-save-submit disabled>保存更改</button>
+                        <span class="settings-status" data-save-status>{{common.unchanged}}</span>
+                        <button type="button" class="btn btn-secondary" data-save-reset disabled>{{common.discardChanges}}</button>
+                        <button type="button" class="btn btn-primary" data-save-submit disabled>{{common.saveChanges}}</button>
                     </div>
                 </div>
             </div>

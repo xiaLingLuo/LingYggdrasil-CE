@@ -33,7 +33,7 @@
   "meta": {
     "serverName": "泠 Yggdrasil",
     "implementationName": "LingYggdrasil",
-    "implementationVersion": "2.10.0",
+    "implementationVersion": "2.10.1",
     "links": { "homepage": "..." }
   },
   "signaturePublickey": "-----BEGIN PUBLIC KEY-----\n...",

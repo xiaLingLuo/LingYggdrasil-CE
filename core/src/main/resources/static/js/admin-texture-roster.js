@@ -53,7 +53,7 @@
                 function (page) { state.page = page; load(); },
                 function (size) { state.pageSize = size; state.page = 1; load(); });
         }).catch(function (error) {
-            message('加载失败：' + error.message, false);
+            message('' + t('common.loadFailedShort') + '：' + error.message, false);
         }).finally(function () { state.loading = false; });
     }
 
@@ -62,25 +62,25 @@
         if (!body) return;
         if (!items.length) {
             body.innerHTML = '<tr><td colspan="' + (TYPE === 'SKIN' ? 8 : 7)
-                + '" class="text-center">暂无数据</td></tr>';
+                + '" class="text-center">' + t('common.noData') + '</td></tr>';
             return;
         }
         body.innerHTML = items.map(function (item) {
             var name = item.adminFileName || item.displayName || '-';
-            var author = item.authorDisplayName || item.author || '佚名';
+            var author = item.authorDisplayName || item.author || '' + t('common.anonymous') + '';
             var slim = item.skinModel === 'SLIM';
             var modelCell = TYPE === 'SKIN'
-                ? '<td><button class="verified-badge" type="button" title="切换皮肤模型" data-skin-model="'
+                ? '<td><button class="verified-badge" type="button" title="' + t('admin.textureRoster.toggleModel') + '" data-skin-model="'
                     + item.id + '" data-model="' + (slim ? 'SLIM' : 'DEFAULT') + '">'
-                    + (slim ? '纤细' : '默认') + '</button></td>'
+                    + (slim ? '' + t('texture.slimModel') + '' : '' + t('texture.defaultModel') + '') + '</button></td>'
                 : '';
             return '<tr>'
                 + '<td style="font-family:Consolas,monospace;font-size:12px">' + esc((item.hash || '').substring(0, 6))
                 + ' <button class="pencil-btn" type="button" title="HASH" data-act="hash" data-id="' + item.id
                 + '" data-hash="' + esc(item.hash || '') + '"><i class="fas fa-magnifying-glass"></i></button></td>'
-                + '<td>' + esc(name) + ' <button class="pencil-btn" type="button" title="修改名称" data-act="name" data-id="'
+                + '<td>' + esc(name) + ' <button class="pencil-btn" type="button" title="' + t('admin.textureRoster.editName') + '" data-act="name" data-id="'
                 + item.id + '" data-value="' + esc(name) + '"><i class="fas fa-pencil"></i></button></td>'
-                + '<td>' + esc(author) + ' <button class="pencil-btn" type="button" title="修改作者" data-act="author" data-id="'
+                + '<td>' + esc(author) + ' <button class="pencil-btn" type="button" title="' + t('admin.textureRoster.editAuthor') + '" data-act="author" data-id="'
                 + item.id + '" data-value="' + esc(item.authorName || '') + '"><i class="fas fa-pencil"></i></button></td>'
                 + modelCell
                 + '<td>' + esc(formatSize(item.size)) + '</td>'
@@ -88,44 +88,44 @@
                 + '<td>' + esc(item.createdAt ? formatDate(item.createdAt) : '-') + '</td>'
                 + '<td><div class="action-btns">'
                 + '<button class="btn-action btn-edit" type="button" data-act="preview" data-id="' + item.id
-                + '" data-name="' + esc(name) + '" data-model="' + esc(item.skinModel || 'DEFAULT') + '">预览</button>'
-                + '<a class="btn-action btn-edit" href="/admin/api/texture-assets/' + item.id + '/file" download>下载</a>'
-                + '<button class="btn-action btn-delete" type="button" title="永久删除数据库记录；无其他引用时删除原始文件" data-act="delete" data-id="' + item.id
-                + '" data-name="' + esc(name) + '">删除</button>'
+                + '" data-name="' + esc(name) + '" data-model="' + esc(item.skinModel || 'DEFAULT') + '">' + t('common.preview') + '</button>'
+                + '<a class="btn-action btn-edit" href="/admin/api/texture-assets/' + item.id + '/file" download>' + t('texture.download') + '</a>'
+                + '<button class="btn-action btn-delete" type="button" title="' + t('admin.textureRoster.deleteHint') + '" data-act="delete" data-id="' + item.id
+                + '" data-name="' + esc(name) + '">' + t('common.delete') + '</button>'
                 + '</div></td></tr>';
         }).join('');
     }
 
     function editName(id, current) {
-        showPromptDialog({ title: '修改名称', value: current, maxlength: 128 }, function (value) {
+        showPromptDialog({ title: '' + t('admin.textureRoster.editName') + '', value: current, maxlength: 128 }, function (value) {
             return request('/admin/api/texture-assets/' + id + '/name', {
                 method: 'POST', headers: headers(), body: JSON.stringify({ name: value })
-            }).then(function () { message('名称已更新', true); load(); return true; })
+            }).then(function () { message('' + t('admin.textureRoster.nameUpdated') + '', true); load(); return true; })
               .catch(function (error) {
                   return getAsset(id).then(function (item) {
                       var actual = item ? (item.adminFileName || item.name || '') : null;
                       if (actual !== null && String(actual) === String(value || '').trim()) {
-                          message('名称已更新', true); load(); return true;
+                          message('' + t('admin.textureRoster.nameUpdated') + '', true); load(); return true;
                       }
-                      message('更新失败：' + error.message, false); return false;
-                  }).catch(function () { message('更新失败：' + error.message, false); return false; });
+                      message('' + t('common.updateFailedDetail') + '' + error.message, false); return false;
+                  }).catch(function () { message('' + t('common.updateFailedDetail') + '' + error.message, false); return false; });
               });
         });
     }
 
     function editAuthor(id, current) {
-        showPromptDialog({ title: '修改作者', value: current, maxlength: 128 }, function (value) {
+        showPromptDialog({ title: '' + t('admin.textureRoster.editAuthor') + '', value: current, maxlength: 128 }, function (value) {
             return request('/admin/api/texture-assets/' + id + '/author', {
                 method: 'POST', headers: headers(), body: JSON.stringify({ author: value })
-            }).then(function () { message('作者已更新', true); load(); return true; })
+            }).then(function () { message('' + t('admin.textureRoster.authorUpdated') + '', true); load(); return true; })
               .catch(function (error) {
                   return getAsset(id).then(function (item) {
                       var actual = item && item.authorName ? item.authorName : '';
                       if (String(actual) === String(value || '').trim()) {
-                          message('作者已更新', true); load(); return true;
+                          message('' + t('admin.textureRoster.authorUpdated') + '', true); load(); return true;
                       }
-                      message('更新失败：' + error.message, false); return false;
-                  }).catch(function () { message('更新失败：' + error.message, false); return false; });
+                      message('' + t('common.updateFailedDetail') + '' + error.message, false); return false;
+                  }).catch(function () { message('' + t('common.updateFailedDetail') + '' + error.message, false); return false; });
               });
         });
     }
@@ -137,7 +137,7 @@
         var canvas = document.createElement('canvas');
         stage.appendChild(canvas);
         var dialog = openUiDialog({
-            id: 'textureAssetPreview', title: name || '预览', body: stage, wide: true,
+            id: 'textureAssetPreview', title: name || '' + t('common.preview') + '', body: stage, wide: true,
             onClose: disposePreview
         });
         if (typeof skinview3d !== 'undefined') {
@@ -172,36 +172,36 @@
     }
 
     function deleteAsset(id, name) {
-        showConfirmDialog('确认删除“' + (name || id) + '”？数据库记录将被永久删除；无其他引用时原始文件也会删除，操作不可撤销。', function () {
+        showConfirmDialog(t('admin.textureRoster.deleteConfirm').replace('{0}', name || id), function () {
             if (inflight['delete:' + id]) return;
             inflight['delete:' + id] = true;
             request('/admin/api/texture-assets/' + id + '/delete', {
                 method: 'POST', headers: headers(), body: '{}'
             }).then(function () {
-                message('已删除', true);
+                message('' + t('common.deleted') + '', true);
                 load();
             }).catch(function (error) {
                 getAsset(id).then(function (item) {
                     if (!item) {
-                        message('已删除', true);
+                        message('' + t('common.deleted') + '', true);
                         load();
                     } else {
-                        message('删除失败：' + error.message, false);
+                        message('' + t('common.deleteFailedDetail') + '' + error.message, false);
                     }
                 }).catch(function () {
-                    message('删除失败：' + error.message, false);
+                    message('' + t('common.deleteFailedDetail') + '' + error.message, false);
                 });
             }).finally(function () {
                 delete inflight['delete:' + id];
             });
-        }, { confirmText: '删除' });
+        }, { confirmText: '' + t('common.delete') + '' });
     }
 
     function applyModelButton(button, value) {
         button.setAttribute('data-model', value);
         button.classList.toggle('verified-yes', value === 'SLIM');
         button.classList.toggle('verified-no', value !== 'SLIM');
-        button.textContent = value === 'SLIM' ? '纤细' : '默认';
+        button.textContent = value === 'SLIM' ? '' + t('texture.slimModel') + '' : '' + t('texture.defaultModel') + '';
     }
 
     function updateModel(button, id, value) {
@@ -213,17 +213,17 @@
             method: 'POST', headers: headers(), body: JSON.stringify({ model: value })
         }).then(function () {
             applyModelButton(button, value);
-            message('皮肤类型已更新', true);
+            message('' + t('admin.textureRoster.modelUpdated') + '', true);
         }).catch(function (error) {
             getAsset(id).then(function (item) {
                 if (item && item.skinModel === value) {
                     applyModelButton(button, value);
-                    message('皮肤类型已更新', true);
+                    message('' + t('admin.textureRoster.modelUpdated') + '', true);
                     return;
                 }
-                message('类型更新失败：' + error.message, false);
+                message('' + t('admin.textureRoster.modelFailed') + '' + error.message, false);
             }).catch(function () {
-                message('类型更新失败：' + error.message, false);
+                message('' + t('admin.textureRoster.modelFailed') + '' + error.message, false);
             });
         }).finally(function () {
             button.disabled = false;
